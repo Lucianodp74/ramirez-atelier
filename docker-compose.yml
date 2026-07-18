@@ -1,0 +1,60 @@
+name: ramirez-atelier
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-ramirez}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ramirez_dev_password}
+      POSTGRES_DB: ${DB_NAME:-ramirez_atelier}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-ramirez}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-ramirez_minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-ramirez_minio_secret}
+    ports:
+      - '9000:9000' # API S3-compatible
+      - '9001:9001' # Console web
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-ramirez}:${DB_PASSWORD:-ramirez_dev_password}@postgres:5432/${DB_NAME:-ramirez_atelier}?schema=public
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-ramirez_minio}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-ramirez_minio_secret}
+      S3_BUCKET: ${S3_BUCKET:-richieste-progetto}
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres_data:
+  minio_data:

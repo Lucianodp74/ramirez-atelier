@@ -1,0 +1,565 @@
+// Schema Prisma - Ramirez Atelier Configuratore
+//
+// Convenzioni di naming allineate deliberatamente al futuro Aggregate `RichiestaPreventivo`
+// di ArtigianOS (v. ADR-0001, ADR-0002), per rendere la futura migrazione un'operazione
+// di mappatura dati, non una riscrittura del modello.
+//
+// Decisione chiave (suggerimento raccolto e recepito): il configuratore NON ha campi
+// hardcoded per tipo di progetto (cucina/armadio/bagno/...). Ogni tipo di progetto è
+// definito da una riga in `TipoProgetto.configurazione` (JSON: step, campi, regole di
+// completezza) - lo stesso principio già usato in ArtigianOS per `TemplateProdotto` nel
+// Bounded Context Marketplace. Aggiungere un nuovo tipo di progetto è un'operazione di
+// configurazione (una riga in tabella), mai una modifica di codice.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Definisce un tipo di progetto configurabile (Cucina, Armadio, Living, Bagno, ...).
+/// Il campo `configurazione` contiene la struttura JSON di step/campi/pesi di
+/// completezza — v. src/lib/tipo-progetto-schema.ts per la forma tipizzata attesa.
+model TipoProgetto {
+  id              String   @id @default(cuid())
+  tenantId        String
+  chiave          String // es. "cucina", "armadio", "living" - usata negli URL, univoca per Tenant
+  nome            String // es. "Cucina su misura"
+  descrizione     String?
+  immagineCopertina String?
+  attivo          Boolean  @default(true)
+  ordinamento     Int      @default(0)
+  configurazione  Json // struttura step/campi/pesi completezza (JSON tipizzato lato app)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  richieste       RichiestaProgetto[]
+
+  @@unique([tenantId, chiave])
+  @@map("tipo_progetto")
+}
+
+enum ClienteTipo {
+  PRIVATO
+  ARCHITETTO
+  IMPRESA
+  STUDIO_TECNICO
+
+  @@map("cliente_tipo")
+}
+
+/// Calcolata dal Rule Engine, mai assegnata manualmente in questo incremento
+/// (potrà diventare anche modificabile manualmente in futuro, se servirà).
+enum PrioritaCommerciale {
+  BASSA
+  MEDIA
+  ALTA
+
+  @@map("priorita_commerciale")
+}
+
+/// Stati del ciclo di vita della richiesta. BOZZA precede l'invio (Incremento 2);
+/// dall'invio in poi il workflow operativo (Incremento 3) è Nuova → In revisione →
+/// Preventivo inviato → Convertita, con Chiusa raggiungibile da qualunque stato
+/// attivo (una richiesta può essere persa/rifiutata in qualsiasi momento). Le
+/// transizioni ammesse sono un dato esplicito in codice (src/server/services/
+/// richieste-service.ts:TRANSIZIONI_AMMESSE), non sparse in condizionali - per
+/// restare "facilmente estendibile" come richiesto.
+enum StatoRichiesta {
+  BOZZA
+  NUOVA
+  IN_REVISIONE
+  PREVENTIVO_INVIATO
+  CONVERTITA
+  CHIUSA
+
+  @@map("stato_richiesta")
+}
+
+/// Categoria dell'allegato, derivata automaticamente dal tipo MIME/estensione al
+/// momento del caricamento. Nessuna analisi del contenuto (v. ADR-0002 Fase A/B/C).
+enum CategoriaDocumento {
+  FOTO
+  PDF
+  DWG_DXF
+  RENDER
+  VIDEO
+  ALTRO
+
+  @@map("categoria_documento")
+}
+
+/// Aggregate principale del configuratore. Nome scelto per allinearsi al futuro
+/// `RichiestaPreventivo` di ArtigianOS (ADR-0001).
+model RichiestaProgetto {
+  id                 String         @id @default(cuid())
+  tenantId           String
+  tipoProgettoId     String
+  tipoProgetto       TipoProgetto   @relation(fields: [tipoProgettoId], references: [id])
+
+  /// Token opaco memorizzato in un cookie del browser (non un vero login) che
+  /// permette di riprendere una bozza dopo aver chiuso il browser. Diventa
+  /// superfluo quando l'utente avrà un vero account (fuori scope in questo
+  /// incremento, ma il campo resta compatibile con quel futuro).
+  tokenRipresa       String         @unique @default(cuid())
+
+  /// Contatti: intenzionalmente opzionali finché la richiesta è in BOZZA (l'utente
+  /// può iniziare a compilare prima di lasciare nome/email). Diventano obbligatori
+  /// solo al completamento (validato in applicazione, non a livello di database -
+  /// v. src/lib/tipo-progetto-schema.ts:validaCompletamento).
+  clienteNome        String?
+  clienteEmail       String?
+  clienteTelefono    String?
+  clienteTipo        ClienteTipo    @default(PRIVATO)
+  clienteAzienda     String? // ragione sociale se architetto/impresa/studio tecnico
+
+  // Risposte del wizard, secondo la struttura definita in TipoProgetto.configurazione.
+  // Chiave = campo.chiave definito in configurazione, valore = risposta utente.
+  // Non contiene i campi "riservati" (clienteNome, budgetDichiarato, ...) che hanno
+  // una colonna propria - v. CAMPI_RISERVATI in tipo-progetto-schema.ts.
+  datiFormJson       Json           @default("{}")
+
+  /// Chiave dell'ultimo step compilato con successo, per riprendere esattamente da lì.
+  ultimoStepChiave   String?
+
+  budgetDichiarato   String? // nota libera aggiuntiva (facoltativa) - v. fasciaBudgetId per il dato strutturato
+  fasciaBudgetId     String? // dato strutturato, sostituisce il testo libero come fonte primaria per filtri/statistiche
+  fasciaBudget       FasciaBudget?  @relation(fields: [fasciaBudgetId], references: [id])
+  dataDesiderata     DateTime?
+  messaggioLibero    String?
+
+  /// Calcolata dal Rule Engine (non hard-coded) - v. src/lib/rule-engine. Null finché
+  /// nessuna regola del contesto "richiesta_priorita_commerciale" è stata ancora
+  /// valutata per questa richiesta (avviene al completamento, v. azioni.ts).
+  prioritaCommerciale PrioritaCommerciale?
+
+  indiceCompletezza  Int            @default(0) // 0-100, calcolato da pesi di configurazione
+
+  fasciaPrezzoMin    Decimal?       @db.Decimal(12, 2)
+  fasciaPrezzoMax    Decimal?       @db.Decimal(12, 2)
+  regolaPrezzoApplicataId String? // tracciabilità: quale regola ha generato la fascia
+
+  /// Contenitore libero per output di future estensioni (AI, OCR, CAD parsing,
+  /// Computer Vision, suggerimenti del Preventivatore - v. src/lib/extension-hooks.ts).
+  /// Nessuna di queste è implementata in questo incremento: il campo esiste solo
+  /// come punto di estensione dichiarato, per non dover alterare lo schema quando
+  /// arriveranno (ADR-0002, Fasi D/E/F/G).
+  datiEstensione     Json?
+
+  stato              StatoRichiesta @default(BOZZA)
+  noteInterne        String? // note del titolare, mai visibili al cliente
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  documenti          DocumentoRichiesta[]
+  eventi             EventoAttivita[]
+  commenti           CommentoInterno[]
+
+  @@index([tenantId, stato])
+  @@index([tipoProgettoId])
+  @@index([createdAt])
+  @@map("richiesta_progetto")
+}
+
+/// Allegati caricati dal cliente. Il contenuto binario non vive mai nel database:
+/// solo il riferimento all'Object Storage S3-compatible (coerente con la disciplina
+/// già stabilita nel Database Design di ArtigianOS per Document Management).
+model DocumentoRichiesta {
+  id               String   @id @default(cuid())
+  richiestaId      String
+  richiesta        RichiestaProgetto @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  nomeFileOriginale String
+  tipoMime         String
+  categoria        CategoriaDocumento // derivata automaticamente dal MIME al caricamento
+  storageObjectKey String // chiave nel bucket S3-compatible
+  dimensioneByte   Int
+
+  createdAt        DateTime @default(now())
+
+  @@index([richiestaId])
+  @@map("documento_richiesta")
+}
+
+/// Tipo di evento registrato nella Activity Timeline. Enum esplicito (non testo
+/// libero) per poter filtrare/interrogare in modo affidabile; estendibile aggiungendo
+/// valori quando servirà (es. in futuro "regola_eseguita" per il Rule Engine, v. ADR-0003).
+enum TipoEventoAttivita {
+  RICHIESTA_CREATA
+  STEP_COMPLETATO
+  DOCUMENTO_CARICATO
+  DOCUMENTO_RIMOSSO
+  STATO_MODIFICATO
+  RICHIESTA_COMPLETATA
+  COMMENTO_INSERITO
+  STATO_CONSULTATO_DAL_CLIENTE
+
+  @@map("tipo_evento_attivita")
+}
+
+/// Chi ha generato l'evento. In questo incremento non esiste ancora autenticazione
+/// per il titolare (v. README, "Cosa NON contiene ancora"): TITOLARE è quindi un
+/// singolo attore implicito, non un utente autenticato specifico - da raffinare
+/// quando arriverà un vero sistema di account per lo staff.
+enum AttoreEvento {
+  CLIENTE
+  TITOLARE
+  SISTEMA
+
+  @@map("attore_evento")
+}
+
+/// Activity Timeline: ogni operazione rilevante su una richiesta genera un evento
+/// immutabile. Base per audit, collaborazione futura tra più persone dello staff,
+/// notifiche, e - in prospettiva - per il Rule Engine (ADR-0003), che potrà sia
+/// consumare questi eventi come "fatti" sia scriverci le proprie esecuzioni.
+model EventoAttivita {
+  id            String             @id @default(cuid())
+  richiestaId   String
+  richiesta     RichiestaProgetto  @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  tipo          TipoEventoAttivita
+  descrizione   String // testo leggibile, pronto per la UI (es. "Documento planimetria.pdf caricato")
+  metadatiJson  Json? // dati strutturati aggiuntivi (es. { stepChiave }, { statoPrecedente, statoNuovo })
+  attore        AttoreEvento       @default(SISTEMA)
+
+  createdAt     DateTime           @default(now())
+
+  @@index([richiestaId, createdAt])
+  @@map("evento_attivita")
+}
+
+/// Note interne del titolare, mai visibili al cliente (Requisito esplicito).
+model CommentoInterno {
+  id           String            @id @default(cuid())
+  richiestaId  String
+  richiesta    RichiestaProgetto @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  testo        String
+  autore       String            @default("Titolare") // testo semplice finché non esiste autenticazione staff
+
+  createdAt    DateTime          @default(now())
+
+  @@index([richiestaId, createdAt])
+  @@map("commento_interno")
+}
+
+/// Regola di prezzo configurabile: condizioni (JSON, matchate sui campi derivati delle
+/// risposte del wizard) → fascia di prezzo. Nessuna stima "intelligente": è una tabella
+/// di regole che il titolare potrà curare da un pannello, senza intervento di sviluppo.
+// RegolaPrezzo (Incremento 1) è stata rimossa qui: mai realmente collegata a
+// nulla (nessun codice la interrogava), e ora sostituita dal Rule Engine
+// generico (Regola/EsecuzioneRegola, contesto="preventivo_pricing") -
+// esattamente il "secondo consumatore reale" che ADR-0003 indicava come
+// condizione per questa migrazione (Incremento 7).
+
+/// Fasce di budget come dato di configurazione amministrabile, non hard-coded
+/// nell'interfaccia. Ogni azienda potrà definire le proprie fasce (nome, intervallo,
+/// ordinamento, attiva/disattiva) da un pannello, senza intervento di sviluppo -
+/// esattamente come TipoProgetto.configurazione e RegolaPrezzo. `massimo` è
+/// nullable per rappresentare una fascia aperta verso l'alto (es. "20.000 €+").
+model FasciaBudget {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nome        String // es. "10.000 - 20.000 €" oppure "20.000 €+"
+  minimo      Decimal  @db.Decimal(12, 2)
+  massimo     Decimal? @db.Decimal(12, 2) // null = nessun limite superiore
+  ordinamento Int      @default(0) // usato anche come "livello" nelle condizioni delle regole (maggiore = fascia più alta)
+  attiva      Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  richieste   RichiestaProgetto[]
+
+  @@index([tenantId, attiva, ordinamento])
+  @@map("fascia_budget")
+}
+
+/// Stato operativo di una regola - separato da "validità temporale" (validoDa/validoA):
+/// una regola può essere ATTIVA ma non ancora in vigore, o in vigore ma disattivata
+/// manualmente. Le due dimensioni sono indipendenti di proposito.
+enum StatoRegola {
+  ATTIVA
+  DISATTIVA
+
+  @@map("stato_regola")
+}
+
+/// Business Rules Engine generico (ADR-0003, versione approvata: non specifico per
+/// il pricing). Una Regola non sa nulla del dominio in cui verrà usata: `contesto`
+/// è una stringa libera (non un enum) proprio per non dover modificare lo schema
+/// ogni volta che un nuovo dominio (pricing, workflow, notifiche, CRM, ...) adotta
+/// il motore. `condizioni` è un albero (AND/OR/NOT componibile, mai una lista piatta
+/// - v. src/lib/rule-engine/tipi.ts), `azioni` un elenco ordinato di operazioni la
+/// cui implementazione vive altrove (registro azioni), mai in questa tabella.
+model Regola {
+  id           String       @id @default(cuid())
+  tenantId     String
+  contesto     String // es. "richiesta_priorita_commerciale" - a quale dominio appartiene
+  nome         String
+  descrizione  String?
+  stato        StatoRegola  @default(ATTIVA)
+  priorita     Int          @default(0) // valutate in ordine decrescente
+  condizioni   Json // albero NodoCondizione
+  azioni       Json // Azione[] - elenco ordinato
+  versione     Int          @default(1)
+  validoDa     DateTime? // validità temporale opzionale
+  validoA      DateTime?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  esecuzioni   EsecuzioneRegola[]
+
+  @@index([tenantId, contesto, stato, priorita])
+  @@map("regola")
+}
+
+enum EsitoEsecuzioneRegola {
+  CONDIZIONE_VERA
+  CONDIZIONE_FALSA
+  ERRORE
+
+  @@map("esito_esecuzione_regola")
+}
+
+/// Tracciabilità completa di ogni valutazione di regola (Requisito esplicito):
+/// quale regola, quando, su quale entità, quale risultato. `entitaTipo`/`entitaId`
+/// sono generici (non una foreign key verso una tabella specifica) perché il motore
+/// deve poter valutare regole su qualunque tipo di entità futura (cliente, commessa,
+/// ...) senza che questa tabella debba cambiare forma ogni volta.
+model EsecuzioneRegola {
+  id              String                @id @default(cuid())
+  regolaId        String
+  regola          Regola                @relation(fields: [regolaId], references: [id], onDelete: Cascade)
+
+  entitaTipo      String // es. "richiesta_progetto"
+  entitaId        String
+
+  esito           EsitoEsecuzioneRegola
+  risultatoJson   Json? // dettaglio delle azioni eseguite, se la condizione era vera
+  erroreMessaggio String? // valorizzato solo se esito = ERRORE
+
+  eseguitaIl      DateTime              @default(now())
+
+  @@index([entitaTipo, entitaId, eseguitaIl])
+  @@index([regolaId, eseguitaIl])
+  @@map("esecuzione_regola")
+}
+
+// =====================================================================
+// IDENTITY & SECURITY (ADR-0004 v1.1, approvato)
+//
+// Identità globale (Utente) separata dalla relazione con un'azienda
+// (Membership). Ruoli e permessi sono dati (RBAC), non hard-coded.
+// Ogni tabella di business esistente (TipoProgetto, RichiestaProgetto,
+// FasciaBudget, Regola, RegolaPrezzo) riceve qui sotto una colonna
+// tenantId - per rispettare davvero "nessun servizio opera senza
+// conoscere il Tenant corrente", non solo le tabelle di identità.
+// =====================================================================
+
+/// Tenant: anche se oggi esiste una sola azienda (Ramirez Atelier), il
+/// modello nasce multi-tenant per non dover migrare in futuro (ADR-0004 §3).
+model Tenant {
+  id        String   @id @default(cuid())
+  nome      String
+  slug      String   @unique
+  stato     String   @default("ATTIVO") // ATTIVO | SOSPESO
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  membership Membership[]
+  ruoli      Ruolo[]
+  inviti     Invito[]
+
+  @@map("tenant")
+}
+
+/// Identità autenticabile globale (ADR-0004 §6.1) - NON tenant-scoped.
+/// Copre Proprietario/Dipendente/Collaboratore: la distinzione è nel Ruolo
+/// assegnato via Membership, mai nel tipo di questa tabella.
+model Utente {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  nome            String
+  passwordHash    String // Argon2id - mai la password in chiaro
+  algoritmoHash   String    @default("argon2id")
+  stato           String    @default("ATTIVO") // ATTIVO | DISABILITATO
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  membership      Membership[]
+  sessioni        Sessione[]
+  recuperiPassword RichiestaRecuperoPassword[]
+
+  @@index([stato])
+  @@map("utente")
+}
+
+/// Relazione Identità <-> Tenant (ADR-0004 §6.3) - il cuore della revisione
+/// v1.1. Un Utente può avere più Membership, ciascuna verso un Tenant diverso.
+model Membership {
+  id         String   @id @default(cuid())
+  utenteId   String
+  utente     Utente   @relation(fields: [utenteId], references: [id], onDelete: Cascade)
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  stato      String   @default("ATTIVA") // INVITATA | ATTIVA | SOSPESA | REVOCATA
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ruoli      MembershipRuolo[]
+  sessioni   Sessione[]
+
+  // Invariante ADR §5: al più una Membership attiva per coppia Utente/Tenant.
+  @@unique([utenteId, tenantId])
+  @@index([tenantId, stato])
+  @@map("membership")
+}
+
+/// Entity: una Membership può avere più Ruolo assegnati (ADR-0004 §7).
+model MembershipRuolo {
+  membershipId String
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  ruoloId      String
+  ruolo        Ruolo      @relation(fields: [ruoloId], references: [id], onDelete: Cascade)
+
+  assegnatoIl  DateTime   @default(now())
+
+  @@id([membershipId, ruoloId])
+  @@map("membership_ruolo")
+}
+
+/// Ruolo: tenant-scoped, dato non hard-coded (ADR-0004 §6.5, Principio 5).
+model Ruolo {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  nome           String
+  descrizione    String?
+  templateSistema Boolean @default(false) // clonato da un template di piattaforma vs creato manualmente
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  permessi       Permesso[]
+  membership     MembershipRuolo[]
+
+  @@unique([tenantId, nome])
+  @@map("ruolo")
+}
+
+/// Entity dentro Ruolo: modulo + azione (+ ambito opzionale), mai una
+/// condizione hard-coded nel dominio (ADR-0004 §7, Principio 5).
+model Permesso {
+  id          String  @id @default(cuid())
+  ruoloId     String
+  ruolo       Ruolo   @relation(fields: [ruoloId], references: [id], onDelete: Cascade)
+
+  modulo      String // es. "richieste", "fasce_budget", "regole"
+  azione      String // es. "leggi", "gestisci", "cambia_stato", "commenta"
+  ambitoJson  Json? // restrizione opzionale (es. un centro di costo) - non usato in Ramirez Atelier oggi
+
+  @@unique([ruoloId, modulo, azione])
+  @@map("permesso")
+}
+
+/// Sessione: Aggregate Root a parte (ADR-0004 §6.4). Token opaco: si salva
+/// solo l'hash, mai il token in chiaro, stesso principio della password -
+/// un dump del database non deve permettere di rubare sessioni attive.
+/// Porta il Tenant attivo tramite la Membership corrente (mai un Tenant
+/// diretto): cambiare Tenant attivo significa cambiare quale Membership la
+/// sessione referenzia, senza nuova autenticazione.
+model Sessione {
+  id             String    @id @default(cuid())
+  utenteId       String
+  utente         Utente    @relation(fields: [utenteId], references: [id], onDelete: Cascade)
+  membershipId   String
+  membership     Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  tokenHash      String    @unique
+  stato          String    @default("ATTIVA") // ATTIVA | REVOCATA | SCADUTA
+
+  creataIl       DateTime  @default(now())
+  scadeIl        DateTime
+  revocataIl     DateTime?
+
+  ipAddress      String?
+  userAgent      String?
+
+  @@index([utenteId, stato])
+  @@index([tokenHash])
+  @@map("sessione")
+}
+
+/// Invito: gestisce sia "persona già esistente in ArtigianOS, nuova Membership"
+/// sia "persona completamente nuova" (ADR-0004 §6.6).
+model Invito {
+  id              String    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  email           String
+  ruoloIniziale   String // nome del Ruolo da assegnare all'accettazione
+  tokenHash       String    @unique
+  stato           String    @default("CREATO") // CREATO | ACCETTATO | SCADUTO | REVOCATO
+
+  creatoDaUtenteId String?
+
+  createdAt       DateTime  @default(now())
+  scadeIl         DateTime
+  accettatoIl     DateTime?
+
+  @@index([tenantId, stato])
+  @@map("invito")
+}
+
+/// Token di reset, legato all'identità globale (non a una Membership specifica).
+model RichiestaRecuperoPassword {
+  id         String    @id @default(cuid())
+  utenteId   String
+  utente     Utente    @relation(fields: [utenteId], references: [id], onDelete: Cascade)
+
+  tokenHash  String    @unique
+  scadeIl    DateTime
+  usataIl    DateTime?
+
+  createdAt  DateTime  @default(now())
+
+  @@index([utenteId])
+  @@map("richiesta_recupero_password")
+}
+
+/// Registro eventi di sicurezza (Principio 7: tracciabilità via eventi).
+/// Nota di scope: ArtigianOS prevede un Event Store generico di piattaforma
+/// (Enterprise Domain Model §B.22); Ramirez Atelier non lo ha ancora costruito
+/// per intero, quindi questa tabella è il registro dedicato di Identity &
+/// Security in questo progetto - da migrare/assorbire nell'Event Store
+/// generico quando ArtigianOS lo renderà disponibile anche qui, non da
+/// mantenere parallelo indefinitamente.
+model EventoSicurezza {
+  id            String   @id @default(cuid())
+  tipo          String // LOGIN_RIUSCITO | LOGIN_FALLITO | LOGOUT | CAMBIO_PASSWORD | INVITO_CREATO | INVITO_ACCETTATO | CAMBIO_RUOLO | CAMBIO_TENANT_ATTIVO | SESSIONE_REVOCATA | ACCESSO_NEGATO
+  tenantId      String?
+  utenteId      String?
+  membershipId  String?
+  metadatiJson  Json?
+  ipAddress     String?
+
+  creatoIl      DateTime @default(now())
+
+  @@index([tipo, creatoIl])
+  @@index([utenteId, creatoIl])
+  @@index([tenantId, creatoIl])
+  @@map("evento_sicurezza")
+}
