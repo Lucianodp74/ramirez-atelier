@@ -1,0 +1,1 @@
+# Cartella mantenuta in git tramite questo file - Next.js in modalità standalone (Dockerfile) richiede che public/ esista al momento della build, anche se vuota.
