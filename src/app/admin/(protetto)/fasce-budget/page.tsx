@@ -41,8 +41,10 @@ export default async function FasceBudgetPage() {
                   <td className="px-4 py-3 text-muted-foreground">{f.ordinamento}</td>
                   <td className="px-4 py-3 font-medium">{f.nome}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {f.minimo.toLocaleString('it-IT')} € –{' '}
-                    {f.massimo !== null ? `${f.massimo.toLocaleString('it-IT')} €` : 'illimitato'}
+                    {Number(f.minimo).toLocaleString('it-IT')} € –{' '}
+                    {f.massimo !== null
+                      ? `${Number(f.massimo).toLocaleString('it-IT')} €`
+                      : 'illimitato'}
                   </td>
                   <td className="px-4 py-3">
                     <span className={f.attiva ? 'text-accent' : 'text-muted-foreground'}>

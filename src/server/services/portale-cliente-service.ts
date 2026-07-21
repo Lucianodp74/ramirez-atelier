@@ -69,8 +69,8 @@ export async function recuperaStatoPerCliente(
     tipoProgettoNome: richiesta.tipoProgetto.nome,
     stato: richiesta.stato,
     messaggio: MESSAGGIO_STATO_CLIENTE[richiesta.stato] ?? 'Stato non disponibile.',
-    fasciaPrezzoMin: richiesta.fasciaPrezzoMin,
-    fasciaPrezzoMax: richiesta.fasciaPrezzoMax,
+    fasciaPrezzoMin: richiesta.fasciaPrezzoMin !== null ? Number(richiesta.fasciaPrezzoMin) : null,
+    fasciaPrezzoMax: richiesta.fasciaPrezzoMax !== null ? Number(richiesta.fasciaPrezzoMax) : null,
     creataIl: richiesta.createdAt,
   };
 }

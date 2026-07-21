@@ -47,8 +47,13 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
   });
 
   // --- Valore opportunità aperte e valore medio ---
-  const midpoint = (min: number | null, max: number | null) =>
-    min !== null && max !== null ? (min + max) / 2 : null;
+  // I campi @db.Decimal dello schema (fasciaPrezzoMin/Max) arrivano dal client
+  // Prisma reale come istanze di Decimal, non come number semplici - Number(x)
+  // le converte correttamente (stessa raccomandazione della documentazione Prisma).
+  const midpoint = (min: unknown, max: unknown) =>
+    min !== null && min !== undefined && max !== null && max !== undefined
+      ? (Number(min) + Number(max)) / 2
+      : null;
 
   const aperteConPrezzo = richieste.filter(
     (r) =>

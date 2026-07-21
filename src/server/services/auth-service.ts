@@ -127,7 +127,7 @@ export async function login(
 export async function recuperaSessioneCorrente(tokenGrezzo: string) {
   const sessione = await db.sessione.findUnique({
     where: { tokenHash: hashToken(tokenGrezzo) },
-    include: { utente: true, membership: { ruoli: true } },
+    include: { utente: true, membership: { include: { ruoli: true } } },
   });
 
   if (!sessione) return null;

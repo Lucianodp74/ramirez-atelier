@@ -55,7 +55,7 @@ export default async function UtentiPage() {
                   <td className="px-4 py-3">{m.utente?.nome}</td>
                   <td className="px-4 py-3 text-muted-foreground">{m.utente?.email}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {m.ruoli?.map((r) => r.nome).join(', ')}
+                    {m.ruoli?.map((r) => r.ruolo?.nome).join(', ')}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={m.stato === 'ATTIVA' ? 'accent' : 'outline'}>{m.stato}</Badge>

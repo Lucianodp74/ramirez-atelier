@@ -201,7 +201,7 @@ export default async function DettaglioRichiestaPage({
                 <p className="text-xs text-muted-foreground">Fascia di prezzo (preventivo)</p>
                 <p className="text-sm">
                   {richiesta.fasciaPrezzoMin !== null && richiesta.fasciaPrezzoMax !== null
-                    ? `${richiesta.fasciaPrezzoMin.toLocaleString('it-IT')} – ${richiesta.fasciaPrezzoMax.toLocaleString('it-IT')} €`
+                    ? `${Number(richiesta.fasciaPrezzoMin).toLocaleString('it-IT')} – ${Number(richiesta.fasciaPrezzoMax).toLocaleString('it-IT')} €`
                     : 'Non ancora calcolata (motore di pricing non sviluppato, v. ADR-0003)'}
                 </p>
               </div>

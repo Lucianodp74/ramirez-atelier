@@ -218,8 +218,8 @@ export async function riepilogoDashboard(tenantId: string): Promise<RiepilogoDas
     (r) => r.fasciaPrezzoMin !== null && r.fasciaPrezzoMax !== null,
   );
   const valoreEconomicoStimato = {
-    min: conFasciaPrezzo.reduce((acc, r) => acc + (r.fasciaPrezzoMin ?? 0), 0),
-    max: conFasciaPrezzo.reduce((acc, r) => acc + (r.fasciaPrezzoMax ?? 0), 0),
+    min: conFasciaPrezzo.reduce((acc, r) => acc + Number(r.fasciaPrezzoMin ?? 0), 0),
+    max: conFasciaPrezzo.reduce((acc, r) => acc + Number(r.fasciaPrezzoMax ?? 0), 0),
     disponibile: conFasciaPrezzo.length > 0,
   };
 

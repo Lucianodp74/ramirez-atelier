@@ -1,4 +1,5 @@
 import { db } from '@/server/db';
+import { Prisma } from '@prisma/client';
 import { valuta } from './valutatore';
 import { eseguiAzione } from './registro-azioni';
 import { NodoCondizioneSchema, ElencoAzioniSchema, type Fatti } from './tipi';
@@ -85,7 +86,7 @@ export async function eseguiRegolePerContesto(
         entitaTipo,
         entitaId,
         esito,
-        risultatoJson,
+        risultatoJson: (risultatoJson as Prisma.InputJsonValue | null) ?? Prisma.JsonNull,
         erroreMessaggio,
       },
     });

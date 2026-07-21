@@ -1,4 +1,5 @@
 import { db } from '@/server/db';
+import { Prisma } from '@prisma/client';
 
 export type TipoEventoSicurezza =
   | 'LOGIN_RIUSCITO'
@@ -31,7 +32,7 @@ export async function registraEventoSicurezza(dati: DatiEvento) {
       tenantId: dati.tenantId ?? null,
       utenteId: dati.utenteId ?? null,
       membershipId: dati.membershipId ?? null,
-      metadatiJson: dati.metadati ?? null,
+      metadatiJson: (dati.metadati as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
       ipAddress: dati.ipAddress ?? null,
     },
   });

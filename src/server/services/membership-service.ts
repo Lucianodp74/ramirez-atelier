@@ -59,5 +59,8 @@ export async function membershipDiUtente(utenteId: string) {
 }
 
 export async function membershipDiTenant(tenantId: string) {
-  return db.membership.findMany({ where: { tenantId }, include: { utente: true, ruoli: true } });
+  return db.membership.findMany({
+    where: { tenantId },
+    include: { utente: true, ruoli: { include: { ruolo: true } } },
+  });
 }

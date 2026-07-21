@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
+import type { Prisma } from '@prisma/client';
 import { getStorageAdapter, determinaCategoria } from '@/lib/storage';
 import { risolviConfigurazioneDinamica } from '@/lib/configurazione-dinamica';
 import { datiFormPiatti, costruisciFattiRichiesta } from '@/lib/richiesta-fatti';
@@ -125,7 +126,7 @@ export async function registraVarianteSelezionata(richiestaId: string, varianteI
     where: { id: richiestaId },
     data: {
       variantePreimpostataId: varianteId,
-      datiFormJson: { ...datiEsistenti, ...scelte },
+      datiFormJson: { ...datiEsistenti, ...scelte } as Prisma.InputJsonValue,
     },
   });
 }
@@ -187,7 +188,7 @@ export async function salvaStep(
     where: { id: richiestaId },
     data: {
       ...aggiornamentoColonne,
-      datiFormJson: nuoviDatiForm,
+      datiFormJson: nuoviDatiForm as Prisma.InputJsonValue,
       indiceCompletezza,
       ultimoStepChiave: stepChiave,
     },
@@ -382,7 +383,7 @@ export async function completaRichiesta(richiestaId: string) {
   });
   const fasciaTesto =
     richiestaConPrezzo?.fasciaPrezzoMin != null && richiestaConPrezzo?.fasciaPrezzoMax != null
-      ? `Fascia stimata: ${richiestaConPrezzo.fasciaPrezzoMin.toLocaleString('it-IT')}–${richiestaConPrezzo.fasciaPrezzoMax.toLocaleString('it-IT')} €.`
+      ? `Fascia stimata: ${Number(richiestaConPrezzo.fasciaPrezzoMin).toLocaleString('it-IT')}–${Number(richiestaConPrezzo.fasciaPrezzoMax).toLocaleString('it-IT')} €.`
       : 'Fascia di prezzo non ancora disponibile per questa combinazione.';
   await Promise.all(
     staffAttivo

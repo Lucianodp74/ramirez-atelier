@@ -68,7 +68,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                   {new Date(r.createdAt).toLocaleDateString('it-IT')}
                   {r.fasciaPrezzoMin !== null &&
                     r.fasciaPrezzoMax !== null &&
-                    ` · ${r.fasciaPrezzoMin.toLocaleString('it-IT')}–${r.fasciaPrezzoMax.toLocaleString('it-IT')} €`}
+                    ` · ${Number(r.fasciaPrezzoMin).toLocaleString('it-IT')}–${Number(r.fasciaPrezzoMax).toLocaleString('it-IT')} €`}
                 </p>
               </CardContent>
             </Card>

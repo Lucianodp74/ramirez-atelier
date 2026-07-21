@@ -44,8 +44,8 @@ export default async function CompletatoPage({
             Prima stima indicativa
           </p>
           <p className="mt-1 text-2xl font-semibold text-accent">
-            {richiesta.fasciaPrezzoMin.toLocaleString('it-IT')} –{' '}
-            {richiesta.fasciaPrezzoMax.toLocaleString('it-IT')} €
+            {Number(richiesta.fasciaPrezzoMin).toLocaleString('it-IT')} –{' '}
+            {Number(richiesta.fasciaPrezzoMax).toLocaleString('it-IT')} €
           </p>
           <p className="mt-2 max-w-xs text-xs text-muted-foreground">
             Non è un preventivo definitivo: la cifra reale dipenderà dal progetto che definiremo
