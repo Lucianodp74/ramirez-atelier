@@ -17,7 +17,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /// Definisce un tipo di progetto configurabile (Cucina, Armadio, Living, Bagno, ...).
@@ -37,6 +36,7 @@ model TipoProgetto {
   updatedAt       DateTime @updatedAt
 
   richieste       RichiestaProgetto[]
+  variantiPreimpostate VariantePreimpostata[]
 
   @@unique([tenantId, chiave])
   @@map("tipo_progetto")
@@ -94,11 +94,51 @@ enum CategoriaDocumento {
 
 /// Aggregate principale del configuratore. Nome scelto per allinearsi al futuro
 /// `RichiestaPreventivo` di ArtigianOS (ADR-0001).
+/// Bounded Context CRM (nato dalla simulazione della giornata del titolare,
+/// non da un elenco astratto di funzionalità). Deduplica deterministica su
+/// email o telefono - mai sul nome, che introdurrebbe fusioni sbagliate
+/// silenziose (principio esplicitamente confermato: meglio due clienti
+/// distinti che una fusione automatica errata). La logica di deduplica vive
+/// nel servizio applicativo, non in un vincolo univoco di database: email e
+/// telefono possono essere entrambi assenti per un contatto molto informale,
+/// un vincolo rigido lo impedirebbe.
+model Cliente {
+  id        String   @id @default(cuid())
+  tenantId  String
+  nome      String
+  email     String?
+  telefono  String?
+  tipo      ClienteTipo @default(PRIVATO)
+  azienda   String?
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  richieste RichiestaProgetto[]
+
+  @@index([tenantId, email])
+  @@index([tenantId, telefono])
+  @@map("cliente")
+}
+
 model RichiestaProgetto {
   id                 String         @id @default(cuid())
   tenantId           String
   tipoProgettoId     String
   tipoProgetto       TipoProgetto   @relation(fields: [tipoProgettoId], references: [id])
+
+  /// Risolto (trovato o creato) al completamento della richiesta, non ad ogni
+  /// passo del wizard - un cliente ha valore solo quando la richiesta è
+  /// davvero inviata, non per ogni bozza abbandonata (Configurazione a Valore).
+  clienteId          String?
+  cliente            Cliente?       @relation(fields: [clienteId], references: [id])
+
+  /// Se il cliente è partito da uno stile preimpostato (v. VariantePreimpostata),
+  /// il suo id resta qui per riferimento - nessuna relazione con vincoli di
+  /// integrità: la variante può essere modificata/disattivata in futuro senza
+  /// invalidare lo storico di chi l'ha scelta in passato.
+  variantePreimpostataId String?
 
   /// Token opaco memorizzato in un cookie del browser (non un vero login) che
   /// permette di riprendere una bozza dopo aver chiuso il browser. Diventa
@@ -278,6 +318,122 @@ model FasciaBudget {
 
   @@index([tenantId, attiva, ordinamento])
   @@map("fascia_budget")
+}
+
+/// Catalogo Tecnico (ADR-0006, repository ArtigianOS) - Incremento 1: solo
+/// Finitura, il resto (Modello, Collezione, Componente per-parte) emergerà
+/// negli incrementi successivi, solo quando servirà davvero (Progressive
+/// Disclosure). Nessun campo costo/fornitore: non ancora validato da un
+/// consumatore reale (Premature Modeling - v. docs/principi in ArtigianOS).
+model Finitura {
+  id          String   @id @default(cuid())
+  tenantId    String
+
+  /// Famiglia (legno, laccato, laminato, pietra_marmo, vetro, metallo,
+  /// tessuto_ecopelle) - dato, non enum, coerente con "nessuna assunzione
+  /// di verticale" (ADR-0006 §7).
+  categoria   String
+
+  /// Identificatore tecnico stabile, MAI il nome commerciale: è il valore
+  /// esposto al Rule Engine come fatto (v. richiesta-fatti.ts) e referenziato
+  /// dalle condizioni delle Regole di pricing - deve restare stabile anche
+  /// se il nome commerciale cambia (es. un restyling del catalogo non deve
+  /// rompere silenziosamente le regole di prezzo esistenti).
+  slug        String
+
+  nome        String // es. "Rovere Naturale Spazzolato"
+  descrizione String?
+
+  /// Campione visivo generato via CSS (colore + texture), non una fotografia
+  /// caricata - nessuna dipendenza dallo storage documenti (deliberatamente
+  /// in pausa) e nessun onere di caricare foto per il titolare al primo giorno.
+  coloreHex   String // es. "#8B5A2B"
+  texture     String // 'legno' | 'liscio' | 'pietra' | 'metallo' | 'tessuto' - guida il pattern CSS
+
+  attiva      Boolean  @default(true)
+  ordinamento Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, attiva, categoria, ordinamento])
+  @@map("finitura")
+}
+
+/// Catalogo Tecnico (ADR-0006) - Incremento 3. Cerniere, guide, sistemi di
+/// apertura, maniglie (categoria="maniglia", non un'entità a sé - ADR-0006 §3.5).
+/// Nessun campione visivo: a differenza di Finitura non rappresenta una
+/// superficie, un colore non lo descriverebbe onestamente (Configurazione a
+/// Valore: niente campi che non aggiungono comprensione reale).
+model Ferramenta {
+  id          String   @id @default(cuid())
+  tenantId    String
+  categoria   String // es. cerniera, guida, sistema_apertura, maniglia, ammortizzatore
+  slug        String // stabile, mai il nome - stesso motivo di Finitura.slug
+  nome        String
+  descrizione String?
+  attiva      Boolean  @default(true)
+  ordinamento Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, attiva, categoria, ordinamento])
+  @@map("ferramenta")
+}
+
+/// Attrezzature interne, illuminazione, elettrodomestici e altri elementi
+/// opzionali che non sono né finitura né ferramenta di apertura.
+model Accessorio {
+  id          String   @id @default(cuid())
+  tenantId    String
+  categoria   String // es. interni_cabina, illuminazione, elettrodomestico
+  slug        String
+  nome        String
+  descrizione String?
+  attiva      Boolean  @default(true)
+  ordinamento Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, attiva, categoria, ordinamento])
+  @@map("accessorio")
+}
+
+/// Catalogo Tecnico (ADR-0006 §3.7) - "stile di partenza" proposto al cliente
+/// come primo passo di personalizzazione, non un'opzione in fondo alla pagina.
+/// Agganciata direttamente a TipoProgetto, non a Modello: Modello non è
+/// ancora stato costruito, perché non esiste un bisogno reale di più linee
+/// di prodotto per ambiente - costruirlo solo per dare un genitore a questa
+/// entità sarebbe stata la stessa scorciatoia già evitata altrove
+/// (Premature Modeling). Se un domani Modello emergerà davvero, questa
+/// entità potrà essere riagganciata lì con una migrazione dedicata.
+model VariantePreimpostata {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tipoProgettoId String
+  tipoProgetto   TipoProgetto @relation(fields: [tipoProgettoId], references: [id])
+
+  nome        String // es. "Stile Classico Noce"
+  descrizione String?
+
+  /// Coppie chiave/valore identiche a quelle che il cliente sceglierebbe da
+  /// solo (es. {"materiale": "rovere", "ferramenta": "cerniera_softclose"}) -
+  /// JSON libero, non una struttura tipizzata: la forma esatta dei campi
+  /// varia per ogni TipoProgetto (stesso principio già usato per
+  /// RichiestaProgetto.datiFormJson, non una nuova astrazione).
+  scelte      Json
+
+  attiva      Boolean  @default(true)
+  ordinamento Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, tipoProgettoId, attiva, ordinamento])
+  @@map("variante_preimpostata")
 }
 
 /// Stato operativo di una regola - separato da "validità temporale" (validoDa/validoA):

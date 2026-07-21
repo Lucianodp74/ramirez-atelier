@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { SelezionatoreFinitura } from './SelezionatoreFinitura';
 import type { CampoConfigurazione } from '@/lib/tipo-progetto-schema';
 
 interface Props {
@@ -74,39 +75,48 @@ export function CampoRenderer({ campo, valore, errore, onChange }: Props) {
         </div>
       )}
 
-      {campo.tipo === 'select_immagine' && campo.opzioni && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {campo.opzioni.map((opzione) => (
-            <button
-              key={opzione.valore}
-              type="button"
-              onClick={() => onChange(campo.chiave, opzione.valore)}
-              className={cn(
-                'group overflow-hidden rounded-lg border text-left transition-colors',
-                valore === opzione.valore
-                  ? 'border-accent'
-                  : 'border-input hover:border-muted-foreground',
-              )}
-            >
-              <div className="flex aspect-[4/3] items-center justify-center bg-secondary/60 text-xs text-muted-foreground">
-                {opzione.immagine ? (
-                  // Le immagini reali dei materiali/stili sono un contenuto editoriale,
-                  // fuori scope in questo incremento: placeholder testuale intenzionale.
-                  <span>{opzione.etichetta}</span>
-                ) : (
-                  <span>{opzione.etichetta}</span>
+      {campo.tipo === 'select_immagine' &&
+        campo.opzioni &&
+        campo.opzioni.some((o) => o.coloreHex) && (
+          <SelezionatoreFinitura
+            opzioni={campo.opzioni}
+            valore={valore}
+            onSeleziona={(v) => onChange(campo.chiave, v)}
+          />
+        )}
+
+      {campo.tipo === 'select_immagine' &&
+        campo.opzioni &&
+        !campo.opzioni.some((o) => o.coloreHex) && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {campo.opzioni.map((opzione) => (
+              <button
+                key={opzione.valore}
+                type="button"
+                onClick={() => onChange(campo.chiave, opzione.valore)}
+                className={cn(
+                  'group overflow-hidden rounded-lg border text-left transition-colors',
+                  valore === opzione.valore
+                    ? 'border-accent'
+                    : 'border-input hover:border-muted-foreground',
                 )}
-              </div>
-              <div className="p-3">
-                <div className="text-sm font-medium">{opzione.etichetta}</div>
-                {opzione.descrizione && (
-                  <div className="mt-0.5 text-xs text-muted-foreground">{opzione.descrizione}</div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+              >
+                <div className="flex aspect-[4/3] items-center justify-center bg-secondary/60 text-xs text-muted-foreground">
+                  {/* Immagini reali non ancora in scope (storage documenti in pausa): placeholder testuale. */}
+                  <span>{opzione.etichetta}</span>
+                </div>
+                <div className="p-3">
+                  <div className="text-sm font-medium">{opzione.etichetta}</div>
+                  {opzione.descrizione && (
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {opzione.descrizione}
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
 
       {campo.aiutoTesto && <p className="text-xs text-muted-foreground">{campo.aiutoTesto}</p>}
       {errore && <p className="text-xs text-destructive">{errore}</p>}

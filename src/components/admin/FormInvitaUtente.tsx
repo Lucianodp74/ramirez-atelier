@@ -70,8 +70,8 @@ export function FormInvitaUtente({ nomiRuoli }: { nomiRuoli: string[] }) {
       {errore && <p className="text-sm text-destructive sm:col-span-4">{errore}</p>}
       {linkInvito && (
         <p className="text-sm text-muted-foreground sm:col-span-4">
-          Invio email non ancora configurato in questo incremento — condividi manualmente questo
-          link con l&apos;invitato:{' '}
+          Email di invito inviata. In sviluppo (nessun provider email reale configurato) il
+          contenuto compare nel log del server — questo è comunque il link diretto:{' '}
           <code className="rounded bg-secondary/40 px-1">{linkInvito}</code>
         </p>
       )}

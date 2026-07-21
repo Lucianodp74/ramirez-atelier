@@ -1,6 +1,7 @@
 import { db } from '@/server/db';
 import { transizioneAmmessa } from '@/lib/workflow';
 import { STATI_OPERATIVI } from '@/lib/workflow';
+import { getEmailAdapter } from '@/lib/notifiche';
 import type { StatoRichiesta } from '@prisma/client';
 
 /**
@@ -150,6 +151,20 @@ export async function cambiaStato(
     },
   });
 
+  // Notifica il cliente solo quando il preventivo diventa davvero disponibile
+  // (transizione IN_REVISIONE -> PREVENTIVO_INVIATO, l'unica che porta a questo
+  // stato - v. workflow.ts). Completa un flusso già esistente (la pagina
+  // pubblica e il token mostrano già tutto), non un'estensione del Portale
+  // Cliente: nessuna nuova pagina, nessun nuovo dato esposto.
+  if (nuovoStato === 'PREVENTIVO_INVIATO' && aggiornata.clienteEmail) {
+    const link = `${process.env.SITE_URL}/richiesta/${aggiornata.tokenRipresa}`;
+    await getEmailAdapter().invia({
+      destinatario: aggiornata.clienteEmail,
+      oggetto: `Il tuo preventivo per "${aggiornata.tipoProgetto?.nome}" è pronto`,
+      corpo: `Ciao ${aggiornata.clienteNome ?? ''},\n\nIl preventivo per il tuo progetto "${aggiornata.tipoProgetto?.nome}" è pronto.\n\nPuoi consultarlo qui in qualsiasi momento:\n${link}`,
+    });
+  }
+
   return { successo: true, richiesta: aggiornata };
 }
 
@@ -220,4 +235,43 @@ export async function riepilogoDashboard(tenantId: string): Promise<RiepilogoDas
   });
 
   return { conteggiPerStato, valoreEconomicoStimato, completezzaMedia, ultimeRichieste };
+}
+
+/**
+ * "Usa questo preventivo come punto di partenza" - non "duplica": crea una
+ * nuova richiesta in BOZZA con le stesse scelte tecniche (dimensioni,
+ * materiale, ferramenta...) ma senza alcun dato del cliente originale, dato
+ * che nella pratica reale questo serve più spesso per un cliente diverso
+ * ("qualcosa di simile a quel lavoro") che per lo stesso. Riusa esattamente
+ * il meccanismo di ripresa bozza già costruito per il wizard pubblico -
+ * nessuna nuova interfaccia di modifica: il titolare apre il link e
+ * completa i dati del nuovo cliente come farebbe chiunque riprenda una bozza.
+ */
+export async function creaRichiestaDaPuntoDiPartenza(
+  tenantId: string,
+  richiestaOriginaleId: string,
+) {
+  const originale = await db.richiestaProgetto.findUnique({ where: { id: richiestaOriginaleId } });
+  if (!originale || originale.tenantId !== tenantId) throw new Error('Richiesta non trovata.');
+
+  const nuova = await db.richiestaProgetto.create({
+    data: {
+      tenantId,
+      tipoProgettoId: originale.tipoProgettoId,
+      datiFormJson: originale.datiFormJson ?? {},
+      // Stato BOZZA, nessun dato del cliente originale: il nuovo cliente (lo
+      // stesso o un altro) va identificato da chi completa questa bozza.
+    },
+  });
+
+  await db.eventoAttivita.create({
+    data: {
+      richiestaId: nuova.id,
+      tipo: 'RICHIESTA_CREATA',
+      descrizione: `Creata come punto di partenza dal preventivo ${richiestaOriginaleId.slice(0, 8)}`,
+      attore: 'TITOLARE',
+    },
+  });
+
+  return nuova;
 }

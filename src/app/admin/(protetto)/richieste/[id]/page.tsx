@@ -6,6 +6,7 @@ import { richiediContesto } from '@/server/identity/contesto';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ControlloCambioStato } from '@/components/admin/ControlloCambioStato';
+import { AzionePuntoDiPartenza } from '@/components/admin/AzionePuntoDiPartenza';
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
@@ -69,10 +70,17 @@ export default async function DettaglioRichiestaPage({
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {richiesta.clienteNome ?? 'Senza nome'}
+            {richiesta.clienteId ? (
+              <Link href={`/admin/clienti/${richiesta.clienteId}`} className="hover:underline">
+                {richiesta.clienteNome ?? 'Senza nome'}
+              </Link>
+            ) : (
+              (richiesta.clienteNome ?? 'Senza nome')
+            )}
           </h1>
           <p className="text-muted-foreground">{richiesta.tipoProgetto.nome}</p>
         </div>
+        <AzionePuntoDiPartenza richiestaId={richiesta.id} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

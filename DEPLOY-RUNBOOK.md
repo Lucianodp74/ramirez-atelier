@@ -18,10 +18,10 @@
 
 - Account GitHub, Vercel, Supabase attivi.
 - Verifica esplicita di cosa include il piano Supabase scelto (retention dei backup, point-in-time recovery) — non presumere (ADR-0005 §5, punto 4).
-- Decisione del provider di storage oggetti di produzione (S3 reale o compatibile — es. Cloudflare R2, AWS S3; l'adattatore in `src/lib/storage/` già lo supporta, attivandosi automaticamente quando `S3_ENDPOINT` è impostato).
-- Decisione del provider email transazionale per il recupero password (es. Resend, Postmark) — **richiede un piccolo intervento di sviluppo non ancora fatto**: `recupero-password-service.ts` genera già il token correttamente, ma nessun codice lo invia via email. Va implementato prima della Fase 5, o il flusso di recupero password resterà inutilizzabile in produzione.
+- **Storage documenti: Supabase Storage** (decisione già presa, mai registrata fino a questa revisione) — non Cloudflare R2 né MinIO: stesso account Supabase già in uso per il database (Fase 2), S3-compatibile, endpoint `https://<project-ref>.storage.supabase.co/storage/v1/s3`. Passi concreti: Dashboard Supabase → Storage → creare un bucket privato (es. `richieste-progetto`) → Storage → S3 Configuration → generare Access Key/Secret Key dedicate. L'adattatore in `src/lib/storage/` non richiede alcuna modifica: si attiva automaticamente quando `S3_ENDPOINT` è impostato, indipendentemente dal provider specifico.
+- Decisione del provider email transazionale per l'invio reale (es. Resend, Postmark) — **aggiornamento rispetto alla stesura originale di questo runbook**: `recupero-password-service.ts` non genera più soltanto il token, l'intero ciclo (recupero password, inviti, notifiche a staff e cliente) è implementato e verificato end-to-end tramite `InvioEmailAdapter` (v. `src/lib/notifiche/`) — oggi con un adattatore console che scrive nel log del server, non un invio reale. Resta da fare solo un secondo, piccolo intervento: implementare l'adattatore per il provider scelto (stessa interfaccia, un secondo file) e impostare le sue credenziali in produzione (Fase 6). Senza questo passo, le email in produzione continuerebbero a "inviarsi" solo nei log del server, mai recapitate per davvero.
 
-**Verifiche:** possiedi le credenziali di tutti e tre i servizi; hai una risposta a "cosa succede se perdo il database" prima di crearne uno reale.
+**Verifiche:** possiedi le credenziali di tutti e tre i servizi; hai una risposta a "cosa succede se perdo il database" prima di crearne uno reale — non solo aver letto cosa include il piano, ma aver **provato concretamente un ripristino** (Supabase permette di clonare un progetto o ripristinare a un punto nel tempo su piani a pagamento): un backup mai testato equivale, nella pratica, a non avere un backup.
 
 **Rollback:** nessuno — non è stato ancora toccato nulla.
 
@@ -145,9 +145,10 @@ In entrambi i casi: `npx prisma db seed` (o lo script equivalente) contro `DATAB
 - `DATABASE_URL` (pooled, porta 6543)
 - `DIRECT_URL` (diretta, porta 5432 — usata solo se si eseguono migrazioni da Vercel stesso, altrimenti serve solo in locale)
 - `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` di produzione
-- variabile del provider email, una volta implementato (Fase 0)
+- **`SITE_URL`** (es. `https://ramirezatelier.it`) — **requisito operativo, non facoltativo**: usata per costruire ogni link nelle email (recupero password, invito, notifica nuova richiesta, notifica preventivo pronto — v. `src/lib/notifiche/`). Senza questa variabile impostata, ogni link generato sarebbe letteralmente `"undefined/..."` — verificato concretamente, non un'ipotesi.
+- variabili del provider email scelto (v. Fase 0) — l'infrastruttura di invio (`InvioEmailAdapter`) è già implementata e in uso (recupero password, inviti, notifiche); resta da collegare l'adattatore per il provider reale scelto, sostituendo quello console usato in sviluppo.
 
-**Verifiche:** `vercel env ls` mostra tutte le variabili attese per l'ambiente Production; nessun valore di sviluppo (localhost, MinIO locale) presente in Production.
+**Verifiche:** `vercel env ls` mostra tutte le variabili attese per l'ambiente Production; nessun valore di sviluppo (localhost, MinIO locale) presente in Production; **`SITE_URL` punta al dominio reale di produzione, non a `localhost`** — inviare un'email di prova (es. un recupero password) e verificare che il link nel messaggio sia quello giusto, non un residuo di sviluppo.
 
 **Rollback:** le variabili si correggono e si ridistribuiscono in qualunque momento senza impatto sui dati — un deploy successivo le raccoglie.
 

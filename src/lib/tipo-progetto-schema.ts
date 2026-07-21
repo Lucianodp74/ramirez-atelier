@@ -26,6 +26,16 @@ export const OpzioneCampoSchema = z.object({
   etichetta: z.string(),
   immagine: z.string().optional(),
   descrizione: z.string().optional(),
+  /** Campione visivo generato via CSS (v. Finitura) - se presente, il wizard mostra un
+   * riquadro colorato/texturizzato invece della sola etichetta testuale. Opzionale: un
+   * campo select_immagine senza questi dati resta comunque pienamente funzionante. */
+  coloreHex: z.string().optional(),
+  /** Guida il pattern CSS del campione (v. SelezionatoreFinitura) - 'legno', 'liscio',
+   * 'pietra', 'metallo', 'tessuto'. Ignorato se coloreHex non è presente. */
+  texture: z.string().optional(),
+  /** Se presente, usato per raggruppare visivamente le opzioni (es. per Finitura: la
+   * famiglia - legno, laccato, laminato...) - mai per filtrare la logica del wizard. */
+  categoria: z.string().optional(),
 });
 export type OpzioneCampo = z.infer<typeof OpzioneCampoSchema>;
 

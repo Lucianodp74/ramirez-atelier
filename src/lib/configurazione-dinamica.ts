@@ -9,13 +9,60 @@ import type { TipoProgettoConfigurazione } from './tipo-progetto-schema';
 async function risolviOpzioniPerFonte(
   tenantId: string,
   fonte: string,
-): Promise<{ valore: string; etichetta: string }[]> {
+): Promise<
+  {
+    valore: string;
+    etichetta: string;
+    descrizione?: string;
+    coloreHex?: string;
+    texture?: string;
+    categoria?: string;
+  }[]
+> {
   if (fonte === 'fascia_budget') {
     const fasce = await db.fasciaBudget.findMany({
       where: { tenantId, attiva: true },
       orderBy: { ordinamento: 'asc' },
     });
     return fasce.map((f) => ({ valore: f.id, etichetta: f.nome }));
+  }
+  if (fonte === 'finitura') {
+    const finiture = await db.finitura.findMany({
+      where: { tenantId, attiva: true },
+      orderBy: [{ categoria: 'asc' }, { ordinamento: 'asc' }],
+    });
+    return finiture.map((f) => ({
+      valore: f.slug,
+      etichetta: f.nome,
+      descrizione: f.descrizione ?? undefined,
+      coloreHex: f.coloreHex,
+      texture: f.texture,
+      categoria: f.categoria,
+    }));
+  }
+  if (fonte === 'ferramenta') {
+    const righe = await db.ferramenta.findMany({
+      where: { tenantId, attiva: true },
+      orderBy: [{ categoria: 'asc' }, { ordinamento: 'asc' }],
+    });
+    return righe.map((r) => ({
+      valore: r.slug,
+      etichetta: r.nome,
+      descrizione: r.descrizione ?? undefined,
+      categoria: r.categoria,
+    }));
+  }
+  if (fonte === 'accessorio') {
+    const righe = await db.accessorio.findMany({
+      where: { tenantId, attiva: true },
+      orderBy: [{ categoria: 'asc' }, { ordinamento: 'asc' }],
+    });
+    return righe.map((r) => ({
+      valore: r.slug,
+      etichetta: r.nome,
+      descrizione: r.descrizione ?? undefined,
+      categoria: r.categoria,
+    }));
   }
   throw new Error(`Fonte di opzioni dinamiche sconosciuta: "${fonte}"`);
 }

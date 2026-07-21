@@ -21,9 +21,9 @@ export class StorageS3Adapter implements StorageAdapter {
 
     this.client = new S3Client({
       endpoint,
-      region: 'us-east-1', // MinIO ignora la regione, richiesta comunque dall'SDK
+      region: process.env.S3_REGION ?? 'auto', // R2 raccomanda esplicitamente "auto"; MinIO ignora il valore
       credentials: { accessKeyId, secretAccessKey },
-      forcePathStyle: true, // necessario per MinIO (path-style invece di virtual-hosted)
+      forcePathStyle: true, // necessario per MinIO; R2 supporta comunque questo stile
     });
   }
 

@@ -25,10 +25,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Richieste
           </Link>
           <Link
+            href="/admin/clienti"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Clienti
+          </Link>
+          <Link
             href="/admin/fasce-budget"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             Fasce di budget
+          </Link>
+          <Link
+            href="/admin/catalogo"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Catalogo
           </Link>
           <Link
             href="/admin/regole"

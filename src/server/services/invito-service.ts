@@ -13,6 +13,16 @@ export async function creaInvito(
 ) {
   const tokenGrezzo = generaTokenOpaco();
 
+  // Un nuovo invito invalida quelli precedenti non ancora accettati per la
+  // stessa email - stesso principio già applicato al recupero password
+  // (v. recupero-password-service.ts): altrimenti un vecchio link, mai
+  // accettato né revocato esplicitamente, resterebbe valido per sempre anche
+  // dopo un invito più recente con un ruolo diverso.
+  await db.invito.updateMany({
+    where: { tenantId, email, stato: 'CREATO' },
+    data: { stato: 'REVOCATO' },
+  });
+
   const invito = await db.invito.create({
     data: {
       tenantId,

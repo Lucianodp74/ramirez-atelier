@@ -1,9 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import type { TipoProgettoConfigurazione } from '../src/lib/tipo-progetto-schema';
 import { calcolaHashPassword } from '../src/lib/identity/password';
 import { sincronizzaPermessiCatalogo } from '../src/server/services/ruolo-service';
 
-const prisma = new PrismaClient();
+// Prisma 7: anche qui serve il driver adapter esplicito, come in src/server/db.ts.
+// Il seed usa DIRECT_URL (non DATABASE_URL) perché gira una tantum da riga di
+// comando, non come parte dell'app a runtime - non ha bisogno del pooler.
+const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL });
+const prisma = new PrismaClient({ adapter });
 
 /**
  * Nota: questo script è funzionalmente equivalente a prisma/seed.sql (già verificato
@@ -57,29 +62,8 @@ const configurazioneCucina: TipoProgettoConfigurazione = {
           tipo: 'select_immagine',
           obbligatorio: false,
           pesoCompletezza: 20,
-          chiavePricing: 'materiale', // valore grezzo (es. 'rovere'), le Regole di pricing lo confrontano con 'in'/'uguale'
-          opzioni: [
-            {
-              valore: 'rovere',
-              etichetta: 'Rovere naturale',
-              descrizione: 'Caldo, autentico, senza tempo',
-            },
-            {
-              valore: 'laccato_opaco',
-              etichetta: 'Laccato opaco',
-              descrizione: 'Pulito, contemporaneo, materico',
-            },
-            {
-              valore: 'laminato',
-              etichetta: 'Laminato tecnico',
-              descrizione: 'Resistente, versatile, accessibile',
-            },
-            {
-              valore: 'pietra',
-              etichetta: 'Effetto pietra',
-              descrizione: 'Luxury, scenico, importante',
-            },
-          ],
+          chiavePricing: 'materiale', // valore grezzo (slug della Finitura, es. 'rovere'), le Regole di pricing lo confrontano con 'in'/'uguale'
+          fonteOpzioni: 'finitura', // Catalogo Tecnico (ADR-0006) - non più opzioni statiche duplicate qui
         },
       ],
     },
@@ -113,12 +97,7 @@ const configurazioneCucina: TipoProgettoConfigurazione = {
           tipo: 'select',
           obbligatorio: false,
           pesoCompletezza: 10,
-          opzioni: [
-            { valore: 'standard', etichetta: 'Standard' },
-            { valore: 'softclose', etichetta: 'Soft-close premium' },
-            { valore: 'pushpull', etichetta: 'Push-pull (senza maniglia)' },
-            { valore: 'non_so', etichetta: 'Non saprei, consigliatemi voi' },
-          ],
+          fonteOpzioni: 'ferramenta',
         },
       ],
     },
@@ -248,12 +227,8 @@ const configurazioneArmadio: TipoProgettoConfigurazione = {
           tipo: 'select_immagine',
           obbligatorio: false,
           pesoCompletezza: 20,
-          chiavePricing: 'materiale', // valore grezzo (es. 'rovere'), le Regole di pricing lo confrontano con 'in'/'uguale'
-          opzioni: [
-            { valore: 'laccato_opaco', etichetta: 'Laccato opaco' },
-            { valore: 'rovere', etichetta: 'Rovere naturale' },
-            { valore: 'laminato', etichetta: 'Laminato tecnico' },
-          ],
+          chiavePricing: 'materiale',
+          fonteOpzioni: 'finitura',
         },
       ],
     },
@@ -267,13 +242,7 @@ const configurazioneArmadio: TipoProgettoConfigurazione = {
           tipo: 'select',
           obbligatorio: false,
           pesoCompletezza: 20,
-          opzioni: [
-            { valore: 'essenziale', etichetta: 'Essenziale: appendiabiti e ripiani' },
-            {
-              valore: 'avanzata',
-              etichetta: 'Avanzata: cassettiere, scarpiere, illuminazione interna',
-            },
-          ],
+          fonteOpzioni: 'accessorio',
         },
       ],
     },
@@ -344,7 +313,7 @@ async function main() {
   const tenantId = tenant.id;
 
   const cucina = await prisma.tipoProgetto.upsert({
-    where: { tenantId, chiave: 'cucina' },
+    where: { tenantId_chiave: { tenantId, chiave: 'cucina' } },
     // Bug corretto: `update: {}` lasciava le righe già esistenti congelate alla
     // configurazione della prima esecuzione del seed - qualunque modifica al
     // wizard (es. l'aggiunta della fascia di budget dinamica) non veniva mai
@@ -368,7 +337,7 @@ async function main() {
   });
 
   const armadio = await prisma.tipoProgetto.upsert({
-    where: { tenantId, chiave: 'armadio' },
+    where: { tenantId_chiave: { tenantId, chiave: 'armadio' } },
     update: {
       nome: 'Armadio e cabina armadio su misura',
       descrizione:
@@ -508,6 +477,256 @@ async function main() {
         { tenantId, nome: '10.000 - 20.000 €', minimo: 10000, massimo: 20000, ordinamento: 4 },
         { tenantId, nome: '20.000 € e oltre', minimo: 20000, massimo: null, ordinamento: 5 },
       ],
+    });
+  }
+
+  // Catalogo Tecnico (ADR-0006) - Incremento 1: Finiture reali, raggruppate per
+  // categoria. Gli slug 'rovere', 'laccato_opaco', 'laminato', 'pietra' sono
+  // preservati esattamente: le Regole di pricing esistenti (sotto) li referenziano
+  // già e non vanno riscritte solo perché il catalogo si arricchisce.
+  const finitureEsistenti = await prisma.finitura.findMany({ where: { tenantId } });
+  if (finitureEsistenti.length === 0) {
+    await prisma.finitura.createMany({
+      data: [
+        // Legno
+        {
+          tenantId,
+          categoria: 'legno',
+          slug: 'rovere',
+          nome: 'Rovere Naturale',
+          descrizione: 'Caldo, autentico, senza tempo',
+          coloreHex: '#B08558',
+          texture: 'legno',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'legno',
+          slug: 'noce_canaletto',
+          nome: 'Noce Canaletto',
+          descrizione: 'Venature decise, carattere deciso',
+          coloreHex: '#5C3A28',
+          texture: 'legno',
+          ordinamento: 2,
+        },
+        {
+          tenantId,
+          categoria: 'legno',
+          slug: 'frassino_tinto_grigio',
+          nome: 'Frassino Tinto Grigio',
+          descrizione: 'Contemporaneo, dalla venatura marcata',
+          coloreHex: '#8A8680',
+          texture: 'legno',
+          ordinamento: 3,
+        },
+        // Laccato
+        {
+          tenantId,
+          categoria: 'laccato',
+          slug: 'laccato_opaco',
+          nome: 'Laccato Bianco Opaco',
+          descrizione: 'Pulito, contemporaneo, materico',
+          coloreHex: '#F2F0EC',
+          texture: 'liscio',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'laccato',
+          slug: 'laccato_antracite',
+          nome: 'Laccato Antracite Opaco',
+          descrizione: 'Deciso, elegante, moderno',
+          coloreHex: '#3B3D3E',
+          texture: 'liscio',
+          ordinamento: 2,
+        },
+        {
+          tenantId,
+          categoria: 'laccato',
+          slug: 'laccato_verde_salvia',
+          nome: 'Laccato Verde Salvia Opaco',
+          descrizione: 'Naturale, morbido, distintivo',
+          coloreHex: '#8A9A82',
+          texture: 'liscio',
+          ordinamento: 3,
+        },
+        // Laminato
+        {
+          tenantId,
+          categoria: 'laminato',
+          slug: 'laminato',
+          nome: 'Laminato Tecnico Bianco',
+          descrizione: 'Resistente, versatile, accessibile',
+          coloreHex: '#EDEDE8',
+          texture: 'liscio',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'laminato',
+          slug: 'laminato_effetto_cemento',
+          nome: 'Laminato Effetto Cemento',
+          descrizione: 'Industriale, materico, di tendenza',
+          coloreHex: '#9C9A94',
+          texture: 'pietra',
+          ordinamento: 2,
+        },
+        // Pietra e Marmo
+        {
+          tenantId,
+          categoria: 'pietra_marmo',
+          slug: 'pietra',
+          nome: 'Effetto Pietra Grigia',
+          descrizione: 'Luxury, scenico, importante',
+          coloreHex: '#6E6C68',
+          texture: 'pietra',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'pietra_marmo',
+          slug: 'marmo_calacatta',
+          nome: 'Marmo Calacatta',
+          descrizione: 'Venature dorate su fondo chiaro, massima eleganza',
+          coloreHex: '#E8E4DA',
+          texture: 'pietra',
+          ordinamento: 2,
+        },
+        // Metallo
+        {
+          tenantId,
+          categoria: 'metallo',
+          slug: 'acciaio_spazzolato',
+          nome: 'Acciaio Spazzolato',
+          descrizione: 'Tecnico, essenziale, contemporaneo',
+          coloreHex: '#A8ACAE',
+          texture: 'metallo',
+          ordinamento: 1,
+        },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
+  // Catalogo Tecnico (ADR-0006) - Incremento 3: Ferramenta reale, raggruppata
+  // per categoria (cerniera, guida, sistema_apertura, maniglia).
+  const ferramentaEsistente = await prisma.ferramenta.findMany({ where: { tenantId } });
+  if (ferramentaEsistente.length === 0) {
+    await prisma.ferramenta.createMany({
+      data: [
+        {
+          tenantId,
+          categoria: 'cerniera',
+          slug: 'cerniera_standard',
+          nome: 'Cerniera Standard',
+          descrizione: 'Apertura semplice, affidabile',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'cerniera',
+          slug: 'cerniera_softclose',
+          nome: 'Cerniera Soft-Close',
+          descrizione: 'Chiusura ammortizzata, senza rumore',
+          ordinamento: 2,
+        },
+        {
+          tenantId,
+          categoria: 'sistema_apertura',
+          slug: 'pushpull',
+          nome: 'Push-Pull (senza maniglia)',
+          descrizione: 'Apertura a pressione, superficie continua',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'maniglia',
+          slug: 'maniglia_gola_alluminio',
+          nome: 'Maniglia a Gola Alluminio',
+          descrizione: 'Incassata, minimale',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'maniglia',
+          slug: 'maniglia_pomolo_ottone',
+          nome: 'Maniglia a Pomolo Ottone',
+          descrizione: 'Classica, materica',
+          ordinamento: 2,
+        },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
+  // Catalogo Tecnico (ADR-0006) - Incremento 3: Accessori reali, raggruppati
+  // per categoria (interni_cabina, illuminazione, elettrodomestico).
+  const accessorioEsistente = await prisma.accessorio.findMany({ where: { tenantId } });
+  if (accessorioEsistente.length === 0) {
+    await prisma.accessorio.createMany({
+      data: [
+        {
+          tenantId,
+          categoria: 'interni_cabina',
+          slug: 'cassettiera_interna',
+          nome: 'Cassettiera Interna',
+          descrizione: 'Per biancheria e accessori piccoli',
+          ordinamento: 1,
+        },
+        {
+          tenantId,
+          categoria: 'interni_cabina',
+          slug: 'scarpiera_estraibile',
+          nome: 'Scarpiera Estraibile',
+          descrizione: 'Ripiani inclinati salvaspazio',
+          ordinamento: 2,
+        },
+        {
+          tenantId,
+          categoria: 'illuminazione',
+          slug: 'illuminazione_led_interna',
+          nome: 'Illuminazione LED Interna',
+          descrizione: "Si accende all'apertura dell'anta",
+          ordinamento: 1,
+        },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
+  // Catalogo Tecnico (ADR-0006 §3.7) - Incremento 4: Stili di partenza reali,
+  // agganciati direttamente a TipoProgetto (Modello non ancora costruito).
+  const variantiEsistenti = await prisma.variantePreimpostata.findMany({ where: { tenantId } });
+  if (variantiEsistenti.length === 0) {
+    await prisma.variantePreimpostata.create({
+      data: {
+        tenantId,
+        tipoProgettoId: cucina.id,
+        nome: 'Stile Classico Rovere',
+        descrizione: 'Caldo, senza tempo, per chi ama il legno naturale',
+        scelte: { materiale: 'rovere', ferramenta: 'maniglia_pomolo_ottone' },
+        ordinamento: 1,
+      },
+    });
+    await prisma.variantePreimpostata.create({
+      data: {
+        tenantId,
+        tipoProgettoId: cucina.id,
+        nome: 'Stile Contemporaneo Laccato',
+        descrizione: 'Pulito, essenziale, superfici continue',
+        scelte: { materiale: 'laccato_opaco', ferramenta: 'pushpull' },
+        ordinamento: 2,
+      },
+    });
+    await prisma.variantePreimpostata.create({
+      data: {
+        tenantId,
+        tipoProgettoId: armadio.id,
+        nome: 'Cabina Armadio Completa',
+        descrizione: 'Cassettiera, scarpiera e illuminazione già pensate per te',
+        scelte: { materiale: 'laccato_opaco', configurazioneInterna: 'cassettiera_interna' },
+        ordinamento: 1,
+      },
     });
   }
 

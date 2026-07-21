@@ -9,6 +9,9 @@ import { assicuraGestoriRegistrati } from '@/lib/rule-engine/bootstrap';
 import { eseguiRegolePerContesto } from '@/lib/rule-engine/motore';
 import { CONTESTO_PRICING } from '@/server/services/pricing-service';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
+import { variantiAttivePerTipoProgetto } from '@/server/services/variante-preimpostata-service';
+import { trovaOCreaCliente } from '@/server/services/cliente-service';
+import { getEmailAdapter } from '@/lib/notifiche';
 import {
   TipoProgettoConfigurazioneSchema,
   calcolaIndiceCompletezza,
@@ -24,11 +27,11 @@ const PREFISSO_COOKIE = 'ra_bozza_';
  * oppure ne crea una nuova. Nessun login richiesto: il cookie è l'unico stato di
  * sessione (Requisito 1 - salvataggio automatico e ripresa).
  */
-export async function iniziaORecuperaBozza(chiaveTipoProgetto: string) {
+export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEsplicito?: string) {
   const tenantId = await idTenantRamirezAtelier();
 
   const tipoProgettoGrezzo = await db.tipoProgetto.findUnique({
-    where: { tenantId, chiave: chiaveTipoProgetto },
+    where: { tenantId_chiave: { tenantId, chiave: chiaveTipoProgetto } },
   });
   if (!tipoProgettoGrezzo || !tipoProgettoGrezzo.attivo) {
     throw new Error('Tipo di progetto non trovato o non attualmente disponibile.');
@@ -43,9 +46,17 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string) {
   );
   const tipoProgetto = { ...tipoProgettoGrezzo, configurazione: configurazioneRisolta };
 
+  // Stili di partenza (ADR-0006 §3.7) - se non ce n'è nessuno, il wizard salta
+  // semplicemente quello step (Progressive Disclosure, mai uno step vuoto).
+  const varianti = await variantiAttivePerTipoProgetto(tenantId, tipoProgetto.id);
+
   const cookieStore = await cookies();
   const nomeCookie = PREFISSO_COOKIE + chiaveTipoProgetto;
-  const token = cookieStore.get(nomeCookie)?.value;
+  // Il token esplicito (link "usa come punto di partenza" generato dall'admin)
+  // ha priorità sul cookie: chi apre quel link potrebbe non essere la stessa
+  // persona/browser che ha creato la bozza, quindi il cookie potrebbe non
+  // esserci affatto o riferirsi a una bozza diversa.
+  const token = tokenEsplicito || cookieStore.get(nomeCookie)?.value;
 
   if (token) {
     const esistente = await db.richiestaProgetto.findUnique({
@@ -53,7 +64,16 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string) {
       include: { documenti: true },
     });
     if (esistente && esistente.stato === 'BOZZA' && esistente.tipoProgettoId === tipoProgetto.id) {
-      return { richiesta: esistente, tipoProgetto };
+      // Anche arrivando da un token esplicito, impostiamo il cookie per questo
+      // browser - se la pagina viene ricaricata, la ripresa funziona anche
+      // senza il parametro nell'URL.
+      cookieStore.set(nomeCookie, esistente.tokenRipresa, {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 90,
+        path: '/',
+      });
+      return { richiesta: esistente, tipoProgetto, varianti };
     }
   }
 
@@ -78,7 +98,36 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string) {
     path: '/',
   });
 
-  return { richiesta: nuova, tipoProgetto };
+  return { richiesta: nuova, tipoProgetto, varianti };
+}
+
+/**
+ * Registra quale Variante Preimpostata il cliente ha scelto come punto di
+ * partenza - persiste SUBITO anche i valori (non solo il riferimento
+ * variantePreimpostataId), fondendoli nel datiFormJson esistente. Corregge un
+ * problema reale trovato in verifica: senza questo, un cliente che sceglie
+ * uno stile e chiude il browser prima di attraversare gli step "materiali"/
+ * "ferramenta" perderebbe silenziosamente quei valori, nonostante li avesse
+ * già scelti - la stessa garanzia di "nessuna perdita di dati" già promessa
+ * per ogni altro step del wizard (Requisito 1) si applica anche qui.
+ */
+export async function registraVarianteSelezionata(richiestaId: string, varianteId: string) {
+  const richiesta = await db.richiestaProgetto.findUnique({ where: { id: richiestaId } });
+  if (!richiesta) throw new Error('Richiesta non trovata.');
+
+  const variante = await db.variantePreimpostata.findUnique({ where: { id: varianteId } });
+  if (!variante) throw new Error('Variante non trovata.');
+
+  const datiEsistenti = (richiesta.datiFormJson as Record<string, unknown>) ?? {};
+  const scelte = (variante.scelte as Record<string, string>) ?? {};
+
+  await db.richiestaProgetto.update({
+    where: { id: richiestaId },
+    data: {
+      variantePreimpostataId: varianteId,
+      datiFormJson: { ...datiEsistenti, ...scelte },
+    },
+  });
 }
 
 /**
@@ -263,9 +312,21 @@ export async function completaRichiesta(richiestaId: string) {
     return { successo: false as const, errori };
   }
 
+  // CRM: il Cliente viene risolto (trovato o creato) solo ora, al completamento -
+  // non a ogni passo del wizard, per lo stesso motivo per cui il pricing si
+  // calcola qui e non prima (Configurazione a Valore: un valore reale nasce
+  // solo quando la richiesta è davvero inviata).
+  const cliente = await trovaOCreaCliente(richiesta.tenantId, {
+    nome: richiesta.clienteNome!.trim(),
+    email: richiesta.clienteEmail?.trim() || null,
+    telefono: richiesta.clienteTelefono?.trim() || null,
+    tipo: richiesta.clienteTipo ?? undefined,
+    azienda: richiesta.clienteAzienda,
+  });
+
   const aggiornata = await db.richiestaProgetto.update({
     where: { id: richiestaId },
-    data: { stato: 'NUOVA' },
+    data: { stato: 'NUOVA', clienteId: cliente.id },
     include: { fasciaBudget: true, tipoProgetto: true },
   });
 
@@ -310,6 +371,30 @@ export async function completaRichiesta(richiestaId: string) {
   // Rilegge la richiesta per restituire la fascia di prezzo appena calcolata
   // (se una Regola ha matchato) - l'update sopra precede la valutazione.
   const richiestaConPrezzo = await db.richiestaProgetto.findUnique({ where: { id: richiestaId } });
+
+  // Notifiche: lo staff attivo del tenant viene avvisato di ogni nuova
+  // richiesta - non configurabile per ora (un atelier piccolo ha 1-3
+  // persone, tutte interessate a saperlo; una configurazione "chi vuole
+  // essere avvisato" non produce beneficio reale a questa scala).
+  const staffAttivo = await db.membership.findMany({
+    where: { tenantId: aggiornata.tenantId, stato: 'ATTIVA' },
+    include: { utente: true },
+  });
+  const fasciaTesto =
+    richiestaConPrezzo?.fasciaPrezzoMin != null && richiestaConPrezzo?.fasciaPrezzoMax != null
+      ? `Fascia stimata: ${richiestaConPrezzo.fasciaPrezzoMin.toLocaleString('it-IT')}–${richiestaConPrezzo.fasciaPrezzoMax.toLocaleString('it-IT')} €.`
+      : 'Fascia di prezzo non ancora disponibile per questa combinazione.';
+  await Promise.all(
+    staffAttivo
+      .filter((m) => m.utente?.email)
+      .map((m) =>
+        getEmailAdapter().invia({
+          destinatario: m.utente!.email,
+          oggetto: `Nuova richiesta — ${aggiornata.tipoProgetto?.nome ?? 'progetto'}`,
+          corpo: `Nuova richiesta da ${aggiornata.clienteNome ?? 'un cliente'} per "${aggiornata.tipoProgetto?.nome}".\n\n${fasciaTesto}\n\nApri la richiesta:\n${process.env.SITE_URL}/admin/richieste/${richiestaId}`,
+        }),
+      ),
+  );
 
   return { successo: true as const, richiesta: richiestaConPrezzo ?? aggiornata };
 }

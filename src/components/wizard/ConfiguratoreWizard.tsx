@@ -7,15 +7,24 @@ import { CampoRenderer } from './CampoRenderer';
 import { ProgressoWizard } from './ProgressoWizard';
 import { UploadDocumenti } from './UploadDocumenti';
 import { RiepilogoRichiesta } from './RiepilogoRichiesta';
-import { salvaStep, completaRichiesta } from '@/app/progetti/[chiave]/azioni';
+import { SelettoreVariante } from './SelettoreVariante';
+import {
+  salvaStep,
+  completaRichiesta,
+  registraVarianteSelezionata,
+} from '@/app/progetti/[chiave]/azioni';
 import {
   calcolaStepMancanti,
   validaStep,
   type TipoProgettoConfigurazione,
 } from '@/lib/tipo-progetto-schema';
-import type { RichiestaProgetto, DocumentoRichiesta } from '@prisma/client';
+import type { RichiestaProgetto, DocumentoRichiesta, VariantePreimpostata } from '@prisma/client';
 
-type Fase = { tipo: 'campo'; indice: number } | { tipo: 'allegati' } | { tipo: 'riepilogo' };
+type Fase =
+  | { tipo: 'variante' }
+  | { tipo: 'campo'; indice: number }
+  | { tipo: 'allegati' }
+  | { tipo: 'riepilogo' };
 
 interface Props {
   chiaveTipoProgetto: string;
@@ -23,6 +32,7 @@ interface Props {
   configurazione: TipoProgettoConfigurazione;
   richiestaIniziale: RichiestaProgetto;
   documentiIniziali: DocumentoRichiesta[];
+  variantiDisponibili: VariantePreimpostata[];
 }
 
 /** Ricostruisce la vista "piatta" dati riservati + JSON, identica a quella usata dal server action. */
@@ -49,6 +59,7 @@ export function ConfiguratoreWizard({
   configurazione,
   richiestaIniziale,
   documentiIniziali,
+  variantiDisponibili,
 }: Props) {
   const router = useRouter();
   const [richiesta, setRichiesta] = useState(richiestaIniziale);
@@ -56,18 +67,26 @@ export function ConfiguratoreWizard({
   const [datiForm, setDatiForm] = useState<Record<string, unknown>>(() =>
     richiestaADatiForm(richiestaIniziale),
   );
+  const [varianteSelezionataId, setVarianteSelezionataId] = useState<string | null>(
+    richiestaIniziale.variantePreimpostataId,
+  );
   const [errori, setErrori] = useState<Record<string, string>>({});
   const [salvando, startSalvataggio] = useTransition();
   const [inviando, startInvio] = useTransition();
   const [erroreInvio, setErroreInvio] = useState<string | null>(null);
 
+  // Lo step "stile di partenza" esiste solo se ci sono varianti attive per
+  // questo tipo di progetto - mai mostrato vuoto (Progressive Disclosure).
+  const mostraVariante = variantiDisponibili.length > 0;
+
   const fasi: Fase[] = useMemo(
     () => [
+      ...(mostraVariante ? [{ tipo: 'variante' as const }] : []),
       ...configurazione.step.map((_, indice) => ({ tipo: 'campo' as const, indice })),
       { tipo: 'allegati' as const },
       { tipo: 'riepilogo' as const },
     ],
-    [configurazione],
+    [configurazione, mostraVariante],
   );
 
   const [faseIndice, setFaseIndice] = useState(() => {
@@ -75,8 +94,20 @@ export function ConfiguratoreWizard({
     const indiceRipreso = configurazione.step.findIndex(
       (s) => s.chiave === richiestaIniziale.ultimoStepChiave,
     );
-    return indiceRipreso >= 0 ? indiceRipreso : 0;
+    if (indiceRipreso < 0) return 0;
+    // Chi riprende una bozza è già oltre lo step "stile di partenza" per
+    // definizione (l'ha già visto o saltato la prima volta) - l'offset
+    // compensa la fase aggiunta in testa all'array.
+    return indiceRipreso + (mostraVariante ? 1 : 0);
   });
+
+  function selezionaVariante(variante: { id: string; scelte: unknown }) {
+    setVarianteSelezionataId(variante.id);
+    setDatiForm((prec) => ({ ...prec, ...(variante.scelte as Record<string, unknown>) }));
+    startSalvataggio(async () => {
+      await registraVarianteSelezionata(richiesta.id, variante.id);
+    });
+  }
 
   const faseCorrente = fasi[faseIndice];
   const stepCorrente =
@@ -167,6 +198,7 @@ export function ConfiguratoreWizard({
     <div className="mx-auto max-w-3xl px-6 py-16">
       <p className="mb-2 text-sm text-muted-foreground">{nomeTipoProgetto}</p>
       <h1 className="mb-8 text-2xl font-semibold tracking-tight">
+        {faseCorrente.tipo === 'variante' && 'Da dove vuoi partire?'}
         {faseCorrente.tipo === 'campo' && stepCorrente?.titolo}
         {faseCorrente.tipo === 'allegati' && 'Documenti e riferimenti'}
         {faseCorrente.tipo === 'riepilogo' && 'Il tuo progetto, in sintesi'}
@@ -175,6 +207,14 @@ export function ConfiguratoreWizard({
       <div className="mb-8">
         <ProgressoWizard percentuale={richiesta.indiceCompletezza} stepMancanti={stepMancanti} />
       </div>
+
+      {faseCorrente.tipo === 'variante' && (
+        <SelettoreVariante
+          varianti={variantiDisponibili}
+          selezionata={varianteSelezionataId}
+          onSeleziona={selezionaVariante}
+        />
+      )}
 
       {faseCorrente.tipo === 'campo' && stepCorrente && (
         <div className="space-y-6">

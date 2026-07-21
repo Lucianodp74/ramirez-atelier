@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,6 +69,12 @@ export default function LoginPage() {
               {inCorso ? 'Accesso in corso…' : 'Accedi'}
             </Button>
           </form>
+          <Link
+            href="/admin/recupera-password"
+            className="mt-4 block text-center text-sm text-muted-foreground hover:underline"
+          >
+            Password dimenticata?
+          </Link>
         </CardContent>
       </Card>
     </main>
