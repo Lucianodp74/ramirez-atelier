@@ -436,7 +436,7 @@ Row-Level Security PostgreSQL per l'isolamento tra Tenant (oggi applicativo, dis
 
 ## Avvio in locale
 
-Prerequisiti: Node.js 20+, PostgreSQL 16 (o Docker, v. sezione successiva — più semplice se non si vuole configurare Postgres a mano).
+Prerequisiti: Node.js 22.12+ (versione minima richiesta da `@prisma/client` — dichiarata in `package.json` → `engines`), PostgreSQL 16 (o Docker, v. sezione successiva — più semplice se non si vuole configurare Postgres a mano).
 
 Se PostgreSQL è già installato ma non ha ancora un ruolo/database per questo progetto, crearli prima (`.env.example` assume queste credenziali esatte — cambiarle è possibile, ma allora va aggiornato anche `DATABASE_URL`/`DIRECT_URL` di conseguenza):
 
