@@ -57,7 +57,7 @@
 
 - Creare un nuovo progetto Supabase, regione vicina agli utenti reali (Europa).
 - Impostare una password del database generata casualmente (non riutilizzare quella di sviluppo), salvata in un password manager — mai nel repository.
-- Annotare **entrambe** le stringhe di connessione fornite da Supabase: quella diretta (porta 5432) e quella con pooler (porta 6543, PgBouncer in transaction mode) — servono per scopi diversi (Fase 3).
+- Recuperare le stringhe dal pannello **Connect → ORM → Prisma** del progetto (non "Project Settings → Database", spostato lì nelle versioni recenti dell'interfaccia). **Nota su un'assunzione rivista durante la Fase 3**: la connessione "diretta" storica di Supabase (`db.<project-ref>.supabase.co`) oggi è raggiungibile solo su IPv6 di default — non adatta a un ambiente come Vercel, che non garantisce IPv6 in uscita. Per questo Supabase offre, ed è quello che useremo, un **Session Pooler** compatibile IPv4: stesso host del pooler transazionale (`aws-0-<regione>.pooler.supabase.com`), ma sulla porta **5432** invece di **6543** — si comporta come una connessione diretta (supporta i prepared statement, le migrazioni) pur passando dall'infrastruttura del pooler. `DATABASE_URL` = pooler transazionale, porta 6543, `?pgbouncer=true`; `DIRECT_URL` = session pooler, stesso host, porta 5432, nessun parametro aggiuntivo.
 
 **Verifiche:** connessione riuscita a entrambe le stringhe con `psql` o un client equivalente.
 
