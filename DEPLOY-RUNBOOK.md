@@ -61,6 +61,8 @@
 
 **Verifiche:** connessione riuscita a entrambe le stringhe con `psql` o un client equivalente.
 
+**Nota operativa (piano FREE, decisione confermata durante la Fase 3 — restare su FREE per ora, non passare a Pro):** un progetto sul piano FREE **va in pausa automaticamente dopo una settimana senza richieste API**. Non è perdita dati (il progetto resta recuperabile), ma diventa irraggiungibile finché non lo si riattiva manualmente dalla Dashboard — un rischio concreto durante un pilota con una sola falegnameria, se il traffico reale è discontinuo. **Mitigazione minima finché si resta su FREE**: verificare manualmente che il progetto sia attivo prima di ogni demo pianificata; se il periodo tra un test e l'altro rischia di superare una settimana, effettuare una richiesta qualunque (anche solo aprire la Dashboard) per resettare il conteggio. Da rivalutare (passaggio a Pro) se il pilota richiede disponibilità continua non presidiata.
+
 **Rollback:** eliminare il progetto Supabase e ricrearlo — nessun dato ancora presente, operazione senza rischio in questa fase.
 
 ---
