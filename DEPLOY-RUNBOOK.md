@@ -81,7 +81,7 @@
     directUrl = env("DIRECT_URL")     // stringa diretta, porta 5432, solo per le migrazioni
   }
   ```
-- Aggiornare `.env.example` di conseguenza (e rimuovere il commento residuo su "NextAuth/Auth.js" — riferimento superato da quando Identity & Security è stato costruito da zero in ADR-0004, non con NextAuth).
+- `.env.example` aggiornato di conseguenza. **Fatto** (Pre-Flight Review pre-Supabase): rimosso il commento residuo su "NextAuth/Auth.js" — riferimento a una direzione mai adottata, superato da quando Identity & Security è stato costruito da zero con sessioni opache custom (ADR-0004).
 
 **Verifiche:** `npx prisma validate` non segnala errori.
 

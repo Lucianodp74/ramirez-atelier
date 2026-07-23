@@ -501,10 +501,10 @@ model EsecuzioneRegola {
   risultatoJson   Json? // dettaglio delle azioni eseguite, se la condizione era vera
   erroreMessaggio String? // valorizzato solo se esito = ERRORE
 
-  eseguitaIl      DateTime              @default(now())
+  createdAt       DateTime              @default(now())
 
-  @@index([entitaTipo, entitaId, eseguitaIl])
-  @@index([regolaId, eseguitaIl])
+  @@index([entitaTipo, entitaId, createdAt])
+  @@index([regolaId, createdAt])
   @@map("esecuzione_regola")
 }
 
@@ -589,7 +589,7 @@ model MembershipRuolo {
   ruoloId      String
   ruolo        Ruolo      @relation(fields: [ruoloId], references: [id], onDelete: Cascade)
 
-  assegnatoIl  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
 
   @@id([membershipId, ruoloId])
   @@map("membership_ruolo")
@@ -646,7 +646,7 @@ model Sessione {
   tokenHash      String    @unique
   stato          String    @default("ATTIVA") // ATTIVA | REVOCATA | SCADUTA
 
-  creataIl       DateTime  @default(now())
+  createdAt      DateTime  @default(now())
   scadeIl        DateTime
   revocataIl     DateTime?
 
@@ -712,10 +712,10 @@ model EventoSicurezza {
   metadatiJson  Json?
   ipAddress     String?
 
-  creatoIl      DateTime @default(now())
+  createdAt     DateTime @default(now())
 
-  @@index([tipo, creatoIl])
-  @@index([utenteId, creatoIl])
-  @@index([tenantId, creatoIl])
+  @@index([tipo, createdAt])
+  @@index([utenteId, createdAt])
+  @@index([tenantId, createdAt])
   @@map("evento_sicurezza")
 }

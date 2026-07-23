@@ -42,7 +42,7 @@ export default async function StatoRichiestaPage({
             )}
 
             <p className="mt-6 text-xs text-muted-foreground">
-              Richiesta ricevuta il {new Date(stato.creataIl).toLocaleDateString('it-IT')}
+              Richiesta ricevuta il {new Date(stato.createdAt).toLocaleDateString('it-IT')}
             </p>
           </>
         )}

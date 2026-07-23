@@ -18,7 +18,7 @@ export async function impostaStatoRegola(
 export async function esecuzioniPerEntita(entitaTipo: string, entitaId: string) {
   const esecuzioni = await db.esecuzioneRegola.findMany({
     where: { entitaTipo, entitaId },
-    orderBy: { eseguitaIl: 'desc' },
+    orderBy: { createdAt: 'desc' },
   });
 
   const regoleUniche = await Promise.all(
@@ -37,7 +37,7 @@ export async function ultimeEsecuzioni(tenantId: string, limite = 50) {
   const idRegole = new Set(regoleDelTenant.map((r) => r.id));
 
   const esecuzioni = await db.esecuzioneRegola.findMany({
-    orderBy: { eseguitaIl: 'desc' },
+    orderBy: { createdAt: 'desc' },
     take: limite * 3,
   });
   return esecuzioni.filter((e) => idRegole.has(e.regolaId)).slice(0, limite);

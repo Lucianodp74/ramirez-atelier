@@ -29,7 +29,7 @@ async function superatoLimiteTentativi(utenteId: string): Promise<boolean> {
   const tentativiRecenti = await db.eventoSicurezza.findMany({
     where: { tipo: 'LOGIN_FALLITO', utenteId },
   });
-  const recenti = tentativiRecenti.filter((e) => new Date(e.creatoIl) >= dallaData);
+  const recenti = tentativiRecenti.filter((e) => new Date(e.createdAt) >= dallaData);
   return recenti.length >= MAX_TENTATIVI_FALLITI;
 }
 

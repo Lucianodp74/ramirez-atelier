@@ -244,7 +244,7 @@ export default async function DettaglioRichiestaPage({
                       <p className="font-medium">{e.regola?.nome ?? e.regolaId}</p>
                       <p className="text-xs text-muted-foreground">
                         {ETICHETTA_ESITO_REGOLA[e.esito] ?? e.esito} ·{' '}
-                        {new Date(e.eseguitaIl).toLocaleString('it-IT')}
+                        {new Date(e.createdAt).toLocaleString('it-IT')}
                       </p>
                     </li>
                   ))}

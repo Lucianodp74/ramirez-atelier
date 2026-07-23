@@ -75,7 +75,7 @@ export default async function RegolePage() {
                 </td>
                 <td className="px-4 py-3">{ETICHETTA_ESITO[e.esito] ?? e.esito}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {new Date(e.eseguitaIl).toLocaleString('it-IT')}
+                  {new Date(e.createdAt).toLocaleString('it-IT')}
                 </td>
               </tr>
             ))}
