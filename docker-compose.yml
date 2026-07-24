@@ -51,7 +51,7 @@ services:
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-ramirez_minio}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-ramirez_minio_secret}
-      S3_BUCKET: ${S3_BUCKET:-richieste-progetto}
+      S3_BUCKET: ${S3_BUCKET:-uploads}
     ports:
       - '3000:3000'
 

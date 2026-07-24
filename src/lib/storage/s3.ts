@@ -11,7 +11,7 @@ export class StorageS3Adapter implements StorageAdapter {
     const endpoint = process.env.S3_ENDPOINT;
     const accessKeyId = process.env.S3_ACCESS_KEY;
     const secretAccessKey = process.env.S3_SECRET_KEY;
-    this.bucket = process.env.S3_BUCKET ?? 'richieste-progetto';
+    this.bucket = process.env.S3_BUCKET ?? 'uploads';
 
     if (!endpoint || !accessKeyId || !secretAccessKey) {
       throw new Error(
