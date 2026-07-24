@@ -230,6 +230,7 @@ export async function caricaDocumento(richiestaId: string, formData: FormData) {
   const categoria = determinaCategoria(file.type, file.name);
   const adattatore = getStorageAdapter();
   const { storageObjectKey, dimensioneByte } = await adattatore.carica({
+    tenantId: richiesta.tenantId,
     richiestaId,
     nomeFileOriginale: file.name,
     tipoMime: file.type || 'application/octet-stream',

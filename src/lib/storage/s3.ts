@@ -28,13 +28,14 @@ export class StorageS3Adapter implements StorageAdapter {
   }
 
   async carica(params: {
+    tenantId: string;
     richiestaId: string;
     nomeFileOriginale: string;
     tipoMime: string;
     contenuto: Buffer;
   }): Promise<RisultatoUpload> {
     const estensione = path.extname(params.nomeFileOriginale);
-    const key = `${params.richiestaId}/${randomUUID()}${estensione}`;
+    const key = `${params.tenantId}/richieste/${params.richiestaId}/${randomUUID()}${estensione}`;
 
     await this.client.send(
       new PutObjectCommand({

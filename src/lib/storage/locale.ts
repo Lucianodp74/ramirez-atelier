@@ -13,12 +13,18 @@ const CARTELLA_UPLOAD = path.join(process.cwd(), '.uploads-locali');
  */
 export class StorageLocaleAdapter implements StorageAdapter {
   async carica(params: {
+    tenantId: string;
     richiestaId: string;
     nomeFileOriginale: string;
     tipoMime: string;
     contenuto: Buffer;
   }): Promise<RisultatoUpload> {
-    const cartellaRichiesta = path.join(CARTELLA_UPLOAD, params.richiestaId);
+    const cartellaRichiesta = path.join(
+      CARTELLA_UPLOAD,
+      params.tenantId,
+      'richieste',
+      params.richiestaId,
+    );
     await mkdir(cartellaRichiesta, { recursive: true });
 
     const estensione = path.extname(params.nomeFileOriginale);
@@ -28,7 +34,7 @@ export class StorageLocaleAdapter implements StorageAdapter {
     await writeFile(percorsoCompleto, params.contenuto);
 
     return {
-      storageObjectKey: `locale://${params.richiestaId}/${nomeUnivoco}`,
+      storageObjectKey: `locale://${params.tenantId}/richieste/${params.richiestaId}/${nomeUnivoco}`,
       dimensioneByte: params.contenuto.byteLength,
     };
   }

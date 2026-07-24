@@ -15,6 +15,7 @@ export interface RisultatoUpload {
  */
 export interface StorageAdapter {
   carica(params: {
+    tenantId: string;
     richiestaId: string;
     nomeFileOriginale: string;
     tipoMime: string;
