@@ -1,23 +1,29 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #0a0a0b;
-  --foreground: #fafafa;
-  --card: #131316;
-  --card-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0b;
-  --secondary: #1c1c1f;
-  --secondary-foreground: #fafafa;
-  --muted: #1c1c1f;
-  --muted-foreground: #9a9aa2;
-  --accent: #6366f1;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --border: #232327;
-  --input: #232327;
-  --ring: #6366f1;
-  --radius: 0.75rem;
+  /* Palette Ramirez Atelier - materiale, calda, non un default da SaaS.
+     avorio/carbone: sfondo e testo principali, mai bianco/nero puri.
+     rovere: accento primario, letteralmente il colore di un legno reale.
+     tortora: superfici secondarie (card, bordi).
+     salvia: riservato a stati positivi/conferma, alternativa naturale
+     al verde "successo" da interfaccia tecnica. */
+  --background: #f7f3ed;
+  --foreground: #2a2622;
+  --card: #fdfbf7;
+  --card-foreground: #2a2622;
+  --primary: #8b6e4e;
+  --primary-foreground: #f7f3ed;
+  --secondary: #dcd3c4;
+  --secondary-foreground: #2a2622;
+  --muted: #ede7db;
+  --muted-foreground: #6b6255;
+  --accent: #8b6e4e;
+  --accent-foreground: #f7f3ed;
+  --destructive: #c0392b;
+  --border: #e3dbcb;
+  --input: #e3dbcb;
+  --ring: #8b6e4e;
+  --radius: 0.5rem;
 }
 
 @theme inline {
