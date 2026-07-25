@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantePreimpostata } from '@prisma/client';
 
@@ -32,15 +33,20 @@ export function SelettoreVariante({ varianti, selezionata, onSeleziona }: Props)
             type="button"
             onClick={() => onSeleziona(v)}
             className={cn(
-              'rounded-lg border p-4 text-left transition-colors',
+              'relative rounded-lg border p-4 text-left transition-all',
               selezionata === v.id
-                ? 'border-accent bg-accent/10'
+                ? 'border-accent bg-accent/10 ring-2 ring-accent ring-offset-2 ring-offset-background'
                 : 'border-input hover:border-muted-foreground',
             )}
           >
-            <div className="font-medium">{v.nome}</div>
+            {selezionata === v.id && (
+              <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                <Check className="h-3 w-3" strokeWidth={3} />
+              </span>
+            )}
+            <div className="pr-6 font-medium">{v.nome}</div>
             {v.descrizione && (
-              <div className="mt-1 text-sm text-muted-foreground">{v.descrizione}</div>
+              <div className="mt-1 pr-6 text-sm text-muted-foreground">{v.descrizione}</div>
             )}
           </button>
         ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OpzioneCampo } from '@/lib/tipo-progetto-schema';
 
@@ -127,12 +128,17 @@ export function SelezionatoreFinitura({ opzioni, valore, onSeleziona }: Props) {
                 type="button"
                 onClick={() => onSeleziona(opzione.valore)}
                 className={cn(
-                  'group overflow-hidden rounded-lg border text-left transition-colors',
+                  'group relative overflow-hidden rounded-lg border text-left transition-all',
                   valore === opzione.valore
-                    ? 'border-accent'
+                    ? 'border-accent ring-2 ring-accent ring-offset-2 ring-offset-background'
                     : 'border-input hover:border-muted-foreground',
                 )}
               >
+                {valore === opzione.valore && (
+                  <span className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md">
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                  </span>
+                )}
                 <div
                   className="aspect-[4/3]"
                   style={

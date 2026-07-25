@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SelezionatoreFinitura } from './SelezionatoreFinitura';
 import type { CampoConfigurazione } from '@/lib/tipo-progetto-schema';
@@ -60,15 +61,22 @@ export function CampoRenderer({ campo, valore, errore, onChange }: Props) {
               type="button"
               onClick={() => onChange(campo.chiave, opzione.valore)}
               className={cn(
-                'rounded-md border px-4 py-3 text-left text-sm transition-colors hover:border-accent',
+                'relative rounded-md border px-4 py-3 text-left text-sm transition-all hover:border-accent',
                 valore === opzione.valore
-                  ? 'border-accent bg-accent/10'
+                  ? 'border-accent bg-accent/10 ring-2 ring-accent ring-offset-2 ring-offset-background'
                   : 'border-input bg-secondary/40',
               )}
             >
-              <div className="font-medium">{opzione.etichetta}</div>
+              {valore === opzione.valore && (
+                <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                </span>
+              )}
+              <div className="pr-6 font-medium">{opzione.etichetta}</div>
               {opzione.descrizione && (
-                <div className="mt-0.5 text-xs text-muted-foreground">{opzione.descrizione}</div>
+                <div className="mt-0.5 pr-6 text-xs text-muted-foreground">
+                  {opzione.descrizione}
+                </div>
               )}
             </button>
           ))}
@@ -95,12 +103,17 @@ export function CampoRenderer({ campo, valore, errore, onChange }: Props) {
                 type="button"
                 onClick={() => onChange(campo.chiave, opzione.valore)}
                 className={cn(
-                  'group overflow-hidden rounded-lg border text-left transition-colors',
+                  'group relative overflow-hidden rounded-lg border text-left transition-all',
                   valore === opzione.valore
-                    ? 'border-accent'
+                    ? 'border-accent ring-2 ring-accent ring-offset-2 ring-offset-background'
                     : 'border-input hover:border-muted-foreground',
                 )}
               >
+                {valore === opzione.valore && (
+                  <span className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md">
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                  </span>
+                )}
                 <div className="flex aspect-[4/3] items-center justify-center bg-secondary/60 text-xs text-muted-foreground">
                   {/* Immagini reali non ancora in scope (storage documenti in pausa): placeholder testuale. */}
                   <span>{opzione.etichetta}</span>
