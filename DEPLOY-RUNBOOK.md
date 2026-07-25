@@ -155,6 +155,8 @@ In entrambi i casi: `npx prisma db seed` (o lo script equivalente) contro `DATAB
 
 **Rollback:** le variabili si correggono e si ridistribuiscono in qualunque momento senza impatto sui dati — un deploy successivo le raccoglie.
 
+**Nota su un rischio accettato consapevolmente (primo deploy, 25 luglio 2026):** durante la configurazione iniziale delle variabili, la password del database e le chiavi S3 sono comparse più volte in chiaro nella sessione di lavoro con l'assistente (necessario per diagnosticare un problema reale: un valore placeholder salvato per errore, poi un'inversione tra `DATABASE_URL`/`DIRECT_URL`). Per lo stesso principio già applicato altrove nel progetto, andrebbero considerate esposte e rigenerate. **Decisione esplicita del titolare: non rigenerarle in questa fase** — accettato come rischio, non come omissione. Da rivalutare obbligatoriamente **prima che la piattaforma tratti il primo dato reale di un cliente** (oggi il sistema ha gestito solo una richiesta di test, con dati propri del titolare).
+
 ---
 
 ## Fase 7 — Collegamento a Vercel e primo deploy
