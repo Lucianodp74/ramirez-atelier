@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { contestoOpzionale } from '@/server/identity/contesto';
 import { db } from '@/server/db';
@@ -14,7 +15,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-background text-foreground">
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center gap-6">
-          <span className="font-semibold">Ramirez Atelier — Area operativa</span>
+          <span className="flex items-center gap-2 font-semibold">
+            <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} />
+            Ramirez Atelier — Area operativa
+          </span>
           <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
             Home
           </Link>

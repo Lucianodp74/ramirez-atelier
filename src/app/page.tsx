@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -24,7 +25,10 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold tracking-tight">Ramirez Atelier</span>
+        <span className="flex items-center gap-2">
+          <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={32} height={23} priority />
+          <span className="text-lg font-semibold tracking-tight">Ramirez Atelier</span>
+        </span>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/progetti">Accedi all&apos;area riservata</Link>
         </Button>

@@ -23,10 +23,11 @@ export default async function RegolePage() {
     <div className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="mb-2 text-2xl font-semibold tracking-tight">Regole di business</h1>
       <p className="mb-8 text-sm text-muted-foreground">
-        Motore generico (Business Rules Engine) — non specifico per il pricing. Questo contesto
-        attivo oggi:{' '}
-        <code className="rounded bg-secondary/40 px-1">richiesta_priorita_commerciale</code>. Nuovi
-        contesti (pricing, notifiche, ...) si aggiungono come nuove righe, senza modificare il
+        Motore generico (Business Rules Engine) — non specifico per il pricing. Contesti attivi
+        oggi:{' '}
+        <code className="rounded bg-secondary/40 px-1">richiesta_priorita_commerciale</code> e{' '}
+        <code className="rounded bg-secondary/40 px-1">preventivo_pricing</code>. Nuovi contesti
+        (notifiche, altri moduli futuri) si aggiungono come nuove righe, senza modificare il
         motore.
       </p>
 

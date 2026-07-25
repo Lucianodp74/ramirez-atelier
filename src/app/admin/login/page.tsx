@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,7 +36,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-foreground">
+      <Image
+        src="/logo-completo.png"
+        alt="Ramirez Atelier — Arredi su misura"
+        width={180}
+        height={177}
+        priority
+      />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Ramirez Atelier — Accesso</CardTitle>
