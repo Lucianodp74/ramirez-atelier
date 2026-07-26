@@ -80,7 +80,17 @@ export default async function DettaglioRichiestaPage({
           </h1>
           <p className="text-muted-foreground">{richiesta.tipoProgetto.nome}</p>
         </div>
-        <AzionePuntoDiPartenza richiestaId={richiesta.id} />
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/richieste/${richiesta.id}/preventivo-pdf`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm text-primary-foreground hover:opacity-90"
+          >
+            Genera Preventivo PDF
+          </a>
+          <AzionePuntoDiPartenza richiestaId={richiesta.id} />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

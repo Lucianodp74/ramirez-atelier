@@ -40,6 +40,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           >
             Fasce di budget
           </Link>
+          <Link href="/admin/spese" className="text-sm text-muted-foreground hover:text-foreground">
+            Spese
+          </Link>
           <Link
             href="/admin/catalogo"
             className="text-sm text-muted-foreground hover:text-foreground"
