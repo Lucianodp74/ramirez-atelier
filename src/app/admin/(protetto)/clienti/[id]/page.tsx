@@ -6,15 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatoBadge } from '@/components/admin/StatoBadge';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { NoteCliente } from '@/components/admin/NoteCliente';
+import { FormModificaCliente } from '@/components/admin/FormModificaCliente';
 
 export const dynamic = 'force-dynamic';
-
-const ETICHETTA_TIPO: Record<string, string> = {
-  PRIVATO: 'Privato',
-  ARCHITETTO: 'Architetto',
-  IMPRESA: 'Impresa',
-  STUDIO_TECNICO: 'Studio tecnico',
-};
 
 export default async function ClientePage({ params }: { params: Promise<{ id: string }> }) {
   const contesto = await richiediContesto({ modulo: 'clienti', azione: 'leggi' });
@@ -32,19 +26,10 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         ← Clienti
       </Link>
 
-      <div className="mb-8 mt-2 flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{cliente.nome}</h1>
-          <p className="text-sm text-muted-foreground">
-            {[cliente.email, cliente.telefono].filter(Boolean).join(' · ') ||
-              'Nessun contatto registrato'}
-            {' · '}
-            {ETICHETTA_TIPO[cliente.tipo] ?? cliente.tipo}
-            {cliente.azienda && ` · ${cliente.azienda}`}
-          </p>
-        </div>
+      <div className="mb-8 mt-2">
+        <FormModificaCliente cliente={cliente} />
         {ultimoContatto && (
-          <p className="text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground">
             Ultimo contatto: {new Date(ultimoContatto).toLocaleDateString('it-IT')}
           </p>
         )}

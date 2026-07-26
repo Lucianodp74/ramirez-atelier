@@ -106,8 +106,10 @@ model Cliente {
   id        String   @id @default(cuid())
   tenantId  String
   nome      String
+  cognome   String?
   email     String?
   telefono  String?
+  indirizzo String?
   tipo      ClienteTipo @default(PRIVATO)
   azienda   String?
   note      String?

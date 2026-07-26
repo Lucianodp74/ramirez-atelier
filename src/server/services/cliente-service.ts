@@ -1,5 +1,6 @@
 import { db } from '@/server/db';
 import type { ClienteTipo } from '@prisma/client';
+import { dividiNomeCompleto } from '@/lib/utils';
 
 export interface DatiContattoCliente {
   nome: string;
@@ -17,6 +18,11 @@ export interface DatiContattoCliente {
  * confermato esplicitamente: meglio due clienti distinti che una fusione
  * automatica sbagliata).
  *
+ * `dati.nome` arriva come nome completo unico (così come il cliente lo scrive
+ * nel wizard, un solo campo "Nome e cognome") - qui viene diviso
+ * euristicamente in nome/cognome (v. dividiNomeCompleto), correggibile a
+ * mano dal pannello Clienti se la divisione automatica sbaglia.
+ *
  * Chiamata solo al completamento di una richiesta (v. azioni.ts), non ad ogni
  * passo del wizard - un Cliente ha valore reale solo quando la richiesta è
  * davvero inviata, non per ogni bozza abbandonata (Configurazione a Valore).
@@ -30,10 +36,13 @@ export async function trovaOCreaCliente(tenantId: string, dati: DatiContattoClie
     if (perTelefono.length > 0) return perTelefono[0];
   }
 
+  const { nome, cognome } = dividiNomeCompleto(dati.nome);
+
   return db.cliente.create({
     data: {
       tenantId,
-      nome: dati.nome,
+      nome,
+      cognome,
       email: dati.email ?? null,
       telefono: dati.telefono ?? null,
       tipo: dati.tipo ?? 'PRIVATO',
@@ -54,6 +63,7 @@ export async function elencoClienti(tenantId: string, filtri: FiltriElencoClient
   if (filtri.ricerca) {
     where.OR = [
       { nome: { contains: filtri.ricerca, mode: 'insensitive' } },
+      { cognome: { contains: filtri.ricerca, mode: 'insensitive' } },
       { email: { contains: filtri.ricerca, mode: 'insensitive' } },
       { telefono: { contains: filtri.ricerca, mode: 'insensitive' } },
     ];
@@ -101,4 +111,40 @@ export async function aggiornaNoteCliente(tenantId: string, clienteId: string, n
   const cliente = await db.cliente.findUnique({ where: { id: clienteId } });
   if (!cliente || cliente.tenantId !== tenantId) throw new Error('Cliente non trovato.');
   return db.cliente.update({ where: { id: clienteId }, data: { note } });
+}
+
+export interface DatiModificaCliente {
+  nome: string;
+  cognome?: string | null;
+  email?: string | null;
+  telefono?: string | null;
+  indirizzo?: string | null;
+  tipo?: ClienteTipo;
+  azienda?: string | null;
+}
+
+/** Aggiornamento completo dei dati anagrafici - distinto da
+ * aggiornaNoteCliente perché le note sono un campo a sé, modificato con
+ * una propria interazione (v. NoteCliente.tsx), non parte di un form
+ * anagrafico unico. */
+export async function aggiornaCliente(
+  tenantId: string,
+  clienteId: string,
+  dati: DatiModificaCliente,
+) {
+  const cliente = await db.cliente.findUnique({ where: { id: clienteId } });
+  if (!cliente || cliente.tenantId !== tenantId) throw new Error('Cliente non trovato.');
+
+  return db.cliente.update({
+    where: { id: clienteId },
+    data: {
+      nome: dati.nome,
+      cognome: dati.cognome ?? null,
+      email: dati.email ?? null,
+      telefono: dati.telefono ?? null,
+      indirizzo: dati.indirizzo ?? null,
+      tipo: dati.tipo ?? cliente.tipo,
+      azienda: dati.azienda ?? null,
+    },
+  });
 }

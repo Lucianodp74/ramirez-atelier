@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { richiediContesto } from '@/server/identity/contesto';
 import { elencoClienti } from '@/server/services/cliente-service';
 import { Card, CardContent } from '@/components/ui/card';
+import { nomeCompletoCliente } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export default async function ClientiPage({
                 <tr key={c.id} className="border-t border-border">
                   <td className="px-4 py-3">
                     <Link href={`/admin/clienti/${c.id}`} className="font-medium hover:underline">
-                      {c.nome}
+                      {nomeCompletoCliente(c)}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">

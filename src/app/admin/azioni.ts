@@ -53,7 +53,11 @@ import {
   eliminaVariante,
   type DatiVariantePreimpostata,
 } from '@/server/services/variante-preimpostata-service';
-import { aggiornaNoteCliente } from '@/server/services/cliente-service';
+import {
+  aggiornaNoteCliente,
+  aggiornaCliente,
+  type DatiModificaCliente,
+} from '@/server/services/cliente-service';
 import type { StatoRichiesta } from '@prisma/client';
 
 /**
@@ -323,6 +327,13 @@ export async function aggiornaNoteClienteAzione(clienteId: string, note: string)
   const contesto = await richiediContesto({ modulo: 'clienti', azione: 'gestisci' });
   await aggiornaNoteCliente(contesto.tenantId, clienteId, note);
   revalidatePath(`/admin/clienti/${clienteId}`);
+}
+
+export async function aggiornaClienteAzione(clienteId: string, dati: DatiModificaCliente) {
+  const contesto = await richiediContesto({ modulo: 'clienti', azione: 'gestisci' });
+  await aggiornaCliente(contesto.tenantId, clienteId, dati);
+  revalidatePath(`/admin/clienti/${clienteId}`);
+  revalidatePath('/admin/clienti');
 }
 
 /** "Usa questo preventivo come punto di partenza" - v. richieste-service.ts
