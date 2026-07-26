@@ -302,6 +302,135 @@ const configurazioneArmadio: TipoProgettoConfigurazione = {
   ],
 };
 
+const configurazioneZonaGiorno: TipoProgettoConfigurazione = {
+  step: [
+    {
+      chiave: 'tipo_elemento',
+      titolo: 'Cosa vuoi realizzare',
+      campi: [
+        {
+          chiave: 'tipoElemento',
+          etichetta: 'Tipo di elemento',
+          tipo: 'select_immagine',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+          opzioni: [
+            { valore: 'libreria', etichetta: 'Libreria' },
+            { valore: 'parete_attrezzata', etichetta: 'Parete attrezzata' },
+            { valore: 'mobile_tv', etichetta: 'Mobile TV' },
+            { valore: 'credenza', etichetta: 'Credenza' },
+            { valore: 'altro', etichetta: 'Altro elemento zona giorno' },
+          ],
+        },
+      ],
+    },
+    {
+      chiave: 'dimensioni',
+      titolo: 'Lo spazio a disposizione',
+      campi: [
+        {
+          chiave: 'larghezzaCm',
+          etichetta: 'Larghezza (cm)',
+          tipo: 'numero',
+          obbligatorio: false,
+          pesoCompletezza: 20,
+          chiavePricing: 'larghezzaCm',
+        },
+        {
+          chiave: 'altezzaCm',
+          etichetta: 'Altezza (cm)',
+          tipo: 'numero',
+          obbligatorio: false,
+          pesoCompletezza: 10,
+        },
+      ],
+    },
+    {
+      chiave: 'materiali',
+      titolo: 'Materiale e finitura',
+      campi: [
+        {
+          chiave: 'materiale',
+          etichetta: 'Materiale',
+          tipo: 'select_immagine',
+          obbligatorio: false,
+          pesoCompletezza: 20,
+          chiavePricing: 'materiale',
+          fonteOpzioni: 'finitura',
+        },
+      ],
+    },
+    {
+      chiave: 'budget_tempi',
+      titolo: 'Budget e tempistiche',
+      campi: [
+        {
+          chiave: 'fasciaBudgetId',
+          etichetta: 'Fascia di budget indicativa',
+          tipo: 'select',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+          fonteOpzioni: 'fascia_budget',
+        },
+        {
+          chiave: 'dataDesiderata',
+          etichetta: 'Quando vorresti iniziare?',
+          tipo: 'data',
+          obbligatorio: false,
+          pesoCompletezza: 5,
+        },
+      ],
+    },
+    {
+      chiave: 'racconta',
+      titolo: 'Raccontaci il tuo progetto',
+      sottotitolo:
+        'Con parole tue: più dettagli ci dai, più precisa sarà la nostra proposta - utile in particolare qui, dato che "zona giorno" copre elementi molto diversi tra loro.',
+      campi: [
+        {
+          chiave: 'messaggioLibero',
+          etichetta: 'Descrizione libera',
+          tipo: 'testo_lungo',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+        },
+      ],
+    },
+    {
+      chiave: 'contatti',
+      titolo: 'Come possiamo ricontattarti',
+      sottotitolo: 'Ci servono solo pochi dati per condividere con te la prima proposta.',
+      campi: [
+        {
+          chiave: 'clienteNome',
+          etichetta: 'Nome e cognome',
+          tipo: 'testo',
+          obbligatorio: true,
+          pesoCompletezza: 10,
+        },
+        {
+          chiave: 'clienteEmail',
+          etichetta: 'Email',
+          tipo: 'testo',
+          obbligatorio: true,
+          pesoCompletezza: 10,
+          validazione: {
+            pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+            messaggioPattern: 'Inserisci un indirizzo email valido.',
+          },
+        },
+        {
+          chiave: 'clienteTelefono',
+          etichetta: 'Telefono (facoltativo)',
+          tipo: 'testo',
+          obbligatorio: false,
+          pesoCompletezza: 5,
+        },
+      ],
+    },
+  ],
+};
+
 async function main() {
   // Tenant "well-known" (id fisso, creato dalla migrazione Identity & Security).
   const tenant = await prisma.tenant.findUnique({ where: { slug: 'ramirez-atelier' } });
@@ -352,6 +481,25 @@ async function main() {
         'Ogni centimetro pensato per il tuo spazio, il tuo guardaroba, la tua quotidianità.',
       ordinamento: 2,
       configurazione: configurazioneArmadio,
+    },
+  });
+
+  const zonaGiorno = await prisma.tipoProgetto.upsert({
+    where: { tenantId_chiave: { tenantId, chiave: 'zona-giorno' } },
+    update: {
+      nome: 'Zona giorno su misura',
+      descrizione:
+        'Librerie, pareti attrezzate, mobili TV, credenze - pensati per il tuo spazio di ogni giorno.',
+      configurazione: configurazioneZonaGiorno,
+    },
+    create: {
+      tenantId,
+      chiave: 'zona-giorno',
+      nome: 'Zona giorno su misura',
+      descrizione:
+        'Librerie, pareti attrezzate, mobili TV, credenze - pensati per il tuo spazio di ogni giorno.',
+      ordinamento: 3,
+      configurazione: configurazioneZonaGiorno,
     },
   });
 
@@ -447,6 +595,56 @@ async function main() {
           valore: 'armadio',
         },
         azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 3000, max: 5000 } }],
+      },
+      // Zona Giorno: fasce indicative per ordine di grandezza, non ancora
+      // validate con il titolare (v. metodologia-scoperta-modello-economico.md
+      // - da rivedere dopo la prima intervista reale, stessa cautela già
+      // dichiarata per le altre otto regole di questo motore).
+      {
+        nome: 'Zona giorno, elemento ampio',
+        priorita: 20,
+        condizioni: {
+          operatoreLogico: 'E',
+          figli: [
+            { campo: 'richiesta.tipoProgettoChiave', operatore: 'uguale', valore: 'zona-giorno' },
+            { campo: 'richiesta.larghezzaCm', operatore: 'maggiore_uguale', valore: 350 },
+          ],
+        },
+        azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 5000, max: 9000 } }],
+      },
+      {
+        nome: 'Zona giorno, larghezza media',
+        priorita: 15,
+        condizioni: {
+          operatoreLogico: 'E',
+          figli: [
+            { campo: 'richiesta.tipoProgettoChiave', operatore: 'uguale', valore: 'zona-giorno' },
+            { campo: 'richiesta.larghezzaCm', operatore: 'tra', valore: [150, 350] },
+          ],
+        },
+        azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 2500, max: 5000 } }],
+      },
+      {
+        nome: 'Zona giorno, elemento piccolo',
+        priorita: 15,
+        condizioni: {
+          operatoreLogico: 'E',
+          figli: [
+            { campo: 'richiesta.tipoProgettoChiave', operatore: 'uguale', valore: 'zona-giorno' },
+            { campo: 'richiesta.larghezzaCm', operatore: 'minore', valore: 150 },
+          ],
+        },
+        azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 1200, max: 2500 } }],
+      },
+      {
+        nome: 'Zona giorno, stima generica',
+        priorita: 5,
+        condizioni: {
+          campo: 'richiesta.tipoProgettoChiave',
+          operatore: 'uguale',
+          valore: 'zona-giorno',
+        },
+        azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 2000, max: 6000 } }],
       },
     ];
 
@@ -827,6 +1025,7 @@ async function main() {
   console.log('Seed completato:', {
     cucina: cucina.chiave,
     armadio: armadio.chiave,
+    zonaGiorno: zonaGiorno.chiave,
     tenant: tenant.slug,
     utenteAdmin: utenteAdmin.email,
   });
