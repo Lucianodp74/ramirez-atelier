@@ -30,6 +30,7 @@ export const CATALOGO_MODULI_AZIONI: Record<string, string[]> = {
   kpi: ['leggi'],
   catalogo: ['leggi', 'gestisci'],
   clienti: ['leggi', 'gestisci'],
+  spese: ['leggi', 'gestisci'],
 };
 
 /**

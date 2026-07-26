@@ -787,8 +787,21 @@ async function main() {
   }
 
   // Utente amministratore iniziale, con Membership attiva verso Ramirez Atelier.
+  // Cerca prima per ruolo (chi ha già "Proprietario" su questo tenant), non solo
+  // per l'email di default: se l'email è stata cambiata dopo il primo seed (un
+  // caso reale, non ipotetico - accaduto durante il primo deploy), cercare solo
+  // per email creava un secondo utente duplicato invece di riconoscere quello
+  // già esistente. Trovato e corretto il 25/07/2026.
   const emailAdmin = 'titolare@ramirezatelier.it';
-  let utenteAdmin = await prisma.utente.findUnique({ where: { email: emailAdmin } });
+  const membershipProprietarioEsistente = await prisma.membershipRuolo.findFirst({
+    where: { ruoloId: ruoloProprietario.id, membership: { tenantId } },
+    include: { membership: { include: { utente: true } } },
+  });
+
+  let utenteAdmin =
+    membershipProprietarioEsistente?.membership.utente ??
+    (await prisma.utente.findUnique({ where: { email: emailAdmin } }));
+
   if (!utenteAdmin) {
     utenteAdmin = await prisma.utente.create({
       data: {
@@ -815,7 +828,7 @@ async function main() {
     cucina: cucina.chiave,
     armadio: armadio.chiave,
     tenant: tenant.slug,
-    utenteAdmin: emailAdmin,
+    utenteAdmin: utenteAdmin.email,
   });
 }
 

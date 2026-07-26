@@ -15,6 +15,7 @@ import {
   type DatiFasciaBudget,
 } from '@/server/services/fasce-budget-service';
 import { impostaStatoRegola } from '@/server/services/regole-service';
+import { creaSpesa, aggiornaSpesa, eliminaSpesa } from '@/server/services/spesa-service';
 import {
   membershipDiTenant,
   sospendiMembership,
@@ -89,22 +90,38 @@ export async function aggiungiCommentoRichiesta(id: string, testo: string) {
 
 export async function creaFasciaBudgetAzione(dati: DatiFasciaBudget) {
   const contesto = await richiediContesto({ modulo: 'fasce_budget', azione: 'gestisci' });
-  const fascia = await creaFasciaBudget(contesto.tenantId, dati);
+  await creaFasciaBudget(contesto.tenantId, dati);
   revalidatePath('/admin/fasce-budget');
-  return fascia;
 }
 
 export async function aggiornaFasciaBudgetAzione(id: string, dati: Partial<DatiFasciaBudget>) {
   const contesto = await richiediContesto({ modulo: 'fasce_budget', azione: 'gestisci' });
-  const fascia = await aggiornaFasciaBudget(contesto.tenantId, id, dati);
+  await aggiornaFasciaBudget(contesto.tenantId, id, dati);
   revalidatePath('/admin/fasce-budget');
-  return fascia;
 }
 
 export async function impostaAttivaFasciaBudgetAzione(id: string, attiva: boolean) {
   const contesto = await richiediContesto({ modulo: 'fasce_budget', azione: 'gestisci' });
   await impostaAttivaFasciaBudget(contesto.tenantId, id, attiva);
   revalidatePath('/admin/fasce-budget');
+}
+
+export async function creaSpesaAzione(nome: string, importoMensile: number) {
+  const contesto = await richiediContesto({ modulo: 'spese', azione: 'gestisci' });
+  await creaSpesa(contesto.tenantId, nome, importoMensile);
+  revalidatePath('/admin/spese');
+}
+
+export async function aggiornaSpesaAzione(id: string, nome: string, importoMensile: number) {
+  const contesto = await richiediContesto({ modulo: 'spese', azione: 'gestisci' });
+  await aggiornaSpesa(contesto.tenantId, id, nome, importoMensile);
+  revalidatePath('/admin/spese');
+}
+
+export async function eliminaSpesaAzione(id: string) {
+  const contesto = await richiediContesto({ modulo: 'spese', azione: 'gestisci' });
+  await eliminaSpesa(contesto.tenantId, id);
+  revalidatePath('/admin/spese');
 }
 
 export async function impostaStatoRegolaAzione(id: string, stato: 'ATTIVA' | 'DISATTIVA') {
