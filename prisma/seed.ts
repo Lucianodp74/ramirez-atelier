@@ -431,6 +431,157 @@ const configurazioneZonaGiorno: TipoProgettoConfigurazione = {
   ],
 };
 
+/**
+ * Falegnameria su Misura: categoria neutra per lavori che non rientrano in
+ * Cucina/Armadio/Zona Giorno (tavolo, arredo bagno, mobile ingresso,
+ * mensole, scrivania, boiserie, elemento artigianale personalizzato).
+ *
+ * Deliberatamente NESSUN campo ha `chiavePricing`, e nessuna Regola di
+ * pricing esiste per `tipoProgettoChiave: 'falegnameria-su-misura'` (v. il
+ * Rule Engine, contesto preventivo_pricing, più sotto) - non per
+ * dimenticanza, per lo stesso motivo per cui è nato l'intero step "Zona
+ * Giorno bootstrap" come cautela: lavori così eterogenei tra loro non
+ * hanno una relazione stabile tra dimensione e costo, mostrare comunque
+ * una fascia sarebbe un numero arbitrario, non solo impreciso. Verificato
+ * che il resto del prodotto già gestisce con eleganza l'assenza di fascia
+ * (pagina di completamento wizard e PDF preventivo: se fasciaPrezzoMin/Max
+ * restano null, il riquadro prezzo semplicemente non compare, nessun
+ * placeholder necessario) - nessuna modifica a quel codice richiesta qui.
+ */
+const configurazioneFalegnameriaSuMisura: TipoProgettoConfigurazione = {
+  step: [
+    {
+      chiave: 'tipo_lavoro',
+      titolo: 'Che lavoro hai in mente',
+      campi: [
+        {
+          chiave: 'tipoLavoro',
+          etichetta: 'Tipo di lavoro',
+          tipo: 'select_immagine',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+          opzioni: [
+            { valore: 'tavolo', etichetta: 'Tavolo su misura' },
+            { valore: 'arredo_bagno', etichetta: 'Arredo bagno' },
+            { valore: 'mobile_ingresso', etichetta: 'Mobile ingresso' },
+            { valore: 'mensole', etichetta: 'Mensole' },
+            { valore: 'scrivania', etichetta: 'Scrivania' },
+            { valore: 'boiserie', etichetta: 'Boiserie' },
+            { valore: 'altro', etichetta: 'Altro lavoro di falegnameria' },
+          ],
+        },
+      ],
+    },
+    {
+      chiave: 'materiali',
+      titolo: 'Materiale e finitura',
+      campi: [
+        {
+          chiave: 'materiale',
+          etichetta: 'Materiale',
+          tipo: 'select_immagine',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+          // Nessun chiavePricing qui, deliberatamente - v. commento sopra.
+          fonteOpzioni: 'finitura',
+        },
+      ],
+    },
+    {
+      chiave: 'dimensioni',
+      titolo: 'Dimensioni indicative',
+      sottotitolo: 'Anche solo approssimative: le perfezioneremo insieme.',
+      campi: [
+        {
+          chiave: 'larghezzaCm',
+          etichetta: 'Larghezza (cm)',
+          tipo: 'numero',
+          obbligatorio: false,
+          pesoCompletezza: 10,
+          // Nessun chiavePricing qui, deliberatamente - v. commento sopra.
+        },
+        {
+          chiave: 'altezzaCm',
+          etichetta: 'Altezza (cm)',
+          tipo: 'numero',
+          obbligatorio: false,
+          pesoCompletezza: 5,
+        },
+      ],
+    },
+    {
+      chiave: 'racconta',
+      titolo: 'Raccontaci il tuo progetto',
+      sottotitolo:
+        'Qui più che altrove: descrivici cosa hai in mente, a cosa servirà, dove andrà - è la parte più importante per capire come aiutarti.',
+      campi: [
+        {
+          chiave: 'messaggioLibero',
+          etichetta: 'Descrizione libera',
+          tipo: 'testo_lungo',
+          obbligatorio: false,
+          pesoCompletezza: 25,
+        },
+      ],
+    },
+    {
+      chiave: 'budget_tempi',
+      titolo: 'Budget e tempistiche',
+      sottotitolo:
+        "Un'indicazione tua, non un calcolo automatico: per questo tipo di lavoro preferiamo valutare il prezzo insieme, non stimarlo da soli.",
+      campi: [
+        {
+          chiave: 'fasciaBudgetId',
+          etichetta: 'Fascia di budget indicativa',
+          tipo: 'select',
+          obbligatorio: false,
+          pesoCompletezza: 15,
+          fonteOpzioni: 'fascia_budget',
+        },
+        {
+          chiave: 'dataDesiderata',
+          etichetta: 'Quando vorresti iniziare?',
+          tipo: 'data',
+          obbligatorio: false,
+          pesoCompletezza: 5,
+        },
+      ],
+    },
+    {
+      chiave: 'contatti',
+      titolo: 'Come possiamo ricontattarti',
+      sottotitolo: 'Ci servono solo pochi dati per valutare insieme il tuo progetto.',
+      campi: [
+        {
+          chiave: 'clienteNome',
+          etichetta: 'Nome e cognome',
+          tipo: 'testo',
+          obbligatorio: true,
+          pesoCompletezza: 10,
+        },
+        {
+          chiave: 'clienteEmail',
+          etichetta: 'Email',
+          tipo: 'testo',
+          obbligatorio: true,
+          pesoCompletezza: 10,
+          validazione: {
+            pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+            messaggioPattern: 'Inserisci un indirizzo email valido.',
+          },
+        },
+        {
+          chiave: 'clienteTelefono',
+          etichetta: 'Telefono (facoltativo)',
+          tipo: 'testo',
+          obbligatorio: false,
+          pesoCompletezza: 5,
+        },
+      ],
+    },
+  ],
+};
+
 async function main() {
   // Tenant "well-known" (id fisso, creato dalla migrazione Identity & Security).
   const tenant = await prisma.tenant.findUnique({ where: { slug: 'ramirez-atelier' } });
@@ -500,6 +651,25 @@ async function main() {
         'Librerie, pareti attrezzate, mobili TV, credenze - pensati per il tuo spazio di ogni giorno.',
       ordinamento: 3,
       configurazione: configurazioneZonaGiorno,
+    },
+  });
+
+  const falegnameriaSuMisura = await prisma.tipoProgetto.upsert({
+    where: { tenantId_chiave: { tenantId, chiave: 'falegnameria-su-misura' } },
+    update: {
+      nome: 'Falegnameria su misura',
+      descrizione:
+        'Tavoli, arredo bagno, mensole, boiserie - qualunque lavoro di falegnameria che non rientri nelle altre categorie. Raccontaci cosa hai in mente, valutiamo insieme.',
+      configurazione: configurazioneFalegnameriaSuMisura,
+    },
+    create: {
+      tenantId,
+      chiave: 'falegnameria-su-misura',
+      nome: 'Falegnameria su misura',
+      descrizione:
+        'Tavoli, arredo bagno, mensole, boiserie - qualunque lavoro di falegnameria che non rientri nelle altre categorie. Raccontaci cosa hai in mente, valutiamo insieme.',
+      ordinamento: 4,
+      configurazione: configurazioneFalegnameriaSuMisura,
     },
   });
 
@@ -596,10 +766,21 @@ async function main() {
         },
         azioni: [{ tipo: 'imposta_fascia_prezzo', parametri: { min: 3000, max: 5000 } }],
       },
-      // Zona Giorno: fasce indicative per ordine di grandezza, non ancora
-      // validate con il titolare (v. metodologia-scoperta-modello-economico.md
-      // - da rivedere dopo la prima intervista reale, stessa cautela già
-      // dichiarata per le altre otto regole di questo motore).
+      // ⚠️ DATI DI BOOTSTRAP, NON UN MODELLO ECONOMICO VALIDATO ⚠️
+      // Le quattro fasce sotto sono un'ipotesi operativa iniziale - stimate
+      // per coerenza di scala con le regole di Armadio già esistenti, MAI
+      // derivate da un costo reale (materiale, ore, spese generali) né da
+      // un'intervista con Roberto. Servono solo a rendere il configuratore
+      // utilizzabile da subito per questa categoria, non a rappresentare
+      // quanto Ramirez Atelier guadagna o dovrebbe guadagnare su un lavoro
+      // di questo tipo.
+      //
+      // Metodo con cui vanno riviste, non "corrette a sensazione": v.
+      // docs/ricerca/metodologia-scoperta-modello-economico.md (ArtigianOS)
+      // - condurre l'intervista lì descritta, con casi reali di Zona Giorno
+      // già realizzati, PRIMA di considerare questi numeri affidabili.
+      // Finché quell'intervista non sarà stata condotta, trattare ogni
+      // fascia qui sotto come un placeholder, non come un dato di dominio.
       {
         nome: 'Zona giorno, elemento ampio',
         priorita: 20,
@@ -1026,6 +1207,7 @@ async function main() {
     cucina: cucina.chiave,
     armadio: armadio.chiave,
     zonaGiorno: zonaGiorno.chiave,
+    falegnameriaSuMisura: falegnameriaSuMisura.chiave,
     tenant: tenant.slug,
     utenteAdmin: utenteAdmin.email,
   });
