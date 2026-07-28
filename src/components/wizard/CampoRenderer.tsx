@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -114,9 +115,18 @@ export function CampoRenderer({ campo, valore, errore, onChange }: Props) {
                     <Check className="h-4 w-4" strokeWidth={3} />
                   </span>
                 )}
-                <div className="flex aspect-[4/3] items-center justify-center bg-secondary/60 text-xs text-muted-foreground">
-                  {/* Immagini reali non ancora in scope (storage documenti in pausa): placeholder testuale. */}
-                  <span>{opzione.etichetta}</span>
+                <div className="relative flex aspect-[4/3] items-center justify-center bg-secondary/60 text-xs text-muted-foreground">
+                  {opzione.immagine ? (
+                    <Image
+                      src={opzione.immagine}
+                      alt={opzione.etichetta}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    />
+                  ) : (
+                    <span>{opzione.etichetta}</span>
+                  )}
                 </div>
                 <div className="p-3">
                   <div className="text-sm font-medium">{opzione.etichetta}</div>

@@ -260,7 +260,7 @@ const configurazioneArmadio: TipoProgettoConfigurazione = {
         },
         {
           chiave: 'dataDesiderata',
-          etichetta: 'Quando vorresti iniziare?',
+          etichetta: 'Quando vorresti iniziare i lavori?',
           tipo: 'data',
           obbligatorio: false,
           pesoCompletezza: 10,
@@ -374,7 +374,7 @@ const configurazioneZonaGiorno: TipoProgettoConfigurazione = {
         },
         {
           chiave: 'dataDesiderata',
-          etichetta: 'Quando vorresti iniziare?',
+          etichetta: 'Quando vorresti iniziare i lavori?',
           tipo: 'data',
           obbligatorio: false,
           pesoCompletezza: 5,
@@ -540,7 +540,7 @@ const configurazioneFalegnameriaSuMisura: TipoProgettoConfigurazione = {
         },
         {
           chiave: 'dataDesiderata',
-          etichetta: 'Quando vorresti iniziare?',
+          etichetta: 'Quando vorresti iniziare i lavori?',
           tipo: 'data',
           obbligatorio: false,
           pesoCompletezza: 5,
