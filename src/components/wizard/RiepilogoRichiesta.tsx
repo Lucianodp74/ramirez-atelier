@@ -9,13 +9,21 @@ interface Props {
   configurazione: TipoProgettoConfigurazione;
   datiForm: Record<string, unknown>;
   documenti: DocumentoRichiesta[];
+  /**
+   * Se presente, i documenti diventano link di download verso l'API admin
+   * (`/api/richieste/[id]/documenti/[documentoId]`). Omesso quando il
+   * componente è usato lato cliente nel wizard (ConfiguratoreWizard), dove
+   * non esiste un endpoint di download autenticato per il cliente stesso -
+   * in quel caso i documenti restano badge informativi, come prima.
+   */
+  richiestaId?: string;
 }
 
 /**
  * Il riepilogo è generato interamente dalla configurazione (etichette dei campi,
  * opzioni scelte) - non contiene alcuna riga specifica per "cucina" o "armadio".
  */
-export function RiepilogoRichiesta({ configurazione, datiForm, documenti }: Props) {
+export function RiepilogoRichiesta({ configurazione, datiForm, documenti, richiestaId }: Props) {
   return (
     <div className="space-y-6">
       {configurazione.step.map((step) => {
@@ -24,7 +32,6 @@ export function RiepilogoRichiesta({ configurazione, datiForm, documenti }: Prop
           return v !== undefined && v !== null && String(v).trim().length > 0;
         });
         if (campiValorizzati.length === 0) return null;
-
         return (
           <div key={step.chiave}>
             <h4 className="mb-2 text-sm font-medium text-muted-foreground">{step.titolo}</h4>
@@ -43,16 +50,30 @@ export function RiepilogoRichiesta({ configurazione, datiForm, documenti }: Prop
           </div>
         );
       })}
-
       {documenti.length > 0 && (
         <div>
           <h4 className="mb-2 text-sm font-medium text-muted-foreground">Documenti allegati</h4>
           <div className="flex flex-wrap gap-2">
-            {documenti.map((d) => (
-              <Badge key={d.id} variant="outline">
-                {d.nomeFileOriginale} · {formattaDimensione(d.dimensioneByte)}
-              </Badge>
-            ))}
+            {documenti.map((d) =>
+              richiestaId ? (
+                <a
+                  key={d.id}
+                  href={`/api/richieste/${richiestaId}/documenti/${d.id}`}
+                  className="no-underline"
+                >
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer transition-colors hover:bg-secondary"
+                  >
+                    {d.nomeFileOriginale} · {formattaDimensione(d.dimensioneByte)}
+                  </Badge>
+                </a>
+              ) : (
+                <Badge key={d.id} variant="outline">
+                  {d.nomeFileOriginale} · {formattaDimensione(d.dimensioneByte)}
+                </Badge>
+              ),
+            )}
           </div>
         </div>
       )}

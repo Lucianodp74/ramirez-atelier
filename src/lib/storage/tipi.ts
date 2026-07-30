@@ -6,6 +6,17 @@ export interface RisultatoUpload {
 }
 
 /**
+ * Risultato di un download: gli adattatori remoti (S3/Supabase) restituiscono
+ * un URL firmato temporaneo a cui reindirizzare il browser (redirect 307,
+ * nessun file passa dal server Next.js); l'adattatore locale invece legge il
+ * file dal filesystem e lo restituisce come buffer, dato che non esiste un
+ * URL pubblico da cui servirlo direttamente.
+ */
+export type RisultatoDownload =
+  | { tipo: 'redirect'; url: string }
+  | { tipo: 'contenuto'; buffer: Buffer };
+
+/**
  * Interfaccia comune tra l'adattatore locale (sviluppo, senza dipendenze esterne)
  * e l'adattatore S3 (MinIO in locale via Docker, provider reale in produzione).
  * Il resto dell'applicazione dipende solo da questa interfaccia, mai dai dettagli
@@ -21,6 +32,9 @@ export interface StorageAdapter {
     tipoMime: string;
     contenuto: Buffer;
   }): Promise<RisultatoUpload>;
+
+  /** Recupera un documento già caricato, dato lo storageObjectKey salvato in DB. */
+  scarica(storageObjectKey: string): Promise<RisultatoDownload>;
 }
 
 const CATEGORIE_PER_MIME: Array<{

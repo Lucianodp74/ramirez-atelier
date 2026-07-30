@@ -1,7 +1,8 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import path from 'path';
-import type { StorageAdapter, RisultatoUpload } from './tipi';
+import type { StorageAdapter, RisultatoUpload, RisultatoDownload } from './tipi';
 
 export class StorageS3Adapter implements StorageAdapter {
   private client: S3Client;
@@ -36,7 +37,6 @@ export class StorageS3Adapter implements StorageAdapter {
   }): Promise<RisultatoUpload> {
     const estensione = path.extname(params.nomeFileOriginale);
     const key = `${params.tenantId}/richieste/${params.richiestaId}/${randomUUID()}${estensione}`;
-
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
@@ -45,10 +45,21 @@ export class StorageS3Adapter implements StorageAdapter {
         ContentType: params.tipoMime,
       }),
     );
-
     return {
       storageObjectKey: key,
       dimensioneByte: params.contenuto.byteLength,
     };
+  }
+
+  async scarica(storageObjectKey: string): Promise<RisultatoDownload> {
+    const comando = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: storageObjectKey,
+    });
+    // URL firmato valido 5 minuti - tempo ampio per avviare il download,
+    // abbastanza breve da non lasciare link condivisibili a lungo termine
+    // per documenti privati dei clienti.
+    const url = await getSignedUrl(this.client, comando, { expiresIn: 300 });
+    return { tipo: 'redirect', url };
   }
 }

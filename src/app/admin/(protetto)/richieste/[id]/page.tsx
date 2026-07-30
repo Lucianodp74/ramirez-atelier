@@ -131,7 +131,7 @@ export default async function DettaglioRichiestaPage({
               <RiepilogoRichiesta
                 configurazione={configurazione}
                 datiForm={datiForm}
-                documenti={richiesta.documenti ?? []}
+                documenti={richiesta.documenti ?? []}richiestaId={richiesta.id}
               />
               {richiesta.documenti && richiesta.documenti.length > 0 && (
                 <div className="mt-4">

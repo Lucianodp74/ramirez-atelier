@@ -1,7 +1,7 @@
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile, readFile } from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import type { StorageAdapter, RisultatoUpload } from './tipi';
+import type { StorageAdapter, RisultatoUpload, RisultatoDownload } from './tipi';
 
 const CARTELLA_UPLOAD = path.join(process.cwd(), '.uploads-locali');
 
@@ -26,16 +26,26 @@ export class StorageLocaleAdapter implements StorageAdapter {
       params.richiestaId,
     );
     await mkdir(cartellaRichiesta, { recursive: true });
-
     const estensione = path.extname(params.nomeFileOriginale);
     const nomeUnivoco = `${randomUUID()}${estensione}`;
     const percorsoCompleto = path.join(cartellaRichiesta, nomeUnivoco);
-
     await writeFile(percorsoCompleto, params.contenuto);
-
     return {
       storageObjectKey: `locale://${params.tenantId}/richieste/${params.richiestaId}/${nomeUnivoco}`,
       dimensioneByte: params.contenuto.byteLength,
     };
+  }
+
+  async scarica(storageObjectKey: string): Promise<RisultatoDownload> {
+    const prefisso = 'locale://';
+    if (!storageObjectKey.startsWith(prefisso)) {
+      throw new Error(
+        `storageObjectKey non riconosciuto dall'adattatore locale: ${storageObjectKey}`,
+      );
+    }
+    const percorsoRelativo = storageObjectKey.slice(prefisso.length);
+    const percorsoCompleto = path.join(CARTELLA_UPLOAD, ...percorsoRelativo.split('/'));
+    const buffer = await readFile(percorsoCompleto);
+    return { tipo: 'contenuto', buffer };
   }
 }
