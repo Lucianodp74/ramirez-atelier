@@ -32,7 +32,7 @@ export default function HomePage() {
           <span className="font-serif text-lg tracking-tight">Ramirez Atelier</span>
         </span>
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/progetti">Accedi all&apos;area riservata</Link>
+          <Link href="/admin/login">Accedi all&apos;area riservata</Link>
         </Button>
       </nav>
 
