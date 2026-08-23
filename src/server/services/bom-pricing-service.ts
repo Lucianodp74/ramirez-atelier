@@ -116,8 +116,7 @@ export function calcolaPrezzoBom(
   percentualeValida('Lo sconto', scontoPercentuale);
   percentualeValida("L'IVA", ivaPercentuale);
 
-  const baseConRicarico =
-    costoProduzione * (1 + ricaricoPercentuale / 100) + costiFissi;
+  const baseConRicarico = costoProduzione * (1 + ricaricoPercentuale / 100) + costiFissi;
   const sconto = baseConRicarico * (scontoPercentuale / 100);
   const imponibile = Math.max(0, baseConRicarico - sconto);
   const iva = imponibile * (ivaPercentuale / 100);
