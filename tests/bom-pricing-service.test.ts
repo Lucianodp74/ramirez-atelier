@@ -9,30 +9,27 @@ vi.mock('@/server/services/bom-service', () => ({
 import { calcolaPrezzoBom, riepilogoCostoBom } from '@/server/services/bom-pricing-service';
 
 describe('calcolaPrezzoBom', () => {
-  it(
-    'calcola ricarico, costi fissi, sconto e IVA senza inventare valori',
-    () => {
-      const risultato = calcolaPrezzoBom(100, {
-        ricaricoPercentuale: 20,
-        costiFissi: 10,
-        scontoPercentuale: 10,
-        ivaPercentuale: 22,
-      });
+  it('calcola ricarico, costi fissi, sconto e IVA senza inventare valori', () => {
+    const risultato = calcolaPrezzoBom(100, {
+      ricaricoPercentuale: 20,
+      costiFissi: 10,
+      scontoPercentuale: 10,
+      ivaPercentuale: 22,
+    });
 
-      expect(risultato).toEqual({
-        costoProduzione: 100,
-        costiFissi: 10,
-        baseConRicarico: 130,
-        sconto: 13,
-        imponibile: 117,
-        iva: 25.74,
-        totale: 142.74,
-        ricaricoPercentuale: 20,
-        scontoPercentuale: 10,
-        ivaPercentuale: 22,
-      });
-    },
-  );
+    expect(risultato).toEqual({
+      costoProduzione: 100,
+      costiFissi: 10,
+      baseConRicarico: 130,
+      sconto: 13,
+      imponibile: 117,
+      iva: 25.74,
+      totale: 142.74,
+      ricaricoPercentuale: 20,
+      scontoPercentuale: 10,
+      ivaPercentuale: 22,
+    });
+  });
 
   it('usa zero come default per i parametri economici omessi', () => {
     expect(calcolaPrezzoBom(125)).toEqual({
