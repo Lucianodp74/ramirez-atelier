@@ -66,7 +66,11 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package.json package-lock.json
           git commit -m 'chore: add vitest test dependency'
-          git push origin HEAD:feat/bom-foundation
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          git fetch origin feat/bom-foundation
+          git checkout -B feat/bom-foundation origin/feat/bom-foundation
+          git cherry-pick "$LOCAL_COMMIT"
+          git push origin feat/bom-foundation
 
       - name: Type check
         run: npm run type-check
