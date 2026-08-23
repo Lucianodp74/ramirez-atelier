@@ -51,10 +51,7 @@ jobs:
         run: npx prisma db seed
 
       - name: Format check
-        run: |
-          npx prettier --write src/server/services/bom-preventivo-service.ts src/server/services/bom-pricing-service.ts
-          git diff -- src/server/services/bom-preventivo-service.ts src/server/services/bom-pricing-service.ts
-          git diff --exit-code -- src/server/services/bom-preventivo-service.ts src/server/services/bom-pricing-service.ts
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint
