@@ -53,6 +53,20 @@ function assertQuantita(quantita: number) {
   if (!Number.isFinite(quantita) || quantita <= 0) throw new Error('La quantità BOM deve essere maggiore di zero.');
 }
 
+export function validaTransizioneBom(statoCorrente: StatoBom, nuovoStato: StatoBom) {
+  if (statoCorrente === nuovoStato) return;
+
+  const consentite: Record<StatoBom, StatoBom[]> = {
+    BOZZA: ['CONFERMATA'],
+    CONFERMATA: ['CHIUSA'],
+    CHIUSA: [],
+  };
+
+  if (!consentite[statoCorrente].includes(nuovoStato)) {
+    throw new Error(`Transizione BOM non consentita: ${statoCorrente} → ${nuovoStato}.`);
+  }
+}
+
 /**
  * BOM foundation using the additive SQL schema. Every operation receives tenantId
  * explicitly and verifies ownership through the request/BOM relation.
@@ -104,9 +118,16 @@ export async function aggiungiRigaBom(tenantId: string, bomId: string, input: Cr
 }
 
 export async function cambiaStatoBom(tenantId: string, bomId: string, stato: StatoBom) {
-  const esito = await db.$executeRaw`
+  const bom = await db.$queryRaw<Array<{ id: string; stato: StatoBom }>>`
+    SELECT "id", "stato" FROM "bom" WHERE "id" = ${bomId} AND "tenantId" = ${tenantId} LIMIT 1
+  `;
+  if (!bom.length) throw new Error('Distinta non trovata.');
+
+  validaTransizioneBom(bom[0].stato, stato);
+  if (bom[0].stato === stato) return;
+
+  await db.$executeRaw`
     UPDATE "bom" SET "stato" = ${stato}, "updatedAt" = CURRENT_TIMESTAMP
     WHERE "id" = ${bomId} AND "tenantId" = ${tenantId}
   `;
-  if (esito === 0) throw new Error('Distinta non trovata.');
 }
