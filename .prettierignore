@@ -4,3 +4,15 @@ dist/
 build/
 coverage/
 package-lock.json
+
+docs/bom/
+scripts/aggiorna-immagini-zona-giorno.ts
+scripts/ispeziona-tipo-progetto.ts
+src/app/admin/(protetto)/regole/page.tsx
+src/lib/storage/tipi.ts
+src/app/admin/(protetto)/richieste/[id]/BOMCard.tsx
+src/app/admin/(protetto)/richieste/[id]/page.tsx
+src/app/api/admin/bom/route.ts
+src/server/services/bom-foundation.test.ts
+src/server/services/bom-service.test.ts
+src/server/services/bom-service.ts
