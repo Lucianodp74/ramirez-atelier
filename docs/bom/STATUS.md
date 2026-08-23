@@ -1,0 +1,1 @@
+BOM foundation is implemented on feat/bom-foundation. Production merge still requires Prisma schema/client synchronization, database migration validation, protected Admin API/UI, configurator rules, Pricing integration, and end-to-end CI tests.
