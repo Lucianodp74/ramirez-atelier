@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { aggiungiRigaBom, dettaglioBom } from '@/server/services/bom-service';
 import type { CreaBomRigaInput } from '@/server/services/bom-service';
-import { richiediContesto, ErroreNonAutenticato, ErroreAccessoNegato } from '@/server/identity/contesto';
+import {
+  ErroreAccessoNegato,
+  ErroreNonAutenticato,
+  richiediContesto,
+} from '@/server/identity/contesto';
 
 async function contesto() {
   return richiediContesto({ modulo: 'richieste', azione: 'scrivi' });
@@ -10,11 +14,21 @@ async function contesto() {
 export async function POST(request: Request) {
   try {
     const identity = await contesto();
-    const body = (await request.json()) as Partial<CreaBomRigaInput> & { bomId?: unknown };
-    if (typeof body.bomId !== 'string' || !body.bomId) return NextResponse.json({ error: 'bomId obbligatorio' }, { status: 400 });
-    if (typeof body.categoria !== 'string' || !body.categoria) return NextResponse.json({ error: 'categoria obbligatoria' }, { status: 400 });
-    if (typeof body.descrizione !== 'string' || !body.descrizione) return NextResponse.json({ error: 'descrizione obbligatoria' }, { status: 400 });
-    if (typeof body.quantita !== 'number') return NextResponse.json({ error: 'quantita obbligatoria' }, { status: 400 });
+    const body = (await request.json()) as Partial<CreaBomRigaInput> & {
+      bomId?: unknown;
+    };
+    if (typeof body.bomId !== 'string' || !body.bomId) {
+      return NextResponse.json({ error: 'bomId obbligatorio' }, { status: 400 });
+    }
+    if (typeof body.categoria !== 'string' || !body.categoria) {
+      return NextResponse.json({ error: 'categoria obbligatoria' }, { status: 400 });
+    }
+    if (typeof body.descrizione !== 'string' || !body.descrizione) {
+      return NextResponse.json({ error: 'descrizione obbligatoria' }, { status: 400 });
+    }
+    if (typeof body.quantita !== 'number') {
+      return NextResponse.json({ error: 'quantita obbligatoria' }, { status: 400 });
+    }
 
     const id = await aggiungiRigaBom(identity.tenantId, body.bomId, {
       categoria: body.categoria,
@@ -30,9 +44,16 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
-    if (error instanceof ErroreNonAutenticato) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
-    if (error instanceof ErroreAccessoNegato) return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Errore riga BOM' }, { status: 400 });
+    if (error instanceof ErroreNonAutenticato) {
+      return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
+    }
+    if (error instanceof ErroreAccessoNegato) {
+      return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Errore riga BOM' },
+      { status: 400 },
+    );
   }
 }
 
@@ -40,13 +61,21 @@ export async function GET(request: Request) {
   try {
     const identity = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
     const bomId = new URL(request.url).searchParams.get('bomId');
-    if (!bomId) return NextResponse.json({ error: 'bomId obbligatorio' }, { status: 400 });
+    if (!bomId) {
+      return NextResponse.json({ error: 'bomId obbligatorio' }, { status: 400 });
+    }
     const bom = await dettaglioBom(identity.tenantId, bomId);
-    if (!bom) return NextResponse.json({ error: 'Distinta non trovata' }, { status: 404 });
+    if (!bom) {
+      return NextResponse.json({ error: 'Distinta non trovata' }, { status: 404 });
+    }
     return NextResponse.json({ righe: bom.righe });
   } catch (error) {
-    if (error instanceof ErroreNonAutenticato) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
-    if (error instanceof ErroreAccessoNegato) return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
+    if (error instanceof ErroreNonAutenticato) {
+      return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
+    }
+    if (error instanceof ErroreAccessoNegato) {
+      return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
+    }
     throw error;
   }
 }
