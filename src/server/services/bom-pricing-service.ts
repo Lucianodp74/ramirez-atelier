@@ -75,7 +75,10 @@ export async function riepilogoCostoBom(
     subtotale += totale;
     righeConCosto += 1;
 
-    const corrente = categorie.get(riga.categoria) ?? { totale: 0, righe: 0 };
+    const corrente = categorie.get(riga.categoria) ?? {
+      totale: 0,
+      righe: 0,
+    };
     corrente.totale += totale;
     corrente.righe += 1;
     categorie.set(riga.categoria, corrente);
@@ -111,9 +114,10 @@ export function calcolaPrezzoBom(
   percentualeValida('Il ricarico', ricaricoPercentuale);
   importoValido('I costi fissi', costiFissi);
   percentualeValida('Lo sconto', scontoPercentuale);
-  percentualeValida('L\'IVA', ivaPercentuale);
+  percentualeValida("L'IVA", ivaPercentuale);
 
-  const baseConRicarico = costoProduzione * (1 + ricaricoPercentuale / 100) + costiFissi;
+  const baseConRicarico =
+    costoProduzione * (1 + ricaricoPercentuale / 100) + costiFissi;
   const sconto = baseConRicarico * (scontoPercentuale / 100);
   const imponibile = Math.max(0, baseConRicarico - sconto);
   const iva = imponibile * (ivaPercentuale / 100);
