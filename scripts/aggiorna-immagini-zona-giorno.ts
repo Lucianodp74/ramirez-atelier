@@ -7,6 +7,7 @@
 //   npx tsx --env-file=.env scripts/aggiorna-immagini-zona-giorno.ts
 //   npx tsx --env-file=.env scripts/aggiorna-immagini-zona-giorno.ts --apply
 
+import { Prisma } from '@prisma/client'
 import { db } from '../src/server/db'
 
 const CHIAVE_TIPO_PROGETTO = 'zona-giorno'
@@ -88,9 +89,11 @@ async function main() {
     process.exit(0)
   }
 
+  const configurazione = JSON.parse(JSON.stringify(config)) as Prisma.InputJsonValue
+
   await db.tipoProgetto.update({
     where: { id: tipoProgetto.id },
-    data: { configurazione: config as any },
+    data: { configurazione },
   })
 
   console.log(`Fatto. ${modificati} opzione/i aggiornate su Supabase.`)
