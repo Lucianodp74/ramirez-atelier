@@ -17,7 +17,9 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
         body: JSON.stringify({ richiestaId }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Impossibile creare la distinta.');
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Impossibile creare la distinta.');
+      }
       setBomId(data.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Errore BOM');
@@ -31,12 +33,20 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-medium">Distinta di produzione</p>
-          <p className="text-sm text-muted-foreground">BOM collegata a questa richiesta.</p>
+          <p className="text-sm text-muted-foreground">
+            BOM collegata a questa richiesta.
+          </p>
         </div>
         {bomId ? (
-          <span className="text-sm font-medium">BOM pronta · {bomId.slice(0, 8)}</span>
+          <span className="text-sm font-medium">
+            BOM pronta · {bomId.slice(0, 8)}
+          </span>
         ) : (
-          <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} onClick={crea}>
+          <button
+            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
+            disabled={busy}
+            onClick={crea}
+          >
             {busy ? 'Creazione…' : 'Crea BOM'}
           </button>
         )}
