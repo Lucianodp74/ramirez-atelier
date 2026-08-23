@@ -56,6 +56,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Diagnose Vitest dependency
+        run: |
+          npm install --save-dev vitest@4.1.11
+          git diff -- package.json package-lock.json
+          exit 1
+
       - name: Type check
         run: npm run type-check
 
