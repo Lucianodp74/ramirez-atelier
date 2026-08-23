@@ -41,7 +41,9 @@ export async function preparaSnapshotPreventivoBom(
   if (!bom) return null;
 
   if (bom.stato === 'BOZZA') {
-    throw new Error('La BOM deve essere confermata prima di generare un preventivo.');
+    throw new Error(
+      'La BOM deve essere confermata prima di generare un preventivo.',
+    );
   }
 
   const righe = bom.righe.map((riga) => ({
@@ -52,15 +54,19 @@ export async function preparaSnapshotPreventivoBom(
     unita: riga.unita,
     quantita: riga.quantita,
     costoUnitario: riga.costoUnitario,
-    totaleCosto: riga.costoUnitario === null ? null : riga.quantita * riga.costoUnitario,
+    totaleCosto:
+      riga.costoUnitario === null ? null : riga.quantita * riga.costoUnitario,
   }));
 
   if (
     righe.some(
-      (riga) => riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario),
+      (riga) =>
+        riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario),
     )
   ) {
-    throw new Error('Tutte le righe BOM devono avere un costo unitario prima del preventivo.');
+    throw new Error(
+      'Tutte le righe BOM devono avere un costo unitario prima del preventivo.',
+    );
   }
 
   const costoProduzione = righe.reduce(
