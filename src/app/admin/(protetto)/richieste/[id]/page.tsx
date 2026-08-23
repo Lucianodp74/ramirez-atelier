@@ -10,6 +10,7 @@ import { AzionePuntoDiPartenza } from '@/components/admin/AzionePuntoDiPartenza'
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
+import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
 import { formattaDimensione } from '@/lib/utils';
@@ -152,6 +153,8 @@ export default async function DettaglioRichiestaPage({
               )}
             </CardContent>
           </Card>
+
+          <BOMCard richiestaId={richiesta.id} />
 
           <Card>
             <CardHeader>
