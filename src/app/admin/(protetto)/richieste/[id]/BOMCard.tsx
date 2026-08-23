@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 type BomRow = {
   id: string;
@@ -91,10 +92,6 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
       setBusy(false);
     }
   }
-
-  useEffect(() => {
-    // La card non conosce l'id BOM prima della prima apertura; non interroga endpoint pubblici.
-  }, []);
 
   return (
     <section className="rounded-lg border p-4">
