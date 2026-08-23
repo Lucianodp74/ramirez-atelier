@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { aggiungiRigaBom, CreaBomRigaInput, dettaglioBom } from '@/server/services/bom-service';
+import { aggiungiRigaBom, dettaglioBom } from '@/server/services/bom-service';
+import type { CreaBomRigaInput } from '@/server/services/bom-service';
 import { richiediContesto, ErroreNonAutenticato, ErroreAccessoNegato } from '@/server/identity/contesto';
 
 async function contesto() {
