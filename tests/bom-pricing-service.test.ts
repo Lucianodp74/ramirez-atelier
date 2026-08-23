@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const dettaglioBom = vi.fn();
+const { dettaglioBom } = vi.hoisted(() => ({
+  dettaglioBom: vi.fn(),
+}));
 
 vi.mock('@/server/services/bom-service', () => ({
   dettaglioBom,
