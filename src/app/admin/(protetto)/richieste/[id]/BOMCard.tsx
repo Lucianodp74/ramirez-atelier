@@ -16,9 +16,20 @@ type BomRow = {
   note: string | null;
 };
 
+type BomCostSummary = {
+  righeConCosto: number;
+  righeSenzaCosto: number;
+  subtotale: number;
+  categorie: Array<{ categoria: string; totale: number; righe: number }>;
+  completo: boolean;
+};
+
+const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+
 export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [bomId, setBomId] = useState<string | null>(null);
   const [rows, setRows] = useState<BomRow[]>([]);
+  const [summary, setSummary] = useState<BomCostSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [descrizione, setDescrizione] = useState('');
@@ -35,6 +46,11 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
     if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la distinta.');
     setBomId(id);
     setRows(data.righe ?? []);
+
+    const costResponse = await fetch(`/api/admin/bom/prezzo?bomId=${encodeURIComponent(id)}`);
+    const costData = await costResponse.json();
+    if (!costResponse.ok) throw new Error(costData.error ?? 'Impossibile calcolare il riepilogo costi.');
+    setSummary(costData);
   }
 
   async function crea() {
@@ -118,6 +134,38 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
             <span className="ml-2 text-muted-foreground">{rows.length} righe</span>
           </div>
 
+          {summary && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">Subtotale costi</p>
+                <p className="mt-1 text-lg font-semibold">{euro.format(summary.subtotale)}</p>
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">Righe valorizzate</p>
+                <p className="mt-1 text-lg font-semibold">{summary.righeConCosto} / {rows.length}</p>
+              </div>
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">Stato pricing</p>
+                <p className="mt-1 text-sm font-semibold">{summary.completo ? 'Completo' : 'Incompleto'}</p>
+                {!summary.completo && <p className="mt-1 text-xs text-muted-foreground">Mancano {summary.righeSenzaCosto} costi unitari.</p>}
+              </div>
+            </div>
+          )}
+
+          {summary && summary.categorie.length > 0 && (
+            <div className="mt-4 rounded-md border p-3">
+              <p className="mb-2 text-sm font-medium">Costi per categoria</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {summary.categorie.map((item) => (
+                  <div key={item.categoria} className="flex items-center justify-between text-sm">
+                    <span>{item.categoria} <span className="text-muted-foreground">({item.righe})</span></span>
+                    <span className="font-medium">{euro.format(item.totale)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 overflow-x-auto rounded-md border">
             <table className="w-full min-w-[760px] text-sm">
               <thead className="bg-muted/40 text-left">
@@ -140,14 +188,12 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                     <td className="p-2">{row.lavorazione ?? '—'}</td>
                     <td className="p-2">{row.quantita}</td>
                     <td className="p-2">{row.unita}</td>
-                    <td className="p-2">{row.costoUnitario ?? '—'}</td>
+                    <td className="p-2">{row.costoUnitario === null ? '—' : euro.format(row.costoUnitario)}</td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td className="p-4 text-muted-foreground" colSpan={7}>
-                      Nessuna riga ancora inserita.
-                    </td>
+                    <td className="p-4 text-muted-foreground" colSpan={7}>Nessuna riga ancora inserita.</td>
                   </tr>
                 )}
               </tbody>
@@ -156,38 +202,27 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
 
           <form className="mt-5 grid gap-3 rounded-md border p-4" onSubmit={aggiungi}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="text-sm">
-                Categoria
+              <label className="text-sm">Categoria
                 <select className="mt-1 w-full rounded-md border bg-background p-2" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                  <option>COMPONENTE</option>
-                  <option>MATERIALE</option>
-                  <option>LAVORAZIONE</option>
-                  <option>FERRAMENTA</option>
-                  <option>ALTRO</option>
+                  <option>COMPONENTE</option><option>MATERIALE</option><option>LAVORAZIONE</option><option>FERRAMENTA</option><option>ALTRO</option>
                 </select>
               </label>
-              <label className="text-sm sm:col-span-1 lg:col-span-2">
-                Descrizione
+              <label className="text-sm sm:col-span-1 lg:col-span-2">Descrizione
                 <input className="mt-1 w-full rounded-md border bg-background p-2" required value={descrizione} onChange={(e) => setDescrizione(e.target.value)} />
               </label>
-              <label className="text-sm">
-                Quantità
+              <label className="text-sm">Quantità
                 <input className="mt-1 w-full rounded-md border bg-background p-2" min="0.0001" step="any" type="number" required value={quantita} onChange={(e) => setQuantita(e.target.value)} />
               </label>
-              <label className="text-sm">
-                Unità
+              <label className="text-sm">Unità
                 <input className="mt-1 w-full rounded-md border bg-background p-2" value={unita} onChange={(e) => setUnita(e.target.value)} />
               </label>
-              <label className="text-sm">
-                Materiale
+              <label className="text-sm">Materiale
                 <input className="mt-1 w-full rounded-md border bg-background p-2" value={materiale} onChange={(e) => setMateriale(e.target.value)} />
               </label>
-              <label className="text-sm">
-                Lavorazione
+              <label className="text-sm">Lavorazione
                 <input className="mt-1 w-full rounded-md border bg-background p-2" value={lavorazione} onChange={(e) => setLavorazione(e.target.value)} />
               </label>
-              <label className="text-sm">
-                Costo unitario
+              <label className="text-sm">Costo unitario
                 <input className="mt-1 w-full rounded-md border bg-background p-2" min="0" step="0.01" type="number" value={costoUnitario} onChange={(e) => setCostoUnitario(e.target.value)} />
               </label>
             </div>
