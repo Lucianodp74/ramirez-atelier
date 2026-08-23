@@ -1,5 +1,9 @@
 import { dettaglioBom } from '@/server/services/bom-service';
-import { calcolaPrezzoBom, type BomPrezzoInput, type BomPrezzoSummary } from '@/server/services/bom-pricing-service';
+import {
+  calcolaPrezzoBom,
+  type BomPrezzoInput,
+  type BomPrezzoSummary,
+} from '@/server/services/bom-pricing-service';
 
 export type PreventivoBomSnapshot = {
   bomId: string;
@@ -51,11 +55,18 @@ export async function preparaSnapshotPreventivoBom(
     totaleCosto: riga.costoUnitario === null ? null : riga.quantita * riga.costoUnitario,
   }));
 
-  if (righe.some((riga) => riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario))) {
+  if (
+    righe.some(
+      (riga) => riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario),
+    )
+  ) {
     throw new Error('Tutte le righe BOM devono avere un costo unitario prima del preventivo.');
   }
 
-  const costoProduzione = righe.reduce((totale, riga) => totale + (riga.totaleCosto ?? 0), 0);
+  const costoProduzione = righe.reduce(
+    (totale, riga) => totale + (riga.totaleCosto ?? 0),
+    0,
+  );
 
   return {
     bomId: bom.id,
