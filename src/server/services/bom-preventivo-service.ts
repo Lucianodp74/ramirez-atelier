@@ -59,10 +59,7 @@ export async function preparaSnapshotPreventivoBom(
     throw new Error('Tutte le righe BOM devono avere un costo unitario prima del preventivo.');
   }
 
-  const costoProduzione = righe.reduce(
-    (totale, riga) => totale + (riga.totaleCosto ?? 0),
-    0,
-  );
+  const costoProduzione = righe.reduce((totale, riga) => totale + (riga.totaleCosto ?? 0), 0);
 
   return {
     bomId: bom.id,
