@@ -20,6 +20,35 @@ export interface CreaBomRigaInput {
   ordinamento?: number;
 }
 
+type BomDetailRow = {
+  id: string;
+  tenantId: string;
+  richiestaId: string;
+  stato: StatoBom;
+  versione: number;
+  noteProduzione: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  righe: BomRigaRow[];
+};
+
+type BomRigaRow = {
+  id: string;
+  bomId: string;
+  ordinamento: number;
+  categoria: string;
+  codice: string | null;
+  descrizione: string;
+  unita: string;
+  quantita: number;
+  materiale: string | null;
+  lavorazione: string | null;
+  costoUnitario: number | null;
+  note: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 function assertQuantita(quantita: number) {
   if (!Number.isFinite(quantita) || quantita <= 0) throw new Error('La quantità BOM deve essere maggiore di zero.');
 }
@@ -47,8 +76,8 @@ export async function creaBom(tenantId: string, input: CreaBomInput) {
   return id;
 }
 
-export async function dettaglioBom(tenantId: string, bomId: string) {
-  const rows = await db.$queryRaw<any[]>`
+export async function dettaglioBom(tenantId: string, bomId: string): Promise<BomDetailRow | null> {
+  const rows = await db.$queryRaw<BomDetailRow[]>`
     SELECT b.*, COALESCE(json_agg(br ORDER BY br."ordinamento", br."createdAt") FILTER (WHERE br."id" IS NOT NULL), '[]') AS righe
     FROM "bom" b
     LEFT JOIN "bom_riga" br ON br."bomId" = b."id"
