@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -58,19 +55,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-      - name: Add Vitest dependency
-        run: |
-          npm install --save-dev vitest@4.1.11
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
-          git commit -m 'chore: add vitest test dependency'
-          LOCAL_COMMIT=$(git rev-parse HEAD)
-          git fetch origin feat/bom-foundation
-          git checkout -B feat/bom-foundation origin/feat/bom-foundation
-          git cherry-pick "$LOCAL_COMMIT"
-          git push origin feat/bom-foundation
 
       - name: Type check
         run: npm run type-check
