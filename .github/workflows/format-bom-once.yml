@@ -31,3 +31,5 @@ jobs:
           git add src/server/services/bom-preventivo-service.ts src/server/services/bom-pricing-service.ts
           git commit -m 'style: format BOM services with Prettier'
           git push
+
+# Temporary diagnostic helper for the BOM branch.
