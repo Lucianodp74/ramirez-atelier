@@ -1,19 +1,33 @@
 import { describe, expect, it } from 'vitest';
-
-function validateQuantity(value: number) {
-  if (!Number.isFinite(value) || value <= 0) throw new Error('La quantità BOM deve essere maggiore di zero.');
-}
+import {
+  validaCostoUnitarioBom,
+  validaQuantitaBom,
+  validaTransizioneBom,
+} from './bom-service';
 
 describe('BOM foundation invariants', () => {
-  it('rejects zero quantities', () => {
-    expect(() => validateQuantity(0)).toThrow();
+  it('validates quantity through the service', () => {
+    expect(() => validaQuantitaBom(1)).not.toThrow();
+    expect(() => validaQuantitaBom(0)).toThrow();
+    expect(() => validaQuantitaBom(-1)).toThrow();
+    expect(() => validaQuantitaBom(Number.NaN)).toThrow();
+    expect(() => validaQuantitaBom(Number.POSITIVE_INFINITY)).toThrow();
   });
 
-  it('rejects negative quantities', () => {
-    expect(() => validateQuantity(-1)).toThrow();
+  it('validates unit cost through the service', () => {
+    expect(() => validaCostoUnitarioBom(null)).not.toThrow();
+    expect(() => validaCostoUnitarioBom(0)).not.toThrow();
+    expect(() => validaCostoUnitarioBom(12.5)).not.toThrow();
+    expect(() => validaCostoUnitarioBom(-1)).toThrow();
+    expect(() => validaCostoUnitarioBom(Number.NaN)).toThrow();
+    expect(() => validaCostoUnitarioBom(Number.POSITIVE_INFINITY)).toThrow();
   });
 
-  it('accepts positive quantities', () => {
-    expect(() => validateQuantity(1)).not.toThrow();
+  it('allows only forward BOM state transitions', () => {
+    expect(() => validaTransizioneBom('BOZZA', 'CONFERMATA')).not.toThrow();
+    expect(() => validaTransizioneBom('CONFERMATA', 'CHIUSA')).not.toThrow();
+    expect(() => validaTransizioneBom('BOZZA', 'CHIUSA')).toThrow();
+    expect(() => validaTransizioneBom('CHIUSA', 'BOZZA')).toThrow();
+    expect(() => validaTransizioneBom('CHIUSA', 'CHIUSA')).not.toThrow();
   });
 });
