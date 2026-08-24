@@ -38,7 +38,10 @@ export async function GET(
     const { id } = await params;
     const bom = await dettaglioBomAdmin(identity.tenantId, id);
     if (!bom) {
-      return NextResponse.json({ error: 'Distinta non trovata' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Distinta non trovata' },
+        { status: 404 },
+      );
     }
     return NextResponse.json(bom);
   } catch (error) {
@@ -57,7 +60,10 @@ export async function POST(
 
     if (body?.azione === 'stato') {
       if (!['BOZZA', 'CONFERMATA', 'CHIUSA'].includes(body.stato)) {
-        return NextResponse.json({ error: 'Stato non valido.' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Stato non valido.' },
+          { status: 400 },
+        );
       }
       await cambiaStatoBomAdmin(identity.tenantId, id, body.stato as StatoBom);
       return NextResponse.json({ ok: true });
@@ -65,7 +71,10 @@ export async function POST(
 
     if (body?.azione === 'elimina-riga') {
       if (typeof body.rigaId !== 'string') {
-        return NextResponse.json({ error: 'rigaId obbligatorio.' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'rigaId obbligatorio.' },
+          { status: 400 },
+        );
       }
       await eliminaRigaBomAdmin(identity.tenantId, id, body.rigaId);
       return NextResponse.json({ ok: true });
