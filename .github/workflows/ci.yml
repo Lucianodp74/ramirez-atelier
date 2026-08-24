@@ -51,10 +51,7 @@ jobs:
         run: npx prisma db seed
 
       - name: Format check
-        run: |
-          npx prettier --write src/components/admin/BOMCostSummary.tsx
-          git diff -- src/components/admin/BOMCostSummary.tsx
-          npx prettier --check src/components/admin/BOMCostSummary.tsx
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint
