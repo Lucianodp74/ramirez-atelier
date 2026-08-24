@@ -10,6 +10,7 @@ import { AzionePuntoDiPartenza } from '@/components/admin/AzionePuntoDiPartenza'
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
+import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
 import { formattaDimensione } from '@/lib/utils';
@@ -75,7 +76,7 @@ export default async function DettaglioRichiestaPage({
                 {richiesta.clienteNome ?? 'Senza nome'}
               </Link>
             ) : (
-              (richiesta.clienteNome ?? 'Senza nome')
+              richiesta.clienteNome ?? 'Senza nome'
             )}
           </h1>
           <p className="text-muted-foreground">{richiesta.tipoProgetto.nome}</p>
@@ -95,7 +96,6 @@ export default async function DettaglioRichiestaPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* Cliente e Contatti */}
           <Card>
             <CardHeader>
               <CardTitle>Cliente e contatti</CardTitle>
@@ -122,7 +122,6 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Tipologia progetto + Dati inseriti + Documenti/Foto (riuso del riepilogo dell'Incremento 2) */}
           <Card>
             <CardHeader>
               <CardTitle>Il progetto</CardTitle>
@@ -131,7 +130,8 @@ export default async function DettaglioRichiestaPage({
               <RiepilogoRichiesta
                 configurazione={configurazione}
                 datiForm={datiForm}
-                documenti={richiesta.documenti ?? []}richiestaId={richiesta.id}
+                documenti={richiesta.documenti ?? []}
+                richiestaId={richiesta.id}
               />
               {richiesta.documenti && richiesta.documenti.length > 0 && (
                 <div className="mt-4">
@@ -154,7 +154,8 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Note interne */}
+          <BOMCard richiestaId={richiesta.id} />
+
           <Card>
             <CardHeader>
               <CardTitle>Note interne</CardTitle>
@@ -164,7 +165,6 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Activity Timeline */}
           <Card>
             <CardHeader>
               <CardTitle>Cronologia</CardTitle>
@@ -183,7 +183,6 @@ export default async function DettaglioRichiestaPage({
         </div>
 
         <div className="space-y-6">
-          {/* Stato / Workflow */}
           <Card>
             <CardHeader>
               <CardTitle>Stato</CardTitle>
@@ -193,7 +192,6 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Completezza e prezzo */}
           <Card>
             <CardHeader>
               <CardTitle>Completezza e prezzo</CardTitle>
@@ -222,7 +220,6 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Priorità commerciale - calcolata dal Rule Engine, mai assegnata manualmente in questo incremento */}
           <Card>
             <CardHeader>
               <CardTitle>Priorità commerciale</CardTitle>
@@ -241,7 +238,6 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
-          {/* Tracciabilità Rule Engine - Requisito esplicito: quale regola, quando, quale risultato */}
           <Card>
             <CardHeader>
               <CardTitle>Regole applicate</CardTitle>

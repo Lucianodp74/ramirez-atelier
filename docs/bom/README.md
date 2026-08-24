@@ -1,30 +1,27 @@
 # RAMIREZ OS — BOM / Distinta di produzione
 
-## Scopo
+## Foundation implemented
 
-La BOM collega una `RichiestaProgetto` a una distinta di produzione senza alterare i dati storici della richiesta.
+- migration PostgreSQL additiva per `bom` e `bom_riga`;
+- una BOM per `RichiestaProgetto`;
+- indici e query isolati per `tenantId`;
+- stati `BOZZA`, `CONFERMATA`, `CHIUSA`;
+- note di produzione;
+- righe ordinate;
+- quantità, unità, materiale e lavorazione;
+- costo unitario opzionale, mai inventato dal servizio;
+- servizio server-side che usa il client DB Prisma esistente e SQL parametrizzato.
 
-## Struttura logica
+## Vincoli di sicurezza
 
-- `BOM` — intestazione della distinta, collegata a una richiesta e al tenant.
-- `BOMRiga` — componente/materiale/lavorazione, con codice, descrizione, unita, quantita e note.
-- `BOM` deve avere uno stato (`BOZZA`, `CONFERMATA`, `CHIUSA`) e timestamp di creazione/modifica.
-- Le righe devono mantenere un ordine esplicito.
+Il servizio rifiuta operazioni fuori dal `tenantId` corrente e impedisce modifiche quando la BOM non è più in `BOZZA`.
+La migration è additiva e non modifica le tabelle applicative esistenti.
 
-## Regole
+## Da completare prima del merge in produzione
 
-1. Ogni lettura/scrittura deve essere filtrata per `tenantId`.
-2. Una richiesta puo avere una sola BOM attiva; eventuali revisioni devono essere esplicite.
-3. Quantita e costi non devono essere derivati da valori inventati dal frontend.
-4. Il costo materiale deve provenire dal catalogo/prezzi professionali quando disponibile.
-5. Il configuratore alimenta la BOM solo attraverso regole dichiarate per il tipo di progetto.
-6. La BOM non modifica `datiFormJson`: lo interpreta e conserva il risultato della distinta separatamente.
-7. La pubblicazione della BOM richiede una migration Prisma applicata e testata nell'ambiente del progetto.
-
-## Sequenza di integrazione
-
-`RichiestaProgetto` → `BOM` → `BOMRiga` → Pricing/Costing → Preventivo → Produzione
-
-## Stato
-
-Questo documento definisce il contratto di implementazione. La migration e il servizio applicativo vanno aggiunti in una modifica separata e verificati con Prisma/CI prima del merge su `main`.
+1. applicare e validare la migration Prisma/PostgreSQL nell'ambiente del progetto;
+2. aggiungere i modelli BOM a `schema.prisma` e rigenerare Prisma Client quando lo schema completo può essere aggiornato in sicurezza;
+3. aggiungere endpoint protetti e interfaccia Admin usando gli helper identity/RBAC esistenti;
+4. definire le regole prodotto/configuratore che trasformano una configurazione in righe BOM;
+5. collegare il costing/Pricing Engine esclusivamente ai costi catalogo validati;
+6. eseguire CI e test end-to-end.
