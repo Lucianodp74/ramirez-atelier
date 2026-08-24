@@ -45,3 +45,51 @@ export async function elencoBenchmarkPrezzi(tenantId: string): Promise<Benchmark
       "nome"
   `;
 }
+
+export async function cercaBenchmarkCosti(
+  tenantId: string,
+  query: string,
+  unita?: string,
+): Promise<BenchmarkPrezzo[]> {
+  const termine = query.trim();
+  if (!termine) return [];
+  const unitaFiltro = unita?.trim() || null;
+
+  return db.$queryRaw<BenchmarkPrezzo[]>`
+    SELECT
+      "id",
+      "categoria",
+      "codice",
+      "nome",
+      "descrizione",
+      "unita",
+      "tipo",
+      "prezzoMin"::float8 AS "prezzoMin",
+      "prezzoMax"::float8 AS "prezzoMax",
+      "valuta",
+      "fonte",
+      "fonteUrl",
+      "rilevatoIl",
+      "note",
+      "attivo"
+    FROM "benchmark_prezzo"
+    WHERE "tenantId" = ${tenantId}
+      AND "attivo" = true
+      AND "tipo" = 'COSTO'
+      AND (
+        "nome" ILIKE ${`%${termine}%`}
+        OR "codice" ILIKE ${`%${termine}%`}
+        OR COALESCE("descrizione", '') ILIKE ${`%${termine}%`}
+      )
+      AND (${unitaFiltro}::text IS NULL OR "unita" = ${unitaFiltro})
+    ORDER BY
+      CASE
+        WHEN LOWER("nome") = LOWER(${termine}) THEN 0
+        WHEN LOWER("codice") = LOWER(${termine}) THEN 1
+        WHEN LOWER("nome") LIKE LOWER(${`${termine}%`}) THEN 2
+        ELSE 3
+      END,
+      "nome"
+    LIMIT 8
+  `;
+}
