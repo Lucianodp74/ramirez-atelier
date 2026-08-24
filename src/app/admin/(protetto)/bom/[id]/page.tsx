@@ -9,7 +9,10 @@ export default async function BomAdminDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
+  const contesto = await richiediContesto({
+    modulo: 'richieste',
+    azione: 'leggi',
+  });
   const bom = await dettaglioBomAdmin(contesto.tenantId, id);
   if (!bom) notFound();
 
