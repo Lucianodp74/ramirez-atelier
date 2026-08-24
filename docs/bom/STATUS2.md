@@ -1,1 +1,0 @@
-BOM foundation checkpoint: additive migration, tenant-scoped service and quantity invariant test are present on feat/bom-foundation. Remaining production work is schema/client synchronization, migration validation, protected Admin API/UI, configurator rules, Pricing integration and end-to-end tests.
