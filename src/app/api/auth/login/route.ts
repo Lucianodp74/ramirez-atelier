@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
     const password = typeof body.password === 'string' ? body.password : '';
 
     if (!email || !password) {
-      return NextResponse.json({ errore: 'Email e password sono obbligatorie.' }, { status: 400 });
+      return NextResponse.json(
+        { errore: 'Email e password sono obbligatorie.' },
+        { status: 400 },
+      );
     }
 
     const esito = await login(email, password, {
@@ -21,7 +24,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!esito.successo || !esito.tokenSessione) {
-      return NextResponse.json({ errore: esito.errore ?? 'Accesso non riuscito.' }, { status: 401 });
+      return NextResponse.json(
+        { errore: esito.errore ?? 'Accesso non riuscito.' },
+        { status: 401 },
+      );
     }
 
     const cookieStore = await cookies();
@@ -37,7 +43,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Errore API login', error);
     return NextResponse.json(
-      { errore: 'Servizio di accesso temporaneamente non disponibile. Riprova tra poco.' },
+      {
+        errore:
+          'Servizio di accesso temporaneamente non disponibile. Riprova tra poco.',
+      },
       { status: 503 },
     );
   }
