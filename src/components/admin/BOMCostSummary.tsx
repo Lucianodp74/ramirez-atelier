@@ -62,7 +62,9 @@ export function BOMCostSummary({ bomId }: { bomId: string | null }) {
         </div>
         <div className="rounded-md bg-muted/40 p-3">
           <p className="text-xs text-muted-foreground">Stato</p>
-          <p className="mt-1 font-semibold">{summary.completo ? 'Completo' : 'Da valorizzare'}</p>
+          <p className="mt-1 font-semibold">
+            {summary.completo ? 'Completo' : 'Da valorizzare'}
+          </p>
         </div>
       </div>
 
