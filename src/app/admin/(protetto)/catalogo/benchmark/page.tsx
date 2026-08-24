@@ -42,62 +42,63 @@ export default async function BenchmarkPrezziPage() {
       </section>
 
       <div className="space-y-10">
-        {[['Costi di riferimento', costi], ['Prezzi di mercato', prezzi]].map(
-          ([titolo, elenco]) => {
-            const righeSezione = elenco as typeof righe;
-            return (
-              <section key={titolo as string}>
-                <h2 className="mb-3 text-lg font-semibold">{titolo as string}</h2>
-                <div className="overflow-hidden rounded-lg border bg-white">
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-sm">
-                      <thead className="bg-secondary/40 text-left text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3 font-normal">Voce</th>
-                          <th className="px-4 py-3 font-normal">Categoria</th>
-                          <th className="px-4 py-3 font-normal">Valore benchmark</th>
-                          <th className="px-4 py-3 font-normal">Fonte</th>
-                          <th className="px-4 py-3 font-normal">Note</th>
+        {[
+          ['Costi di riferimento', costi],
+          ['Prezzi di mercato', prezzi],
+        ].map(([titolo, elenco]) => {
+          const righeSezione = elenco as typeof righe;
+          return (
+            <section key={titolo as string}>
+              <h2 className="mb-3 text-lg font-semibold">{titolo as string}</h2>
+              <div className="overflow-hidden rounded-lg border bg-white">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px] text-sm">
+                    <thead className="bg-secondary/40 text-left text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3 font-normal">Voce</th>
+                        <th className="px-4 py-3 font-normal">Categoria</th>
+                        <th className="px-4 py-3 font-normal">Valore benchmark</th>
+                        <th className="px-4 py-3 font-normal">Fonte</th>
+                        <th className="px-4 py-3 font-normal">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {righeSezione.map((riga) => (
+                        <tr key={riga.id}>
+                          <td className="px-4 py-3">
+                            <div className="font-medium">{riga.nome}</div>
+                            <div className="text-xs text-muted-foreground">{riga.codice}</div>
+                          </td>
+                          <td className="px-4 py-3">{riga.categoria}</td>
+                          <td className="px-4 py-3 font-medium">
+                            {euro(riga.prezzoMin, riga.prezzoMax, riga.unita)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <a
+                              href={riga.fonteUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline underline-offset-2"
+                            >
+                              {riga.fonte}
+                            </a>
+                            <div className="text-xs text-muted-foreground">
+                              Rilevato{' '}
+                              {new Intl.DateTimeFormat('it-IT').format(new Date(riga.rilevatoIl))}
+                            </div>
+                          </td>
+                          <td className="max-w-sm px-4 py-3 text-xs text-muted-foreground">
+                            {riga.note ?? '—'}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {righeSezione.map((riga) => (
-                          <tr key={riga.id}>
-                            <td className="px-4 py-3">
-                              <div className="font-medium">{riga.nome}</div>
-                              <div className="text-xs text-muted-foreground">{riga.codice}</div>
-                            </td>
-                            <td className="px-4 py-3">{riga.categoria}</td>
-                            <td className="px-4 py-3 font-medium">
-                              {euro(riga.prezzoMin, riga.prezzoMax, riga.unita)}
-                            </td>
-                            <td className="px-4 py-3">
-                              <a
-                                href={riga.fonteUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="underline underline-offset-2"
-                              >
-                                {riga.fonte}
-                              </a>
-                              <div className="text-xs text-muted-foreground">
-                                Rilevato{' '}
-                                {new Intl.DateTimeFormat('it-IT').format(new Date(riga.rilevatoIl))}
-                              </div>
-                            </td>
-                            <td className="max-w-sm px-4 py-3 text-xs text-muted-foreground">
-                              {riga.note ?? '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </section>
-            );
-          },
-        )}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </main>
   );
