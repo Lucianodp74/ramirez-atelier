@@ -20,18 +20,22 @@ export default function LoginPage() {
     e.preventDefault();
     setErrore(null);
     iniziaTransizione(async () => {
-      const risposta = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const dati = await risposta.json();
-      if (!risposta.ok) {
-        setErrore(dati.errore ?? 'Accesso non riuscito.');
-        return;
+      try {
+        const risposta = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const dati: { errore?: string; successo?: boolean } = await risposta.json();
+        if (!risposta.ok) {
+          setErrore(dati.errore ?? 'Accesso non riuscito.');
+          return;
+        }
+        router.push('/admin');
+        router.refresh();
+      } catch {
+        setErrore('Servizio di accesso temporaneamente non disponibile. Riprova tra poco.');
       }
-      router.push('/admin');
-      router.refresh();
     });
   }
 
