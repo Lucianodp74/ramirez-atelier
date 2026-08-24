@@ -12,7 +12,13 @@ type Summary = {
   completo: boolean;
 };
 
-export function BOMCostSummary({ bomId }: { bomId: string | null }) {
+export function BOMCostSummary({
+  bomId,
+  refreshKey,
+}: {
+  bomId: string | null;
+  refreshKey?: string | number;
+}) {
   const [summary, setSummary] = useState<Summary | null>(null);
 
   useEffect(() => {
@@ -35,7 +41,7 @@ export function BOMCostSummary({ bomId }: { bomId: string | null }) {
     return () => {
       active = false;
     };
-  }, [bomId]);
+  }, [bomId, refreshKey]);
 
   if (!summary) return null;
 
