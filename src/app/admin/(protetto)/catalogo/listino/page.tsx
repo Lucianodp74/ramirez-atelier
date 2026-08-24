@@ -10,6 +10,7 @@ const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR'
 export default async function ListinoPage() {
   const c = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
   const righe = await elencoPrezziListino(c.tenantId);
+  const storici = await Promise.all(righe.map((riga) => storicoPrezzoListino(c.tenantId, riga.id)));
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
@@ -33,8 +34,8 @@ export default async function ListinoPage() {
         <table className="w-full min-w-[1100px] text-sm">
           <thead className="bg-secondary/40 text-left text-muted-foreground"><tr><th className="p-3">Voce</th><th className="p-3">Categoria</th><th className="p-3">Unità</th><th className="p-3">Prezzo attuale</th><th className="p-3">Stato</th><th className="p-3">Aggiorna prezzo</th></tr></thead>
           <tbody className="divide-y">
-            {righe.map(async (riga) => {
-              const storico = await storicoPrezzoListino(c.tenantId, riga.id);
+            {righe.map((riga, indice) => {
+              const storico = storici[indice];
               return (
                 <tr key={riga.id}>
                   <td className="p-3"><div className="font-medium">{riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice}</div></td>
