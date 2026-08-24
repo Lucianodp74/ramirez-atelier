@@ -3,11 +3,7 @@ import { notFound } from 'next/navigation';
 import { richiediContesto } from '@/server/identity/contesto';
 import { dettaglioBomAdmin } from '@/server/services/bom-admin-service';
 
-export default async function BomAdminDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function BomAdminDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const contesto = await richiediContesto({
     modulo: 'richieste',
@@ -26,9 +22,7 @@ export default async function BomAdminDetailPage({
           <p className="text-sm text-slate-500">Richiesta {bom.richiestaId}</p>
           <h1 className="text-3xl font-semibold">BOM v{bom.versione}</h1>
         </div>
-        <span className="rounded-full border px-3 py-1 text-sm">
-          {bom.stato}
-        </span>
+        <span className="rounded-full border px-3 py-1 text-sm">{bom.stato}</span>
       </div>
 
       <section className="overflow-hidden rounded-lg border bg-white">
@@ -51,9 +45,7 @@ export default async function BomAdminDetailPage({
                 <td className="px-4 py-3">{riga.descrizione}</td>
                 <td className="px-4 py-3">{riga.unita}</td>
                 <td className="px-4 py-3 text-right">{riga.quantita}</td>
-                <td className="px-4 py-3 text-right">
-                  {riga.costoUnitario ?? '—'}
-                </td>
+                <td className="px-4 py-3 text-right">{riga.costoUnitario ?? '—'}</td>
               </tr>
             ))}
           </tbody>
