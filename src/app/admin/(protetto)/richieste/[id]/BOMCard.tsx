@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
 type BomRow = {
@@ -24,7 +24,29 @@ type BomCostSummary = {
   completo: boolean;
 };
 
+type BenchmarkSuggestion = {
+  id: string;
+  categoria: string;
+  codice: string;
+  nome: string;
+  descrizione: string | null;
+  unita: string;
+  prezzoMin: number;
+  prezzoMax: number;
+  costoConsigliato: number;
+  fonte: string;
+  fonteUrl: string;
+  note: string | null;
+};
+
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+
+function categoriaBom(categoria: string) {
+  if (categoria === 'materiale') return 'MATERIALE';
+  if (categoria === 'lavorazione') return 'LAVORAZIONE';
+  if (categoria === 'ferramenta') return 'FERRAMENTA';
+  return 'COMPONENTE';
+}
 
 export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [bomId, setBomId] = useState<string | null>(null);
@@ -39,6 +61,51 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [materiale, setMateriale] = useState('');
   const [lavorazione, setLavorazione] = useState('');
   const [costoUnitario, setCostoUnitario] = useState('');
+  const [suggerimenti, setSuggerimenti] = useState<BenchmarkSuggestion[]>([]);
+  const [ricercaBenchmark, setRicercaBenchmark] = useState(false);
+
+  useEffect(() => {
+    const query = descrizione.trim();
+    if (query.length < 2) {
+      setSuggerimenti([]);
+      setRicercaBenchmark(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setRicercaBenchmark(true);
+      try {
+        const params = new URLSearchParams({ q: query });
+        if (unita.trim()) params.set('unita', unita.trim());
+        const response = await fetch(`/api/admin/benchmark?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? 'Impossibile cercare i benchmark.');
+        setSuggerimenti(data.suggerimenti ?? []);
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === 'AbortError')) {
+          setSuggerimenti([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setRicercaBenchmark(false);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [descrizione, unita]);
+
+  function usaBenchmark(suggerimento: BenchmarkSuggestion) {
+    setDescrizione(suggerimento.nome);
+    setCategoria(categoriaBom(suggerimento.categoria));
+    setUnita(suggerimento.unita);
+    setCostoUnitario(String(suggerimento.costoConsigliato));
+    setSuggerimenti([]);
+  }
 
   async function caricaBom(id: string) {
     const response = await fetch(`/api/admin/bom?id=${encodeURIComponent(id)}`);
@@ -201,6 +268,12 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           </div>
 
           <form className="mt-5 grid gap-3 rounded-md border p-4" onSubmit={aggiungi}>
+            <div>
+              <p className="text-sm font-medium">Aggiungi riga alla BOM</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Cerca una voce: il suggerimento usa solo benchmark di tipo COSTO. Il valore proposto è il punto medio del range e resta modificabile.
+              </p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className="text-sm">Categoria
                 <select className="mt-1 w-full rounded-md border bg-background p-2" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
@@ -226,6 +299,39 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                 <input className="mt-1 w-full rounded-md border bg-background p-2" min="0" step="0.01" type="number" value={costoUnitario} onChange={(e) => setCostoUnitario(e.target.value)} />
               </label>
             </div>
+
+            {(ricercaBenchmark || suggerimenti.length > 0) && (
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium">Suggerimenti dal listino benchmark</p>
+                  {ricercaBenchmark && <span className="text-xs text-muted-foreground">Ricerca…</span>}
+                </div>
+                <div className="space-y-2">
+                  {suggerimenti.map((suggerimento) => (
+                    <div key={suggerimento.id} className="flex flex-col gap-2 rounded-md border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{suggerimento.nome}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {suggerimento.categoria} · {suggerimento.unita} · {euro.format(suggerimento.prezzoMin)} – {euro.format(suggerimento.prezzoMax)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Fonte: {suggerimento.fonte}</p>
+                      </div>
+                      <button
+                        className="shrink-0 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
+                        type="button"
+                        onClick={() => usaBenchmark(suggerimento)}
+                      >
+                        Usa {euro.format(suggerimento.costoConsigliato)}
+                      </button>
+                    </div>
+                  ))}
+                  {!ricercaBenchmark && suggerimenti.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nessun costo benchmark trovato per questa ricerca.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} type="submit">
                 {busy ? 'Salvataggio…' : 'Aggiungi riga'}
