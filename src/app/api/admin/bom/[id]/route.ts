@@ -32,19 +32,13 @@ async function contesto() {
   });
 }
 
-export async function GET(
-  _: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const identity = await contesto();
     const { id } = await params;
     const bom = await dettaglioBomAdmin(identity.tenantId, id);
     if (!bom) {
-      return NextResponse.json(
-        { error: 'Distinta non trovata' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Distinta non trovata' }, { status: 404 });
     }
     return NextResponse.json(bom);
   } catch (error) {
@@ -52,10 +46,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const identity = await contesto();
     const { id } = await params;
@@ -63,10 +54,7 @@ export async function POST(
 
     if (body?.azione === 'stato') {
       if (!['BOZZA', 'CONFERMATA', 'CHIUSA'].includes(body.stato)) {
-        return NextResponse.json(
-          { error: 'Stato non valido.' },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: 'Stato non valido.' }, { status: 400 });
       }
       await cambiaStatoBomAdmin(identity.tenantId, id, body.stato as StatoBom);
       return NextResponse.json({ ok: true });
@@ -74,20 +62,13 @@ export async function POST(
 
     if (body?.azione === 'elimina-riga') {
       if (typeof body.rigaId !== 'string') {
-        return NextResponse.json(
-          { error: 'rigaId obbligatorio.' },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: 'rigaId obbligatorio.' }, { status: 400 });
       }
       await eliminaRigaBomAdmin(identity.tenantId, id, body.rigaId);
       return NextResponse.json({ ok: true });
     }
 
-    if (
-      body?.categoria == null ||
-      body?.descrizione == null ||
-      body?.quantita == null
-    ) {
+    if (body?.categoria == null || body?.descrizione == null || body?.quantita == null) {
       return NextResponse.json(
         { error: 'categoria, descrizione e quantita sono obbligatori.' },
         { status: 400 },
@@ -102,11 +83,9 @@ export async function POST(
       quantita: Number(body.quantita),
       materiale: body.materiale ?? null,
       lavorazione: body.lavorazione ?? null,
-      costoUnitario:
-        body.costoUnitario == null ? null : Number(body.costoUnitario),
+      costoUnitario: body.costoUnitario == null ? null : Number(body.costoUnitario),
       note: body.note ?? null,
-      ordinamento:
-        body.ordinamento == null ? undefined : Number(body.ordinamento),
+      ordinamento: body.ordinamento == null ? undefined : Number(body.ordinamento),
     });
     return NextResponse.json({ id: rigaId }, { status: 201 });
   } catch (error) {
