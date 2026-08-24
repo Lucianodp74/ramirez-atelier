@@ -8,7 +8,7 @@ import {
 } from '@/server/identity/contesto';
 
 async function contesto() {
-  return richiediContesto({ modulo: 'richieste', azione: 'scrivi' });
+  return richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
 }
 
 export async function POST(request: Request) {
