@@ -50,11 +50,6 @@ jobs:
       - name: Prisma seed
         run: npx prisma db seed
 
-      - name: Debug prettier
-        run: |
-          npx prettier src/app/admin/recupera-password/page.tsx src/app/api/auth/login/route.ts --write
-          git diff -- src/app/admin/recupera-password/page.tsx src/app/api/auth/login/route.ts
-
       - name: Format check
         run: npm run format:check
 
