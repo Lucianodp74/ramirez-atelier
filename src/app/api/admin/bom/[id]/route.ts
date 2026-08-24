@@ -26,7 +26,10 @@ function errorResponse(error: unknown) {
 }
 
 async function contesto() {
-  return richiediContesto({ modulo: 'richieste', azione: 'leggi' });
+  return richiediContesto({
+    modulo: 'richieste',
+    azione: 'leggi',
+  });
 }
 
 export async function GET(
