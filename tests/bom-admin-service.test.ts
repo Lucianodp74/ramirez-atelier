@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { validaCostoUnitarioBom, validaQuantitaBom, validaTransizioneBom } from '@/server/services/bom-service';
+import {
+  validaCostoUnitarioBom,
+  validaQuantitaBom,
+  validaTransizioneBom,
+} from '@/server/services/bom-service';
 
 describe('BOM admin business boundaries', () => {
   it('accepts only positive finite quantities', () => {
