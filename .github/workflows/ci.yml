@@ -50,19 +50,6 @@ jobs:
       - name: Prisma seed
         run: npx prisma db seed
 
-      - name: Diagnose Prettier
-        run: |
-          npx prettier --write \
-            'src/app/admin/(protetto)/bom/[id]/page.tsx' \
-            'src/app/admin/(protetto)/bom/page.tsx' \
-            'src/app/api/admin/bom/[id]/route.ts' \
-            'src/server/services/bom-admin-service.ts'
-          git diff -- \
-            'src/app/admin/(protetto)/bom/[id]/page.tsx' \
-            'src/app/admin/(protetto)/bom/page.tsx' \
-            'src/app/api/admin/bom/[id]/route.ts' \
-            'src/server/services/bom-admin-service.ts'
-
       - name: Format check
         run: npm run format:check
 
