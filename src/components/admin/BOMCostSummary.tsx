@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+const euro = new Intl.NumberFormat('it-IT', {
+  style: 'currency',
+  currency: 'EUR',
+});
 
 type Summary = {
   righeConCosto: number;
@@ -78,7 +81,10 @@ export function BOMCostSummary({
         <div className="mt-4 space-y-2">
           <p className="text-sm font-medium">Ripartizione costi</p>
           {summary.categorie.map((item) => (
-            <div key={item.categoria} className="flex items-center justify-between text-sm">
+            <div
+              key={item.categoria}
+              className="flex items-center justify-between text-sm"
+            >
               <span>{item.categoria} · {item.righe} righe</span>
               <span className="font-medium">{euro.format(item.totale)}</span>
             </div>
