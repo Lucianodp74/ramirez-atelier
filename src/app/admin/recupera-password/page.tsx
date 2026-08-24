@@ -10,18 +10,29 @@ import { Button } from '@/components/ui/button';
 export default function RecuperaPasswordPage() {
   const [email, setEmail] = useState('');
   const [messaggio, setMessaggio] = useState<string | null>(null);
+  const [errore, setErrore] = useState<string | null>(null);
   const [inCorso, iniziaTransizione] = useTransition();
 
   function invia(e: React.FormEvent) {
     e.preventDefault();
+    setMessaggio(null);
+    setErrore(null);
     iniziaTransizione(async () => {
-      const risposta = await fetch('/api/auth/recupero-password/richiedi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const dati = await risposta.json();
-      setMessaggio(dati.messaggio);
+      try {
+        const risposta = await fetch('/api/auth/recupero-password/richiedi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const dati: { messaggio?: string; errore?: string } = await risposta.json();
+        if (!risposta.ok) {
+          setErrore(dati.errore ?? 'Servizio di recupero temporaneamente non disponibile.');
+          return;
+        }
+        setMessaggio(dati.messaggio ?? 'Se l\'indirizzo è registrato, riceverai a breve un\'email con le istruzioni.');
+      } catch {
+        setErrore('Servizio di recupero temporaneamente non disponibile. Riprova tra poco.');
+      }
     });
   }
 
@@ -47,6 +58,7 @@ export default function RecuperaPasswordPage() {
                   required
                 />
               </div>
+              {errore && <p className="text-sm text-destructive">{errore}</p>}
               <Button type="submit" className="w-full" disabled={inCorso}>
                 {inCorso ? 'Invio…' : 'Invia le istruzioni'}
               </Button>
