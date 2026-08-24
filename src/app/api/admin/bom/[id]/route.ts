@@ -25,16 +25,16 @@ function errorResponse(error: unknown) {
   );
 }
 
-async function contesto() {
+async function contesto(azione: 'leggi' | 'gestisci') {
   return richiediContesto({
     modulo: 'richieste',
-    azione: 'leggi',
+    azione,
   });
 }
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const identity = await contesto();
+    const identity = await contesto('leggi');
     const { id } = await params;
     const bom = await dettaglioBomAdmin(identity.tenantId, id);
     if (!bom) {
@@ -48,7 +48,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const identity = await contesto();
+    const identity = await contesto('gestisci');
     const { id } = await params;
     const body = await request.json();
 
