@@ -14,12 +14,6 @@ const SEZIONI_CATALOGO = [
   { chiave: 'ferramenta', nome: 'Ferramenta', href: '/admin/catalogo/ferramenta' },
   { chiave: 'accessori', nome: 'Accessori', href: '/admin/catalogo/accessori' },
   { chiave: 'varianti', nome: 'Stili di partenza', href: '/admin/catalogo/varianti' },
-  {
-    chiave: 'benchmark',
-    nome: 'Listino benchmark',
-    href: '/admin/catalogo/benchmark',
-    descrizione: 'Riferimenti di mercato per calibrare costi BOM e prezzi.',
-  },
 ];
 
 export default async function CatalogoPage() {
@@ -65,9 +59,6 @@ export default async function CatalogoPage() {
                     {attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total
                     {s.righe.length === 1 ? 'e' : 'i'}
                   </p>
-                  {'descrizione' in s && s.descrizione ? (
-                    <p className="mt-2 text-xs text-muted-foreground">{s.descrizione}</p>
-                  ) : null}
                 </CardContent>
               </Card>
             </Link>
