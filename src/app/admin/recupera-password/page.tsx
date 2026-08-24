@@ -24,12 +24,9 @@ export default function RecuperaPasswordPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
         });
-        const dati: { messaggio?: string; errore?: string } =
-          await risposta.json();
+        const dati: { messaggio?: string; errore?: string } = await risposta.json();
         if (!risposta.ok) {
-          setErrore(
-            dati.errore ?? 'Servizio di recupero temporaneamente non disponibile.',
-          );
+          setErrore(dati.errore ?? 'Servizio di recupero temporaneamente non disponibile.');
           return;
         }
         setMessaggio(
@@ -37,9 +34,7 @@ export default function RecuperaPasswordPage() {
             "Se l'indirizzo è registrato, riceverai a breve un'email con le istruzioni.",
         );
       } catch {
-        setErrore(
-          'Servizio di recupero temporaneamente non disponibile. Riprova tra poco.',
-        );
+        setErrore('Servizio di recupero temporaneamente non disponibile. Riprova tra poco.');
       }
     });
   }
