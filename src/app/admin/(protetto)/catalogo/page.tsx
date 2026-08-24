@@ -18,6 +18,7 @@ const SEZIONI_CATALOGO = [
 
 export default async function CatalogoPage() {
   const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
+
   if (SEZIONI_CATALOGO.length === 1) redirect(SEZIONI_CATALOGO[0].href);
 
   const [finiture, ferramenta, accessori, varianti] = await Promise.all([
@@ -37,14 +38,53 @@ export default async function CatalogoPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <h1 className="mb-2 text-2xl font-semibold tracking-tight">Catalogo Tecnico</h1>
-      <p className="mb-8 text-sm text-muted-foreground">I materiali, le finiture e gli altri elementi che i clienti scelgono nel configuratore — gestiti qui, senza bisogno di alcun intervento di sviluppo.</p>
+      <p className="mb-8 text-sm text-muted-foreground">
+        I materiali, le finiture e gli altri elementi che i clienti scelgono nel configuratore —
+        gestiti qui, senza bisogno di alcun intervento di sviluppo.
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {sezioni.map((s) => {
           const attive = s.righe.filter((r) => r.attiva).length;
-          return <Link key={s.chiave} href={s.href}><Card className="h-full transition-colors hover:border-accent"><CardHeader><CardTitle>{s.nome}</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">{attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total{s.righe.length === 1 ? 'e' : 'i'}</p></CardContent></Card></Link>;
+          return (
+            <Link key={s.chiave} href={s.href}>
+              <Card className="h-full transition-colors hover:border-accent">
+                <CardHeader>
+                  <CardTitle>{s.nome}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total
+                    {s.righe.length === 1 ? 'e' : 'i'}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
         })}
-        <Link href="/admin/catalogo/listino"><Card className="h-full transition-colors hover:border-accent"><CardHeader><CardTitle>Listino del falegname</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Prezzi reali interni, aggiornabili e storicizzati. Hanno priorità sui benchmark.</p></CardContent></Card></Link>
-        <Link href="/admin/catalogo/benchmark"><Card className="h-full transition-colors hover:border-accent"><CardHeader><CardTitle>Listino benchmark</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Riferimenti di mercato per costi BOM e prezzi di vendita.</p></CardContent></Card></Link>
+        <Link href="/admin/catalogo/listino">
+          <Card className="h-full transition-colors hover:border-accent">
+            <CardHeader>
+              <CardTitle>Listino del falegname</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Prezzi reali interni, aggiornabili e storicizzati. Hanno priorità sui benchmark.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/catalogo/benchmark">
+          <Card className="h-full transition-colors hover:border-accent">
+            <CardHeader>
+              <CardTitle>Listino benchmark</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Riferimenti di mercato per costi BOM e prezzi di vendita.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
