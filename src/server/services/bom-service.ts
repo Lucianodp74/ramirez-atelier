@@ -49,8 +49,17 @@ type BomRigaRow = {
   updatedAt: Date;
 };
 
-function assertQuantita(quantita: number) {
-  if (!Number.isFinite(quantita) || quantita <= 0) throw new Error('La quantità BOM deve essere maggiore di zero.');
+export function validaQuantitaBom(quantita: number) {
+  if (!Number.isFinite(quantita) || quantita <= 0) {
+    throw new Error('La quantità BOM deve essere maggiore di zero.');
+  }
+}
+
+export function validaCostoUnitarioBom(costoUnitario: number | null | undefined) {
+  if (costoUnitario == null) return;
+  if (!Number.isFinite(costoUnitario) || costoUnitario < 0) {
+    throw new Error('Il costo unitario BOM deve essere un numero maggiore o uguale a zero.');
+  }
 }
 
 export function validaTransizioneBom(statoCorrente: StatoBom, nuovoStato: StatoBom) {
@@ -77,17 +86,20 @@ export async function creaBom(tenantId: string, input: CreaBomInput) {
   const richiesta = await db.richiestaProgetto.findFirst({ where: { id: input.richiestaId, tenantId }, select: { id: true } });
   if (!richiesta) throw new Error('Richiesta non trovata.');
 
+  const id = crypto.randomUUID();
+  const inserita = await db.$queryRaw<Array<{ id: string }>>`
+    INSERT INTO "bom" ("id", "tenantId", "richiestaId", "stato", "versione", "noteProduzione", "createdAt", "updatedAt")
+    VALUES (${id}, ${tenantId}, ${input.richiestaId}, 'BOZZA', 1, ${input.noteProduzione ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT ("richiestaId") DO NOTHING
+    RETURNING "id"
+  `;
+  if (inserita[0]) return inserita[0].id;
+
   const esistente = await db.$queryRaw<Array<{ id: string }>>`
     SELECT "id" FROM "bom" WHERE "tenantId" = ${tenantId} AND "richiestaId" = ${input.richiestaId} LIMIT 1
   `;
-  if (esistente.length) return esistente[0].id;
-
-  const id = crypto.randomUUID();
-  await db.$executeRaw`
-    INSERT INTO "bom" ("id", "tenantId", "richiestaId", "stato", "versione", "noteProduzione", "createdAt", "updatedAt")
-    VALUES (${id}, ${tenantId}, ${input.richiestaId}, 'BOZZA', 1, ${input.noteProduzione ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `;
-  return id;
+  if (esistente[0]) return esistente[0].id;
+  throw new Error('Impossibile creare la distinta.');
 }
 
 export async function dettaglioBom(tenantId: string, bomId: string): Promise<BomDetailRow | null> {
@@ -102,7 +114,8 @@ export async function dettaglioBom(tenantId: string, bomId: string): Promise<Bom
 }
 
 export async function aggiungiRigaBom(tenantId: string, bomId: string, input: CreaBomRigaInput) {
-  assertQuantita(input.quantita);
+  validaQuantitaBom(input.quantita);
+  validaCostoUnitarioBom(input.costoUnitario);
   const bom = await db.$queryRaw<Array<{ id: string; stato: StatoBom }>>`
     SELECT "id", "stato" FROM "bom" WHERE "id" = ${bomId} AND "tenantId" = ${tenantId} LIMIT 1
   `;
