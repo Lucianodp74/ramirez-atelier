@@ -46,7 +46,9 @@ export default async function BomAdminDetailPage({
                 <td className="px-4 py-3">{riga.descrizione}</td>
                 <td className="px-4 py-3">{riga.unita}</td>
                 <td className="px-4 py-3 text-right">{riga.quantita}</td>
-                <td className="px-4 py-3 text-right">{riga.costoUnitario ?? '—'}</td>
+                <td className="px-4 py-3 text-right">
+                  {riga.costoUnitario ?? '—'}
+                </td>
               </tr>
             ))}
           </tbody>
