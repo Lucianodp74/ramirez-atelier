@@ -3,7 +3,11 @@ import { notFound } from 'next/navigation';
 import { richiediContesto } from '@/server/identity/contesto';
 import { dettaglioBomAdmin } from '@/server/services/bom-admin-service';
 
-export default async function BomAdminDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BomAdminDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
   const bom = await dettaglioBomAdmin(contesto.tenantId, id);
@@ -11,7 +15,9 @@ export default async function BomAdminDetailPage({ params }: { params: Promise<{
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <Link href="/admin/bom" className="text-sm underline">← Distinte base</Link>
+      <Link href="/admin/bom" className="text-sm underline">
+        ← Distinte base
+      </Link>
       <div className="mt-4 mb-6 flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Richiesta {bom.richiestaId}</p>
