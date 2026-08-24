@@ -36,9 +36,9 @@ export default async function BenchmarkPrezziPage() {
       </div>
 
       <section className="mb-10 rounded-lg border bg-amber-50/50 p-4 text-sm text-amber-950">
-        <strong>Regola di utilizzo:</strong> le voci <strong>COSTO</strong> possono essere usate come
-        punto di partenza per il costo BOM; le voci <strong>PREZZO_VENDITA</strong> sono benchmark del
-        mercato e non devono essere inserite come costo unitario della produzione.
+        <strong>Regola di utilizzo:</strong> le voci <strong>COSTO</strong> possono essere usate
+        come punto di partenza per il costo BOM; le voci <strong>PREZZO_VENDITA</strong> sono
+        benchmark del mercato e non devono essere inserite come costo unitario della produzione.
       </section>
 
       <div className="space-y-10">
