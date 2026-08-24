@@ -45,14 +45,9 @@ export default async function BomAdminPage() {
                   <td className="px-4 py-3">{item.stato}</td>
                   <td className="px-4 py-3">v{item.versione}</td>
                   <td className="px-4 py-3">{item.righeCount}</td>
-                  <td className="px-4 py-3">
-                    {item.updatedAt.toLocaleString('it-IT')}
-                  </td>
+                  <td className="px-4 py-3">{item.updatedAt.toLocaleString('it-IT')}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      className="font-medium underline"
-                      href={`/admin/bom/${item.id}`}
-                    >
+                    <Link className="font-medium underline" href={`/admin/bom/${item.id}`}>
                       Apri
                     </Link>
                   </td>
