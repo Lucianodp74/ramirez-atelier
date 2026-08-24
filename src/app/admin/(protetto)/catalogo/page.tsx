@@ -9,17 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Elenco delle sezioni del Catalogo Tecnico oggi disponibili. Con una sola
- * sezione questa pagina reindirizza automaticamente (v. Incremento 2); con
- * più di una, come ora, mostra davvero le card - nessuna riga di logica
- * riscritta per farlo emergere, solo dati (Progressive Disclosure).
- */
 const SEZIONI_CATALOGO = [
   { chiave: 'finiture', nome: 'Finiture', href: '/admin/catalogo/finiture' },
   { chiave: 'ferramenta', nome: 'Ferramenta', href: '/admin/catalogo/ferramenta' },
   { chiave: 'accessori', nome: 'Accessori', href: '/admin/catalogo/accessori' },
   { chiave: 'varianti', nome: 'Stili di partenza', href: '/admin/catalogo/varianti' },
+  {
+    chiave: 'benchmark',
+    nome: 'Listino benchmark',
+    href: '/admin/catalogo/benchmark',
+    descrizione: 'Riferimenti di mercato per calibrare costi BOM e prezzi.',
+  },
 ];
 
 export default async function CatalogoPage() {
@@ -65,11 +65,26 @@ export default async function CatalogoPage() {
                     {attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total
                     {s.righe.length === 1 ? 'e' : 'i'}
                   </p>
+                  {'descrizione' in s && s.descrizione ? (
+                    <p className="mt-2 text-xs text-muted-foreground">{s.descrizione}</p>
+                  ) : null}
                 </CardContent>
               </Card>
             </Link>
           );
         })}
+        <Link href="/admin/catalogo/benchmark">
+          <Card className="h-full transition-colors hover:border-accent">
+            <CardHeader>
+              <CardTitle>Listino benchmark</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Riferimenti di mercato per costi BOM e prezzi di vendita.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
