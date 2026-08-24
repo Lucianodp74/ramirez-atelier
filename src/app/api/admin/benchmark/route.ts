@@ -11,13 +11,16 @@ export async function GET(request: Request) {
     const identity = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
     const params = new URL(request.url).searchParams;
     const query = params.get('q') ?? '';
-    const unita = params.get('unita') ?? undefined;
 
     if (query.trim().length < 2) {
       return NextResponse.json({ suggerimenti: [] });
     }
 
-    const righe = await cercaBenchmarkCosti(identity.tenantId, query, unita);
+    // La descrizione determina la ricerca; l'unità non deve filtrare i risultati.
+    // Il benchmark restituisce la propria unità e il pulsante "Usa" la applica
+    // alla riga BOM. In questo modo una nuova riga (default "pz") può comunque
+    // trovare, ad esempio, una voce Blum prima che l'unità sia stata scelta.
+    const righe = await cercaBenchmarkCosti(identity.tenantId, query);
     return NextResponse.json({
       suggerimenti: righe.map((riga) => ({
         id: riga.id,
