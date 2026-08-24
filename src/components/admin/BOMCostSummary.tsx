@@ -85,7 +85,9 @@ export function BOMCostSummary({
               key={item.categoria}
               className="flex items-center justify-between text-sm"
             >
-              <span>{item.categoria} · {item.righe} righe</span>
+              <span>
+                {item.categoria} · {item.righe} righe
+              </span>
               <span className="font-medium">{euro.format(item.totale)}</span>
             </div>
           ))}
