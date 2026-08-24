@@ -3,7 +3,10 @@ import { richiediContesto } from '@/server/identity/contesto';
 import { listaBomAdmin } from '@/server/services/bom-admin-service';
 
 export default async function BomAdminPage() {
-  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
+  const contesto = await richiediContesto({
+    modulo: 'richieste',
+    azione: 'leggi',
+  });
   const bom = await listaBomAdmin(contesto.tenantId);
 
   return (
@@ -46,7 +49,10 @@ export default async function BomAdminPage() {
                     {item.updatedAt.toLocaleString('it-IT')}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link className="font-medium underline" href={`/admin/bom/${item.id}`}>
+                    <Link
+                      className="font-medium underline"
+                      href={`/admin/bom/${item.id}`}
+                    >
                       Apri
                     </Link>
                   </td>
