@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { BOMCostSummary } from '@/components/admin/BOMCostSummary';
 
 type BomRow = {
   id: string;
@@ -232,6 +233,8 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
               </div>
             </div>
           )}
+
+          <BOMCostSummary bomId={bomId} />
 
           <div className="mt-4 overflow-x-auto rounded-md border">
             <table className="w-full min-w-[760px] text-sm">
