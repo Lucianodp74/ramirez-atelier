@@ -12,7 +12,9 @@ export default async function BomAdminPage() {
         <div>
           <p className="text-sm text-slate-500">Amministrazione</p>
           <h1 className="text-3xl font-semibold">Distinte base</h1>
-          <p className="mt-1 text-sm text-slate-600">BOM del tenant corrente, con stato e numero di righe.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            BOM del tenant corrente, con stato e numero di righe.
+          </p>
         </div>
       </div>
 
@@ -42,7 +44,12 @@ export default async function BomAdminPage() {
                   <td className="px-4 py-3">{item.righeCount}</td>
                   <td className="px-4 py-3">{item.updatedAt.toLocaleString('it-IT')}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link className="font-medium underline" href={`/admin/bom/${item.id}`}>Apri</Link>
+                    <Link
+                      className="font-medium underline"
+                      href={`/admin/bom/${item.id}`}
+                    >
+                      Apri
+                    </Link>
                   </td>
                 </tr>
               ))}
