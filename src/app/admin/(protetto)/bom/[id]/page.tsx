@@ -26,7 +26,9 @@ export default async function BomAdminDetailPage({
           <p className="text-sm text-slate-500">Richiesta {bom.richiestaId}</p>
           <h1 className="text-3xl font-semibold">BOM v{bom.versione}</h1>
         </div>
-        <span className="rounded-full border px-3 py-1 text-sm">{bom.stato}</span>
+        <span className="rounded-full border px-3 py-1 text-sm">
+          {bom.stato}
+        </span>
       </div>
 
       <section className="overflow-hidden rounded-lg border bg-white">
