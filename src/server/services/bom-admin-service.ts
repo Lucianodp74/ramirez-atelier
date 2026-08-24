@@ -48,19 +48,11 @@ export async function aggiungiRigaBomAdmin(
   return aggiungiRigaBom(tenantId, bomId, input);
 }
 
-export async function cambiaStatoBomAdmin(
-  tenantId: string,
-  bomId: string,
-  stato: StatoBom,
-) {
+export async function cambiaStatoBomAdmin(tenantId: string, bomId: string, stato: StatoBom) {
   return cambiaStatoBom(tenantId, bomId, stato);
 }
 
-export async function eliminaRigaBomAdmin(
-  tenantId: string,
-  bomId: string,
-  rigaId: string,
-) {
+export async function eliminaRigaBomAdmin(tenantId: string, bomId: string, rigaId: string) {
   const result = await db.$executeRaw`
     DELETE FROM "bom_riga" br
     USING "bom" b
