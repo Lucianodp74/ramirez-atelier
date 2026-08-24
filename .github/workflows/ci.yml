@@ -50,21 +50,6 @@ jobs:
       - name: Prisma seed
         run: npx prisma db seed
 
-      - name: Diagnose Prettier output
-        run: |
-          npx prettier --write \
-            'src/app/admin/(protetto)/bom/[id]/page.tsx' \
-            'src/app/admin/(protetto)/bom/page.tsx' \
-            'src/app/api/admin/bom/[id]/route.ts' \
-            'src/server/services/bom-admin-service.ts'
-          git diff --no-ext-diff > /tmp/prettier.patch
-
-      - name: Upload Prettier patch
-        uses: actions/upload-artifact@v4
-        with:
-          name: prettier-patch
-          path: /tmp/prettier.patch
-
       - name: Format check
         run: npm run format:check
 
