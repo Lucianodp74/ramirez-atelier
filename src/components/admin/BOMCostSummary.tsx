@@ -57,9 +57,7 @@ export function BOMCostSummary({
             Il costo resta separato dal prezzo di vendita del preventivo.
           </p>
         </div>
-        <p className="text-xl font-semibold">
-          {euro.format(summary.subtotale)}
-        </p>
+        <p className="text-xl font-semibold">{euro.format(summary.subtotale)}</p>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
