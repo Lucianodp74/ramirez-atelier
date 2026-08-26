@@ -22,7 +22,7 @@ export interface CreaBomRigaInput {
 
 export interface AggiornaBomRigaInput {
   categoria?: string;
-  codigo?: string | null;
+  codice?: string | null;
   descrizione?: string;
   unita?: string;
   quantita?: number;
@@ -176,7 +176,7 @@ export async function aggiornaRigaBom(tenantId: string, rigaId: string, input: A
   await db.$executeRaw`
     UPDATE "bom_riga"
     SET "categoria" = ${input.categoria ?? existing.categoria},
-        "codice" = ${input.codigo !== undefined ? input.codigo : existing.codice},
+        "codice" = ${input.codice !== undefined ? input.codice : existing.codice},
         "descrizione" = ${input.descrizione ?? existing.descrizione},
         "unita" = ${input.unita ?? existing.unita},
         "quantita" = ${input.quantita ?? existing.quantita},
