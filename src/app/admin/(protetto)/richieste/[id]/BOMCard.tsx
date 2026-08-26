@@ -64,6 +64,8 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [costoUnitario, setCostoUnitario] = useState('');
   const [suggerimenti, setSuggerimenti] = useState<BenchmarkSuggestion[]>([]);
   const [ricercaBenchmark, setRicercaBenchmark] = useState(false);
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editingCosto, setEditingCosto] = useState('');
 
   useEffect(() => {
     const query = descrizione.trim();
@@ -177,6 +179,35 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
     }
   }
 
+  async function salvaCosto(rowId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/bom/righe/${encodeURIComponent(rowId)}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          costoUnitario: editingCosto === '' ? null : Number(editingCosto),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Impossibile aggiornare il costo.');
+      setEditingRowId(null);
+      setEditingCosto('');
+      if (bomId) await caricaBom(bomId);
+      void data;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Errore aggiornamento costo');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function avviaModificaCosto(row: BomRow) {
+    setEditingRowId(row.id);
+    setEditingCosto(row.costoUnitario == null ? '' : String(row.costoUnitario));
+  }
+
   const costSummaryRefreshKey = rows
     .map((row) => `${row.id}:${row.quantita}:${row.costoUnitario ?? ''}`)
     .join('|');
@@ -241,7 +272,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           <BOMCostSummary bomId={bomId} refreshKey={costSummaryRefreshKey} />
 
           <div className="mt-4 overflow-x-auto rounded-md border">
-            <table className="w-full min-w-[760px] text-sm">
+            <table className="w-full min-w-[820px] text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>
                   <th className="p-2">Categoria</th>
@@ -251,6 +282,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                   <th className="p-2">Qtà</th>
                   <th className="p-2">Unità</th>
                   <th className="p-2">Costo unit.</th>
+                  <th className="p-2">Azione</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,12 +294,57 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                     <td className="p-2">{row.lavorazione ?? '—'}</td>
                     <td className="p-2">{row.quantita}</td>
                     <td className="p-2">{row.unita}</td>
-                    <td className="p-2">{row.costoUnitario === null ? '—' : euro.format(row.costoUnitario)}</td>
+                    <td className="p-2">
+                      {editingRowId === row.id ? (
+                        <input
+                          className="w-28 rounded-md border bg-background p-2"
+                          min="0"
+                          step="0.01"
+                          type="number"
+                          value={editingCosto}
+                          onChange={(e) => setEditingCosto(e.target.value)}
+                          aria-label={`Costo unitario ${row.descrizione}`}
+                        />
+                      ) : row.costoUnitario === null ? '—' : euro.format(row.costoUnitario)}
+                    </td>
+                    <td className="p-2">
+                      {editingRowId === row.id ? (
+                        <div className="flex gap-2">
+                          <button
+                            className="rounded-md bg-primary px-3 py-2 text-xs text-primary-foreground disabled:opacity-50"
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void salvaCosto(row.id)}
+                          >
+                            Salva
+                          </button>
+                          <button
+                            className="rounded-md border px-3 py-2 text-xs"
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              setEditingRowId(null);
+                              setEditingCosto('');
+                            }}
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
+                          type="button"
+                          onClick={() => avviaModificaCosto(row)}
+                        >
+                          Modifica costo
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td className="p-4 text-muted-foreground" colSpan={7}>Nessuna riga ancora inserita.</td>
+                    <td className="p-4 text-muted-foreground" colSpan={8}>Nessuna riga ancora inserita.</td>
                   </tr>
                 )}
               </tbody>
