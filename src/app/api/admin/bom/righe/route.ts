@@ -1,19 +1,71 @@
 import { NextResponse } from 'next/server';
 import { aggiungiRigaBom, dettaglioBom } from '@/server/services/bom-service';
 import type { CreaBomRigaInput } from '@/server/services/bom-service';
-import {
-  ErroreAccessoNegato,
-  ErroreNonAutenticato,
-  richiediContesto,
-} from '@/server/identity/contesto';
+import { ErroreAccessoNegato, ErroreNonAutenticato, richiediContesto } from '@/server/identity/contesto';
+import { haPermesso } from '@/server/services/permission-service';
+import { registraEventoSicurezza } from '@/server/services/sicurezza-eventi-service';
 
-async function contesto() {
-  return richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
+async function contestoGestioneBom() {
+  const identity = await richiediContesto();
+  const [puoGestireRichieste, puoGestireCatalogo] = await Promise.all([
+    haPermesso(identity.membershipId, 'richieste', 'gestisci'),
+    haPermesso(identity.membershipId, 'catalogo', 'gestisci'),
+  ]);
+
+  if (!puoGestireRichieste && !puoGestireCatalogo) {
+    await registraEventoSicurezza({
+      tipo: 'ACCESSO_NEGATO',
+      utenteId: identity.utenteId,
+      tenantId: identity.tenantId,
+      membershipId: identity.membershipId,
+      metadati: {
+        modulo: 'bom',
+        azione: 'gestisci',
+        permessiRichiesti: ['richieste.gestisci', 'catalogo.gestisci'],
+      },
+    });
+    throw new ErroreAccessoNegato('bom', 'gestisci');
+  }
+
+  return identity;
+}
+
+async function contestoLetturaBom() {
+  const identity = await richiediContesto();
+  const [puoLeggereRichieste, puoGestireRichieste, puoLeggereCatalogo, puoGestireCatalogo] =
+    await Promise.all([
+      haPermesso(identity.membershipId, 'richieste', 'leggi'),
+      haPermesso(identity.membershipId, 'richieste', 'gestisci'),
+      haPermesso(identity.membershipId, 'catalogo', 'leggi'),
+      haPermesso(identity.membershipId, 'catalogo', 'gestisci'),
+    ]);
+
+  if (!puoLeggereRichieste && !puoGestireRichieste && !puoLeggereCatalogo && !puoGestireCatalogo) {
+    await registraEventoSicurezza({
+      tipo: 'ACCESSO_NEGATO',
+      utenteId: identity.utenteId,
+      tenantId: identity.tenantId,
+      membershipId: identity.membershipId,
+      metadati: {
+        modulo: 'bom',
+        azione: 'leggi',
+        permessiRichiesti: [
+          'richieste.leggi',
+          'richieste.gestisci',
+          'catalogo.leggi',
+          'catalogo.gestisci',
+        ],
+      },
+    });
+    throw new ErroreAccessoNegato('bom', 'leggi');
+  }
+
+  return identity;
 }
 
 export async function POST(request: Request) {
   try {
-    const identity = await contesto();
+    const identity = await contestoGestioneBom();
     const body = (await request.json()) as Partial<CreaBomRigaInput> & {
       bomId?: unknown;
     };
@@ -59,7 +111,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const identity = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
+    const identity = await contestoLetturaBom();
     const bomId = new URL(request.url).searchParams.get('bomId');
     if (!bomId) {
       return NextResponse.json({ error: 'bomId obbligatorio' }, { status: 400 });
