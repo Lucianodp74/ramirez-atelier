@@ -2,6 +2,10 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
+# Copiamo la configurazione Prisma prima di npm ci perché il postinstall esegue
+# `prisma generate` e Prisma 7 usa prisma.config.ts per trovare lo schema.
+COPY prisma.config.ts ./
+COPY prisma ./prisma
 RUN npm ci
 
 # --- Stage 2: build ---
