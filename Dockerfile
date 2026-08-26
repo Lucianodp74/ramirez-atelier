@@ -2,6 +2,14 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
+# Copiamo la configurazione Prisma prima di npm ci perché il postinstall esegue
+# `prisma generate` e Prisma 7 usa prisma.config.ts per trovare lo schema.
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+# Prisma config richiede queste variabili anche durante npm ci/prisma generate.
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
+ENV DIRECT_URL="postgresql://build:build@localhost:5432/build?schema=public"
+ENV SITE_URL="http://localhost:3000"
 RUN npm ci
 
 # --- Stage 2: build ---
