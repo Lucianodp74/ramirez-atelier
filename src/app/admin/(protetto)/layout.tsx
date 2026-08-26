@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-background text-foreground">
       <nav className="border-b border-border px-6 py-4">
-        <div className="mx-auto flex max-w-8xl items-center gap-6">
+        <div className="mx-auto flex max-w-7xl items-center gap-6">
           <span className="flex items-center gap-2 font-semibold">
             <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} />
             Ramirez Atelier — Area operativa
