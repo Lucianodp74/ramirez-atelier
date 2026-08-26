@@ -7,6 +7,11 @@ export interface CreaBomInput {
   noteProduzione?: string | null;
 }
 
+export interface BomAttore {
+  utenteId: string;
+  membershipId: string;
+}
+
 export interface CreaBomRigaInput {
   categoria: string;
   codice?: string | null;
@@ -61,6 +66,17 @@ type BomRigaRow = {
   updatedAt: Date;
 };
 
+export type BomPrezzoStorico = {
+  id: string;
+  bomRigaId: string;
+  costoPrecedente: number | null;
+  costoNuovo: number | null;
+  tipo: 'INSERIMENTO' | 'MODIFICA';
+  utenteId: string | null;
+  membershipId: string | null;
+  createdAt: Date;
+};
+
 export function validaQuantitaBom(quantita: number) {
   if (!Number.isFinite(quantita) || quantita <= 0) {
     throw new Error('La quantità BOM deve essere maggiore di zero.');
@@ -88,12 +104,6 @@ export function validaTransizioneBom(statoCorrente: StatoBom, nuovoStato: StatoB
   }
 }
 
-/**
- * BOM foundation using the additive SQL schema. Every operation receives tenantId
- * explicitly and verifies ownership through the request/BOM relation.
- * This service deliberately does not invent material prices or derive production
- * quantities from the public configurator until explicit product rules exist.
- */
 export async function creaBom(tenantId: string, input: CreaBomInput) {
   const richiesta = await db.richiestaProgetto.findFirst({ where: { id: input.richiestaId, tenantId }, select: { id: true } });
   if (!richiesta) throw new Error('Richiesta non trovata.');
@@ -125,7 +135,12 @@ export async function dettaglioBom(tenantId: string, bomId: string): Promise<Bom
   return rows[0] ?? null;
 }
 
-export async function aggiungiRigaBom(tenantId: string, bomId: string, input: CreaBomRigaInput) {
+export async function aggiungiRigaBom(
+  tenantId: string,
+  bomId: string,
+  input: CreaBomRigaInput,
+  attore?: BomAttore,
+) {
   validaQuantitaBom(input.quantita);
   validaCostoUnitarioBom(input.costoUnitario);
   const bom = await db.$queryRaw<Array<{ id: string; stato: StatoBom }>>`
@@ -139,10 +154,19 @@ export async function aggiungiRigaBom(tenantId: string, bomId: string, input: Cr
     INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt")
     VALUES (${id}, ${bomId}, ${input.ordinamento ?? 0}, ${input.categoria}, ${input.codice ?? null}, ${input.descrizione}, ${input.unita ?? 'pz'}, ${input.quantita}, ${input.materiale ?? null}, ${input.lavorazione ?? null}, ${input.costoUnitario ?? null}, ${input.note ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `;
+
+  if (input.costoUnitario != null) {
+    await registraStoricoPrezzo(tenantId, bomId, id, null, input.costoUnitario, 'INSERIMENTO', attore);
+  }
   return id;
 }
 
-export async function aggiornaRigaBom(tenantId: string, rigaId: string, input: AggiornaBomRigaInput) {
+export async function aggiornaRigaBom(
+  tenantId: string,
+  rigaId: string,
+  input: AggiornaBomRigaInput,
+  attore?: BomAttore,
+) {
   if (input.quantita !== undefined) validaQuantitaBom(input.quantita);
   if (input.costoUnitario !== undefined) validaCostoUnitarioBom(input.costoUnitario);
 
@@ -173,6 +197,9 @@ export async function aggiornaRigaBom(tenantId: string, rigaId: string, input: A
   const existing = current[0];
   if (!existing) throw new Error('Riga BOM non trovata.');
 
+  const costoNuovo = input.costoUnitario !== undefined ? input.costoUnitario : existing.costoUnitario;
+  const costoCambiato = input.costoUnitario !== undefined && input.costoUnitario !== existing.costoUnitario;
+
   await db.$executeRaw`
     UPDATE "bom_riga"
     SET "categoria" = ${input.categoria ?? existing.categoria},
@@ -182,10 +209,43 @@ export async function aggiornaRigaBom(tenantId: string, rigaId: string, input: A
         "quantita" = ${input.quantita ?? existing.quantita},
         "materiale" = ${input.materiale !== undefined ? input.materiale : existing.materiale},
         "lavorazione" = ${input.lavorazione !== undefined ? input.lavorazione : existing.lavorazione},
-        "costoUnitario" = ${input.costoUnitario !== undefined ? input.costoUnitario : existing.costoUnitario},
+        "costoUnitario" = ${costoNuovo},
         "note" = ${input.note !== undefined ? input.note : existing.note},
         "updatedAt" = CURRENT_TIMESTAMP
     WHERE "id" = ${rigaId}
+  `;
+
+  if (costoCambiato) {
+    await registraStoricoPrezzo(tenantId, riga[0].bomId, rigaId, existing.costoUnitario, costoNuovo, 'MODIFICA', attore);
+  }
+}
+
+export async function storicoPrezzoBomRiga(
+  tenantId: string,
+  rigaId: string,
+): Promise<BomPrezzoStorico[]> {
+  const rows = await db.$queryRaw<BomPrezzoStorico[]>`
+    SELECT h."id", h."bomRigaId", h."costoPrecedente", h."costoNuovo", h."tipo", h."utenteId", h."membershipId", h."createdAt"
+    FROM "bom_riga_prezzo_storico" h
+    JOIN "bom" b ON b."id" = h."bomId"
+    WHERE h."tenantId" = ${tenantId} AND h."bomRigaId" = ${rigaId}
+    ORDER BY h."createdAt" DESC
+  `;
+  return rows;
+}
+
+async function registraStoricoPrezzo(
+  tenantId: string,
+  bomId: string,
+  bomRigaId: string,
+  costoPrecedente: number | null,
+  costoNuovo: number | null,
+  tipo: 'INSERIMENTO' | 'MODIFICA',
+  attore?: BomAttore,
+) {
+  await db.$executeRaw`
+    INSERT INTO "bom_riga_prezzo_storico" ("id", "tenantId", "bomId", "bomRigaId", "costoPrecedente", "costoNuovo", "tipo", "utenteId", "membershipId", "createdAt")
+    VALUES (${crypto.randomUUID()}, ${tenantId}, ${bomId}, ${bomRigaId}, ${costoPrecedente}, ${costoNuovo}, ${tipo}, ${attore?.utenteId ?? null}, ${attore?.membershipId ?? null}, CURRENT_TIMESTAMP)
   `;
 }
 
