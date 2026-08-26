@@ -44,36 +44,34 @@ export default async function CatalogoPage() {
         I materiali, le finiture e gli altri elementi che i clienti scelgono nel configuratore —
         gestiti qui, senza bisogno di alcun intervento di sviluppo.
       </p>
-
       <div className="grid gap-4 sm:grid-cols-2">
         {sezioni.map((s) => {
           const attive = s.righe.filter((r) => r.attiva).length;
           return (
             <Link key={s.chiave} href={s.href}>
               <Card className="h-full transition-colors hover:border-accent">
-                <CardHeader>
-                  <CardTitle>{s.nome}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total
-                    {s.righe.length === 1 ? 'e' : 'i'}
-                  </p>
-                </CardContent>
+                <CardHeader><CardTitle>{s.nome}</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-muted-foreground">
+                  {attive} attiv{attive === 1 ? 'a' : 'e'} su {s.righe.length} total{s.righe.length === 1 ? 'e' : 'i'}
+                </p></CardContent>
               </Card>
             </Link>
           );
         })}
+        <Link href="/admin/catalogo/listino">
+          <Card className="h-full transition-colors hover:border-accent">
+            <CardHeader><CardTitle>Listino del falegname</CardTitle></CardHeader>
+            <CardContent><p className="text-sm text-muted-foreground">
+              Prezzi reali interni, aggiornabili e storicizzati. Hanno priorità sui benchmark.
+            </p></CardContent>
+          </Card>
+        </Link>
         <Link href="/admin/catalogo/benchmark">
           <Card className="h-full transition-colors hover:border-accent">
-            <CardHeader>
-              <CardTitle>Listino benchmark</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Riferimenti di mercato per costi BOM e prezzi di vendita.
-              </p>
-            </CardContent>
+            <CardHeader><CardTitle>Listino benchmark</CardTitle></CardHeader>
+            <CardContent><p className="text-sm text-muted-foreground">
+              Riferimenti di mercato per costi BOM e prezzi di vendita.
+            </p></CardContent>
           </Card>
         </Link>
       </div>
