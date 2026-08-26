@@ -29,18 +29,16 @@ export type StoricoListino = {
   changedAt: Date;
 };
 
-const selectCampi = `"id", "tipo", "categoria", "codice", "nome", "descrizione", "unita",
-  "prezzo"::float8 AS "prezzo", "attivo", "materiale",
-  "larghezzaCm"::float8 AS "larghezzaCm", "altezzaCm"::float8 AS "altezzaCm",
-  "profonditaCm"::float8 AS "profonditaCm", "createdAt", "updatedAt"`;
-
 export async function elencoPrezziListino(tenantId: string): Promise<VoceListino[]> {
-  return db.$queryRawUnsafe<VoceListino[]>(`
-    SELECT ${selectCampi}
+  return db.$queryRaw<VoceListino[]>`
+    SELECT "id", "tipo", "categoria", "codice", "nome", "descrizione", "unita",
+      "prezzo"::float8 AS "prezzo", "attivo", "materiale",
+      "larghezzaCm"::float8 AS "larghezzaCm", "altezzaCm"::float8 AS "altezzaCm",
+      "profonditaCm"::float8 AS "profonditaCm", "createdAt", "updatedAt"
     FROM "listino_prezzo"
-    WHERE "tenantId" = $1
-    ORDER BY "attivo" DESC, "tipo", "categoria", "nome
-  `, tenantId);
+    WHERE "tenantId" = ${tenantId}
+    ORDER BY "attivo" DESC, "tipo", "categoria", "nome"
+  `;
 }
 
 export async function storicoPrezzoListino(tenantId: string, listinoPrezzoId: string): Promise<StoricoListino[]> {
@@ -60,7 +58,10 @@ export async function cercaPrezziListino(tenantId: string, query: string, unita?
   const unitaFiltro = unita?.trim() || null;
 
   return db.$queryRaw<VoceListino[]>`
-    SELECT ${db.raw(selectCampi)}
+    SELECT "id", "tipo", "categoria", "codice", "nome", "descrizione", "unita",
+      "prezzo"::float8 AS "prezzo", "attivo", "materiale",
+      "larghezzaCm"::float8 AS "larghezzaCm", "altezzaCm"::float8 AS "altezzaCm",
+      "profonditaCm"::float8 AS "profonditaCm", "createdAt", "updatedAt"
     FROM "listino_prezzo"
     WHERE "tenantId" = ${tenantId}
       AND "attivo" = true
@@ -91,8 +92,8 @@ export async function creaPrezzoListino(tenantId: string, dati: {
 }) {
   return db.$queryRaw<VoceListino[]>`
     INSERT INTO "listino_prezzo" ("id", "tenantId", "tipo", "categoria", "codice", "nome", "descrizione", "unita", "prezzo", "materiale", "larghezzaCm", "altezzaCm", "profonditaCm")
-    VALUES (${crypto.randomUUID()}, ${tenantId}, ${dati.tipo ?? 'COMPONENTE'}, ${dati.categoria}, ${dati.codice}, ${dati.nome}, ${dati.descrizione ?? null}, ${dati.unita}, ${dati.prezzo}, ${dati.materiale ?? null}, ${dati.larghezzaCm ?? null}, ${dati.altezzaCm ?? null}, ${dati.profundidadeCm ?? null})
-    RETURNING ${db.raw(selectCampi)}
+    VALUES (${crypto.randomUUID()}, ${tenantId}, ${dati.tipo ?? 'COMPONENTE'}, ${dati.categoria}, ${dati.codice}, ${dati.nome}, ${dati.descrizione ?? null}, ${dati.unita}, ${dati.prezzo}, ${dati.materiale ?? null}, ${dati.larghezzaCm ?? null}, ${dati.altezzaCm ?? null}, ${dati.profonditaCm ?? null})
+    RETURNING "id", "tipo", "categoria", "codice", "nome", "descrizione", "unita", "prezzo"::float8 AS "prezzo", "attivo", "materiale", "larghezzaCm"::float8 AS "larghezzaCm", "altezzaCm"::float8 AS "altezzaCm", "profonditaCm"::float8 AS "profonditaCm", "createdAt", "updatedAt"
   `;
 }
 
