@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       costoUnitario: body.costoUnitario ?? null,
       note: body.note ?? null,
       ordinamento: body.ordinamento ?? 0,
-    });
+    }, { utenteId: identity.utenteId, membershipId: identity.membershipId });
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     if (error instanceof ErroreNonAutenticato) {

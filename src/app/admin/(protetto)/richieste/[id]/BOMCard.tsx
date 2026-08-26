@@ -25,6 +25,15 @@ type BomCostSummary = {
   completo: boolean;
 };
 
+type BomPrezzoStorico = {
+  id: string;
+  costoPrecedente: number | null;
+  costoNuovo: number | null;
+  tipo: 'INSERIMENTO' | 'MODIFICA';
+  utenteId: string | null;
+  createdAt: string;
+};
+
 type BenchmarkSuggestion = {
   id: string;
   categoria: string;
@@ -41,6 +50,7 @@ type BenchmarkSuggestion = {
 };
 
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+const dataOra = new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' });
 
 function categoriaBom(categoria: string) {
   if (categoria === 'materiale') return 'MATERIALE';
@@ -66,6 +76,9 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [ricercaBenchmark, setRicercaBenchmark] = useState(false);
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [editingCosto, setEditingCosto] = useState('');
+  const [historyRowId, setHistoryRowId] = useState<string | null>(null);
+  const [history, setHistory] = useState<BomPrezzoStorico[]>([]);
+  const [historyBusy, setHistoryBusy] = useState(false);
 
   useEffect(() => {
     const query = descrizione.trim();
@@ -81,16 +94,12 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
       try {
         const params = new URLSearchParams({ q: query });
         if (unita.trim()) params.set('unita', unita.trim());
-        const response = await fetch(`/api/admin/benchmark?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/admin/benchmark?${params.toString()}`, { signal: controller.signal });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'Impossibile cercare i benchmark.');
         setSuggerimenti(data.suggerimenti ?? []);
       } catch (e) {
-        if (!(e instanceof DOMException && e.name === 'AbortError')) {
-          setSuggerimenti([]);
-        }
+        if (!(e instanceof DOMException && e.name === 'AbortError')) setSuggerimenti([]);
       } finally {
         if (!controller.signal.aborted) setRicercaBenchmark(false);
       }
@@ -186,14 +195,13 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
       const response = await fetch(`/api/admin/bom/righe/${encodeURIComponent(rowId)}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          costoUnitario: editingCosto === '' ? null : Number(editingCosto),
-        }),
+        body: JSON.stringify({ costoUnitario: editingCosto === '' ? null : Number(editingCosto) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Impossibile aggiornare il costo.');
       setEditingRowId(null);
       setEditingCosto('');
+      setHistoryRowId(null);
       if (bomId) await caricaBom(bomId);
       void data;
     } catch (e) {
@@ -203,14 +211,33 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
     }
   }
 
+  async function mostraStorico(rowId: string) {
+    if (historyRowId === rowId) {
+      setHistoryRowId(null);
+      return;
+    }
+    setHistoryRowId(rowId);
+    setHistoryBusy(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/bom/righe/${encodeURIComponent(rowId)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere lo storico.');
+      setHistory(data.storico ?? []);
+    } catch (e) {
+      setHistory([]);
+      setError(e instanceof Error ? e.message : 'Errore storico prezzo');
+    } finally {
+      setHistoryBusy(false);
+    }
+  }
+
   function avviaModificaCosto(row: BomRow) {
     setEditingRowId(row.id);
     setEditingCosto(row.costoUnitario == null ? '' : String(row.costoUnitario));
   }
 
-  const costSummaryRefreshKey = rows
-    .map((row) => `${row.id}:${row.quantita}:${row.costoUnitario ?? ''}`)
-    .join('|');
+  const costSummaryRefreshKey = rows.map((row) => `${row.id}:${row.quantita}:${row.costoUnitario ?? ''}`).join('|');
 
   return (
     <section className="rounded-lg border p-4">
@@ -220,11 +247,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           <p className="text-sm text-muted-foreground">BOM interna collegata a questa richiesta.</p>
         </div>
         {!bomId && (
-          <button
-            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
-            disabled={busy}
-            onClick={crea}
-          >
+          <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} onClick={crea}>
             {busy ? 'Creazione…' : 'Crea BOM'}
           </button>
         )}
@@ -272,7 +295,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           <BOMCostSummary bomId={bomId} refreshKey={costSummaryRefreshKey} />
 
           <div className="mt-4 overflow-x-auto rounded-md border">
-            <table className="w-full min-w-[820px] text-sm">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>
                   <th className="p-2">Categoria</th>
@@ -287,7 +310,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.id} className="border-t">
+                  <tr key={row.id} className="border-t align-top">
                     <td className="p-2">{row.categoria}</td>
                     <td className="p-2">{row.descrizione}</td>
                     <td className="p-2">{row.materiale ?? '—'}</td>
@@ -296,56 +319,47 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                     <td className="p-2">{row.unita}</td>
                     <td className="p-2">
                       {editingRowId === row.id ? (
-                        <input
-                          className="w-28 rounded-md border bg-background p-2"
-                          min="0"
-                          step="0.01"
-                          type="number"
-                          value={editingCosto}
-                          onChange={(e) => setEditingCosto(e.target.value)}
-                          aria-label={`Costo unitario ${row.descrizione}`}
-                        />
+                        <input className="w-28 rounded-md border bg-background p-2" min="0" step="0.01" type="number" value={editingCosto} onChange={(e) => setEditingCosto(e.target.value)} aria-label={`Costo unitario ${row.descrizione}`} />
                       ) : row.costoUnitario === null ? '—' : euro.format(row.costoUnitario)}
                     </td>
                     <td className="p-2">
-                      {editingRowId === row.id ? (
-                        <div className="flex gap-2">
-                          <button
-                            className="rounded-md bg-primary px-3 py-2 text-xs text-primary-foreground disabled:opacity-50"
-                            type="button"
-                            disabled={busy}
-                            onClick={() => void salvaCosto(row.id)}
-                          >
-                            Salva
-                          </button>
-                          <button
-                            className="rounded-md border px-3 py-2 text-xs"
-                            type="button"
-                            disabled={busy}
-                            onClick={() => {
-                              setEditingRowId(null);
-                              setEditingCosto('');
-                            }}
-                          >
-                            Annulla
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className="rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
-                          type="button"
-                          onClick={() => avviaModificaCosto(row)}
-                        >
-                          Modifica costo
+                      <div className="flex flex-wrap gap-2">
+                        {editingRowId === row.id ? (
+                          <>
+                            <button className="rounded-md bg-primary px-3 py-2 text-xs text-primary-foreground disabled:opacity-50" type="button" disabled={busy} onClick={() => void salvaCosto(row.id)}>Salva</button>
+                            <button className="rounded-md border px-3 py-2 text-xs" type="button" disabled={busy} onClick={() => { setEditingRowId(null); setEditingCosto(''); }}>Annulla</button>
+                          </>
+                        ) : (
+                          <button className="rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted" type="button" onClick={() => avviaModificaCosto(row)}>Modifica costo</button>
+                        )}
+                        <button className="rounded-md border px-3 py-2 text-xs hover:bg-muted" type="button" onClick={() => void mostraStorico(row.id)}>
+                          {historyRowId === row.id ? 'Nascondi storico' : 'Storico prezzi'}
                         </button>
+                      </div>
+                      {historyRowId === row.id && (
+                        <div className="mt-2 rounded-md bg-muted/30 p-2 text-xs">
+                          {historyBusy ? (
+                            <span className="text-muted-foreground">Caricamento storico…</span>
+                          ) : history.length === 0 ? (
+                            <span className="text-muted-foreground">Nessuna modifica di prezzo registrata.</span>
+                          ) : (
+                            <div className="space-y-1">
+                              {history.map((item) => (
+                                <div key={item.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <span className="text-muted-foreground">{dataOra.format(new Date(item.createdAt))}</span>
+                                  <span>{item.tipo === 'INSERIMENTO' ? 'Impostato' : 'Modificato'}</span>
+                                  <span className="font-medium">{item.costoPrecedente == null ? '—' : euro.format(item.costoPrecedente)} → {item.costoNuovo == null ? '—' : euro.format(item.costoNuovo)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
-                  <tr>
-                    <td className="p-4 text-muted-foreground" colSpan={8}>Nessuna riga ancora inserita.</td>
-                  </tr>
+                  <tr><td className="p-4 text-muted-foreground" colSpan={8}>Nessuna riga ancora inserita.</td></tr>
                 )}
               </tbody>
             </table>
@@ -354,9 +368,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           <form className="mt-5 grid gap-3 rounded-md border p-4" onSubmit={aggiungi}>
             <div>
               <p className="text-sm font-medium">Aggiungi riga alla BOM</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Cerca una voce: il suggerimento usa solo benchmark di tipo COSTO. Il valore proposto è il punto medio del range e resta modificabile.
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Cerca una voce: il suggerimento usa solo benchmark di tipo COSTO. Il valore proposto è il punto medio del range e resta modificabile.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className="text-sm">Categoria
@@ -395,31 +407,19 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
                     <div key={suggerimento.id} className="flex flex-col gap-2 rounded-md border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <p className="text-sm font-medium">{suggerimento.nome}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {suggerimento.categoria} · {suggerimento.unita} · {euro.format(suggerimento.prezzoMin)} – {euro.format(suggerimento.prezzoMax)}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{suggerimento.categoria} · {suggerimento.unita} · {euro.format(suggerimento.prezzoMin)} – {euro.format(suggerimento.prezzoMax)}</p>
                         <p className="text-xs text-muted-foreground">Fonte: {suggerimento.fonte}</p>
                       </div>
-                      <button
-                        className="shrink-0 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
-                        type="button"
-                        onClick={() => usaBenchmark(suggerimento)}
-                      >
-                        Usa {euro.format(suggerimento.costoConsigliato)}
-                      </button>
+                      <button className="shrink-0 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted" type="button" onClick={() => usaBenchmark(suggerimento)}>Usa {euro.format(suggerimento.costoConsigliato)}</button>
                     </div>
                   ))}
-                  {!ricercaBenchmark && suggerimenti.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nessun costo benchmark trovato per questa ricerca.</p>
-                  )}
+                  {!ricercaBenchmark && suggerimenti.length === 0 && <p className="text-xs text-muted-foreground">Nessun costo benchmark trovato per questa ricerca.</p>}
                 </div>
               </div>
             )}
 
             <div>
-              <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} type="submit">
-                {busy ? 'Salvataggio…' : 'Aggiungi riga'}
-              </button>
+              <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} type="submit">{busy ? 'Salvataggio…' : 'Aggiungi riga'}</button>
             </div>
           </form>
         </>
