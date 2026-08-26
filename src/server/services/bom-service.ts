@@ -20,6 +20,18 @@ export interface CreaBomRigaInput {
   ordinamento?: number;
 }
 
+export interface AggiornaBomRigaInput {
+  categoria?: string;
+  codigo?: string | null;
+  descrizione?: string;
+  unita?: string;
+  quantita?: number;
+  materiale?: string | null;
+  lavorazione?: string | null;
+  costoUnitario?: number | null;
+  note?: string | null;
+}
+
 type BomDetailRow = {
   id: string;
   tenantId: string;
@@ -128,6 +140,53 @@ export async function aggiungiRigaBom(tenantId: string, bomId: string, input: Cr
     VALUES (${id}, ${bomId}, ${input.ordinamento ?? 0}, ${input.categoria}, ${input.codice ?? null}, ${input.descrizione}, ${input.unita ?? 'pz'}, ${input.quantita}, ${input.materiale ?? null}, ${input.lavorazione ?? null}, ${input.costoUnitario ?? null}, ${input.note ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `;
   return id;
+}
+
+export async function aggiornaRigaBom(tenantId: string, rigaId: string, input: AggiornaBomRigaInput) {
+  if (input.quantita !== undefined) validaQuantitaBom(input.quantita);
+  if (input.costoUnitario !== undefined) validaCostoUnitarioBom(input.costoUnitario);
+
+  const riga = await db.$queryRaw<Array<{ id: string; bomId: string; stato: StatoBom }>>`
+    SELECT br."id", br."bomId", b."stato"
+    FROM "bom_riga" br
+    JOIN "bom" b ON b."id" = br."bomId"
+    WHERE br."id" = ${rigaId} AND b."tenantId" = ${tenantId}
+    LIMIT 1
+  `;
+  if (!riga.length) throw new Error('Riga BOM non trovata.');
+  if (riga[0].stato !== 'BOZZA') throw new Error('La distinta non è più modificabile.');
+
+  const current = await db.$queryRaw<Array<{
+    categoria: string;
+    codice: string | null;
+    descrizione: string;
+    unita: string;
+    quantita: number;
+    materiale: string | null;
+    lavorazione: string | null;
+    costoUnitario: number | null;
+    note: string | null;
+  }>>`
+    SELECT "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note"
+    FROM "bom_riga" WHERE "id" = ${rigaId} LIMIT 1
+  `;
+  const existing = current[0];
+  if (!existing) throw new Error('Riga BOM non trovata.');
+
+  await db.$executeRaw`
+    UPDATE "bom_riga"
+    SET "categoria" = ${input.categoria ?? existing.categoria},
+        "codice" = ${input.codigo !== undefined ? input.codigo : existing.codice},
+        "descrizione" = ${input.descrizione ?? existing.descrizione},
+        "unita" = ${input.unita ?? existing.unita},
+        "quantita" = ${input.quantita ?? existing.quantita},
+        "materiale" = ${input.materiale !== undefined ? input.materiale : existing.materiale},
+        "lavorazione" = ${input.lavorazione !== undefined ? input.lavorazione : existing.lavorazione},
+        "costoUnitario" = ${input.costoUnitario !== undefined ? input.costoUnitario : existing.costoUnitario},
+        "note" = ${input.note !== undefined ? input.note : existing.note},
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = ${rigaId}
+  `;
 }
 
 export async function cambiaStatoBom(tenantId: string, bomId: string, stato: StatoBom) {
