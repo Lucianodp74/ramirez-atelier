@@ -16,6 +16,7 @@ export async function GET(request: Request) {
 
     if (query.trim().length < 2) return NextResponse.json({ suggerimenti: [] });
 
+    // Il listino Atelier viene cercato prima del benchmark di mercato.
     const personali = await cercaPrezziListino(identity.tenantId, query);
     if (personali.length > 0) {
       return NextResponse.json({
