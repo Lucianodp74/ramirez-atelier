@@ -58,17 +58,13 @@ import {
   aggiornaCliente,
   type DatiModificaCliente,
 } from '@/server/services/cliente-service';
+import {
+  creaPrezzoListino,
+  aggiornaPrezzoListino,
+  impostaAttivoPrezzoListino,
+} from '@/server/services/listino-prezzi-service';
 import type { StatoRichiesta } from '@prisma/client';
 
-/**
- * Ogni action verifica esplicitamente autenticazione + permesso PRIMA di
- * chiamare il servizio (vincolo esplicito: l'autorizzazione reale è solo lato
- * server, indipendente da cosa mostra o nasconde il frontend). Sono un
- * involucro sottile sul servizio condiviso, usato dalla UI interattiva; la
- * stessa logica è esposta anche via API REST per il riuso esterno - principio
- * API First: nessuna regola di business vive qui, solo la convenienza di poter
- * aggiornare la UI (revalidatePath) dopo l'operazione.
- */
 export async function cambiaStatoRichiesta(id: string, nuovoStato: StatoRichiesta) {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
   const esito = await cambiaStatoServizio(contesto.tenantId, id, nuovoStato);
@@ -146,7 +142,12 @@ export async function elencoUtentiTenant() {
 
 export async function invitaUtenteAzione(email: string, ruoloNome: string) {
   const contesto = await richiediContesto({ modulo: 'utenti', azione: 'gestisci' });
-  const { tokenGrezzo } = await creaInvito(contesto.tenantId, email, ruoloNome, contesto.utenteId);
+  const { tokenGrezzo } = await creaInvito(
+    contesto.tenantId,
+    email,
+    ruoloNome,
+    contesto.utenteId,
+  );
   revalidatePath('/admin/utenti');
   const link = `${process.env.SITE_URL}/invito/${tokenGrezzo}`;
   await getEmailAdapter().invia({
@@ -154,9 +155,6 @@ export async function invitaUtenteAzione(email: string, ruoloNome: string) {
     oggetto: 'Sei stato invitato su Ramirez Atelier',
     corpo: `Sei stato invitato a collaborare su Ramirez Atelier, con il ruolo di ${ruoloNome}.\n\nApri questo link per accettare l'invito:\n${link}`,
   });
-  // Il link resta comunque visibile in interfaccia (v. FormInvitaUtente.tsx):
-  // finché l'adattatore email è quello console, è l'unico modo pratico di
-  // recuperarlo senza andare a leggere i log del server.
   return { linkInvito: `/invito/${tokenGrezzo}` };
 }
 
@@ -204,10 +202,6 @@ export async function impostaAttivaFinituraAzione(id: string, attiva: boolean) {
   revalidatePath('/admin/catalogo/finiture');
 }
 
-/** Restituisce un messaggio d'errore leggibile invece di lanciare un'eccezione
- * non gestita, così il componente client può mostrarlo senza un try/catch
- * sparso in ogni bottone - unico punto che traduce l'eccezione del servizio
- * in un risultato che l'interfaccia sa presentare. */
 export async function eliminaFinituraAzione(
   id: string,
 ): Promise<{ successo: boolean; errore?: string }> {
@@ -336,12 +330,58 @@ export async function aggiornaClienteAzione(clienteId: string, dati: DatiModific
   revalidatePath('/admin/clienti');
 }
 
-/** "Usa questo preventivo come punto di partenza" - v. richieste-service.ts
- * per il perché del nome e della scelta di riusare il meccanismo di ripresa
- * bozza invece di costruire un editor. */
+export async function creaPrezzoListinoAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const categoria = String(formData.get('categoria') ?? '').trim();
+  const codice = String(formData.get('codice') ?? '').trim();
+  const nome = String(formData.get('nome') ?? '').trim();
+  const unita = String(formData.get('unita') ?? '').trim();
+  const prezzo = Number(formData.get('prezzo'));
+  const descrizione = String(formData.get('descrizione') ?? '').trim();
+
+  if (!categoria || !codice || !nome || !unita || !Number.isFinite(prezzo) || prezzo < 0) {
+    throw new Error('Compila categoria, codice, nome, unità e prezzo valido.');
+  }
+
+  await creaPrezzoListino(contesto.tenantId, {
+    categoria,
+    codice,
+    nome,
+    unita,
+    prezzo,
+    descrizione: descrizione || null,
+  });
+  revalidatePath('/admin/catalogo/listino');
+}
+
+export async function aggiornaPrezzoListinoAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const id = String(formData.get('id') ?? '');
+  const prezzo = Number(formData.get('prezzo'));
+  const motivo = String(formData.get('motivo') ?? '').trim();
+
+  if (!id || !Number.isFinite(prezzo) || prezzo < 0) {
+    throw new Error('Prezzo non valido.');
+  }
+
+  await aggiornaPrezzoListino(contesto.tenantId, id, { prezzo }, motivo || undefined);
+  revalidatePath('/admin/catalogo/listino');
+}
+
+export async function impostaAttivoPrezzoListinoAzione(id: string, attivo: boolean) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  await impostaAttivoPrezzoListino(contesto.tenantId, id, attivo);
+  revalidatePath('/admin/catalogo/listino');
+}
+
 export async function usaComePuntoDiPartenzaAzione(richiestaOriginaleId: string) {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
   const nuova = await creaRichiestaDaPuntoDiPartenza(contesto.tenantId, richiestaOriginaleId);
-  const tipoProgetto = await db.tipoProgetto.findUnique({ where: { id: nuova.tipoProgettoId } });
-  return { tokenRipresa: nuova.tokenRipresa, chiaveTipoProgetto: tipoProgetto?.chiave ?? '' };
+  const tipoProgetto = await db.tipoProgetto.findUnique({
+    where: { id: nuova.tipoProgettoId },
+  });
+  return {
+    tokenRipresa: nuova.tokenRipresa,
+    chiaveTipoProgetto: tipoProgetto?.chiave ?? '',
+  };
 }

@@ -19,9 +19,7 @@ const SEZIONI_CATALOGO = [
 export default async function CatalogoPage() {
   const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
 
-  if (SEZIONI_CATALOGO.length === 1) {
-    redirect(SEZIONI_CATALOGO[0].href);
-  }
+  if (SEZIONI_CATALOGO.length === 1) redirect(SEZIONI_CATALOGO[0].href);
 
   const [finiture, ferramenta, accessori, varianti] = await Promise.all([
     elencoFiniture(contesto.tenantId),
@@ -44,7 +42,6 @@ export default async function CatalogoPage() {
         I materiali, le finiture e gli altri elementi che i clienti scelgono nel configuratore —
         gestiti qui, senza bisogno di alcun intervento di sviluppo.
       </p>
-
       <div className="grid gap-4 sm:grid-cols-2">
         {sezioni.map((s) => {
           const attive = s.righe.filter((r) => r.attiva).length;
@@ -64,6 +61,18 @@ export default async function CatalogoPage() {
             </Link>
           );
         })}
+        <Link href="/admin/catalogo/listino">
+          <Card className="h-full transition-colors hover:border-accent">
+            <CardHeader>
+              <CardTitle>Listino del falegname</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Prezzi reali interni, aggiornabili e storicizzati. Hanno priorità sui benchmark.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/admin/catalogo/benchmark">
           <Card className="h-full transition-colors hover:border-accent">
             <CardHeader>
