@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ErroreAccessoNegato, ErroreNonAutenticato, richiediContesto } from '@/server/identity/contesto';
 import { haPermesso } from '@/server/services/permission-service';
-import { aggiornaRigaBom } from '@/server/services/bom-service';
+import { aggiornaRigaBom, storicoPrezzoBomRiga } from '@/server/services/bom-service';
 
 async function contestoGestioneBom() {
   const identity = await richiediContesto();
@@ -13,6 +13,26 @@ async function contestoGestioneBom() {
     throw new ErroreAccessoNegato('bom', 'gestisci');
   }
   return identity;
+}
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const identity = await contestoGestioneBom();
+    const { id } = await params;
+    const storico = await storicoPrezzoBomRiga(identity.tenantId, id);
+    return NextResponse.json({ storico });
+  } catch (error) {
+    if (error instanceof ErroreNonAutenticato) {
+      return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
+    }
+    if (error instanceof ErroreAccessoNegato) {
+      return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Errore storico prezzo BOM' },
+      { status: 400 },
+    );
+  }
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +53,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       note: body.note === null || typeof body.note === 'string' ? (body.note as string | null | undefined) : undefined,
     };
 
-    await aggiornaRigaBom(identity.tenantId, id, input);
+    await aggiornaRigaBom(identity.tenantId, id, input, {
+      utenteId: identity.utenteId,
+      membershipId: identity.membershipId,
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof ErroreNonAutenticato) {
