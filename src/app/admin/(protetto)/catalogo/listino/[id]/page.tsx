@@ -5,7 +5,9 @@ import {
   dettaglioComposizioneListino,
   elencoComponentiPerComposizione,
 } from '@/server/services/listino-composizioni-service';
+import { listaBomAdmin } from '@/server/services/bom-admin-service';
 import {
+  aggiungiComposizioneABomAzione,
   aggiungiRigaComposizioneAzione,
   aggiornaRigaComposizioneAzione,
   rimuoviRigaComposizioneAzione,
@@ -23,11 +25,16 @@ function dimensioni(riga: { larghezzaCm: number | null; altezzaCm: number | null
 
 export default async function ComposizioneListinoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
-  const dettaglio = await dettaglioComposizioneListino(contesto.tenantId, id);
+  const contestoCatalogo = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
+  const contestoRichieste = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
+  const dettaglio = await dettaglioComposizioneListino(contestoCatalogo.tenantId, id);
   if (!dettaglio) notFound();
-  const componenti = await elencoComponentiPerComposizione(contesto.tenantId, id);
+  const [componenti, bom] = await Promise.all([
+    elencoComponentiPerComposizione(contestoCatalogo.tenantId, id),
+    listaBomAdmin(contestoRichieste.tenantId),
+  ]);
   const differenza = dettaglio.composizione.prezzo - dettaglio.costoDistinta;
+  const bomBozza = bom.filter((item) => item.stato === 'BOZZA');
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-12">
@@ -71,6 +78,31 @@ export default async function ComposizioneListinoPage({ params }: { params: Prom
           <input name="quantita" type="number" min="0.001" step="0.001" defaultValue="1" required className="rounded-md border p-2" />
           <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Aggiungi</button>
         </form>
+      </section>
+
+      <section className="mb-6 rounded-lg border p-5">
+        <div className="mb-4">
+          <h2 className="font-semibold">Trasferisci la composizione in una BOM</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Le righe vengono copiate nella BOM come fotografia della composizione attuale. La BOM deve essere in stato BOZZA.</p>
+        </div>
+        {bomBozza.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nessuna BOM in bozza disponibile. Crea prima una BOM dalla relativa richiesta di progetto.</p>
+        ) : dettaglio.righe.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aggiungi almeno un componente alla composizione prima di trasferirla.</p>
+        ) : (
+          <form action={aggiungiComposizioneABomAzione} className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <input type="hidden" name="composizioneId" value={id} />
+            <select name="bomId" required className="rounded-md border bg-background p-2">
+              <option value="">Seleziona BOM in bozza…</option>
+              {bomBozza.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.richiestaId} · v{item.versione} · {item.righeCount} righe
+                </option>
+              ))}
+            </select>
+            <button className="rounded-md border bg-secondary px-4 py-2 text-sm">Aggiungi alla BOM</button>
+          </form>
+        )}
       </section>
 
       <section className="overflow-x-auto rounded-lg border">
