@@ -16,11 +16,9 @@ export async function GET(request: Request) {
 
     if (query.trim().length < 2) return NextResponse.json({ suggerimenti: [] });
 
-    // Il listino Atelier viene cercato prima del benchmark di mercato.
-    const personali = await cercaPrezziListino(identity.tenantId, query);
-    if (personali.length > 0) {
-      return NextResponse.json({
-        suggerimenti: personali.map((riga) => ({
+    const personali = await cercaPrezziListino(identity.tenantId, query, undefined);
+    const righe = personali.length > 0
+      ? personali.map((riga) => ({
           id: riga.id,
           categoria: riga.categoria,
           codice: riga.codice,
@@ -34,28 +32,24 @@ export async function GET(request: Request) {
           fonteUrl: '',
           note: 'Prezzo interno del tenant: ha priorità sul benchmark di mercato.',
           origine: 'LISTINO_PERSONALE' as const,
-        })),
-      });
-    }
+        }))
+      : (await cercaBenchmarkCosti(identity.tenantId, query, unita)).map((riga) => ({
+          id: riga.id,
+          categoria: riga.categoria,
+          codice: riga.codice,
+          nome: riga.nome,
+          descrizione: riga.descrizione,
+          unita: riga.unita,
+          prezzoMin: riga.prezzoMin,
+          prezzoMax: riga.prezzoMax,
+          costoConsigliato: Number(((riga.prezzoMin + riga.prezzoMax) / 2).toFixed(2)),
+          fonte: riga.fonte,
+          fonteUrl: riga.fonteUrl,
+          note: riga.note,
+          origine: 'BENCHMARK' as const,
+        }));
 
-    const righe = await cercaBenchmarkCosti(identity.tenantId, query, unita);
-    return NextResponse.json({
-      suggerimenti: righe.map((riga) => ({
-        id: riga.id,
-        categoria: riga.categoria,
-        codice: riga.codice,
-        nome: riga.nome,
-        descrizione: riga.descrizione,
-        unita: riga.unita,
-        prezzoMin: riga.prezzoMin,
-        prezzoMax: riga.prezzoMax,
-        costoConsigliato: Number(((riga.prezzoMin + riga.prezzoMax) / 2).toFixed(2)),
-        fonte: riga.fonte,
-        fonteUrl: riga.fonteUrl,
-        note: riga.note,
-        origine: 'BENCHMARK' as const,
-      })),
-    });
+    return NextResponse.json({ suggerimenti: righe });
   } catch (error) {
     if (error instanceof ErroreNonAutenticato) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
     if (error instanceof ErroreAccessoNegato) return NextResponse.json({ error: 'Permesso negato' }, { status: 403 });
