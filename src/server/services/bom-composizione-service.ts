@@ -1,0 +1,82 @@
+import { db } from '@/server/db';
+import { aggiungiRigaBom, type CreaBomRigaInput } from '@/server/services/bom-service';
+
+export type RigaComposizioneBom = {
+  componenteId: string;
+  categoria: string;
+  codice: string;
+  descrizione: string;
+  unita: string;
+  quantita: number;
+  materiale: string | null;
+  costoUnitario: number;
+};
+
+export async function righeComposizionePerBom(
+  tenantId: string,
+  composizioneId: string,
+): Promise<RigaComposizioneBom[]> {
+  return db.$queryRaw<RigaComposizioneBom[]>`
+    SELECT r."componenteId",
+      p."categoria",
+      p."codice",
+      p."nome" AS "descrizione",
+      p."unita",
+      r."quantita"::float8 AS "quantita",
+      p."materiale",
+      r."costoUnitario"::float8 AS "costoUnitario"
+    FROM "listino_composizione_riga" r
+    JOIN "listino_prezzo" p
+      ON p."id" = r."componenteId"
+     AND p."tenantId" = r."tenantId"
+    WHERE r."tenantId" = ${tenantId}
+      AND r."composizioneId" = ${composizioneId}
+    ORDER BY p."tipo", p."nome"
+  `;
+}
+
+export function mappaRigaComposizioneInBom(riga: RigaComposizioneBom): CreaBomRigaInput {
+  return {
+    categoria: riga.categoria,
+    codice: riga.codice,
+    descrizione: riga.descrizione,
+    unita: riga.unita,
+    quantita: riga.quantita,
+    materiale: riga.materiale,
+    costoUnitario: riga.costoUnitario,
+  };
+}
+
+export async function aggiungiComposizioneABom(
+  tenantId: string,
+  bomId: string,
+  composizioneId: string,
+) {
+  const bom = await db.$queryRaw<Array<{ id: string; stato: 'BOZZA' | 'CONFERMATA' | 'CHIUSA' }>>`
+    SELECT "id", "stato"
+    FROM "bom"
+    WHERE "id" = ${bomId} AND "tenantId" = ${tenantId}
+    LIMIT 1
+  `;
+  if (bom.length === 0) throw new Error('Distinta non trovata.');
+  if (bom[0].stato !== 'BOZZA') throw new Error('La distinta non è più modificabile.');
+
+  const composizione = await db.$queryRaw<Array<{ id: string }>>`
+    SELECT "id"
+    FROM "listino_prezzo"
+    WHERE "id" = ${composizioneId}
+      AND "tenantId" = ${tenantId}
+      AND "tipo" = 'COMPOSIZIONE'
+    LIMIT 1
+  `;
+  if (composizione.length === 0) throw new Error('Composizione non trovata.');
+
+  const righe = await righeComposizionePerBom(tenantId, composizioneId);
+  if (righe.length === 0) throw new Error('La composizione non contiene righe da trasferire.');
+
+  for (const riga of righe) {
+    await aggiungiRigaBom(tenantId, bomId, mappaRigaComposizioneInBom(riga));
+  }
+
+  return { righeAggiunte: righe.length };
+}
