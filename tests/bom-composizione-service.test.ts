@@ -81,7 +81,7 @@ describe('aggiungiComposizioneABom', () => {
       righeAggiunte: 2,
     });
 
-    expect(aggiungiRigaBom).toHaveBeenNthCalledWith('tenant-1', 'bom-1', {
+    expect(aggiungiRigaBom).toHaveBeenNthCalledWith(1, 'tenant-1', 'bom-1', {
       categoria: 'PANNELLO',
       codice: 'FIA-18',
       descrizione: 'Fianco',
@@ -90,7 +90,7 @@ describe('aggiungiComposizioneABom', () => {
       materiale: 'Betulla',
       costoUnitario: 31.5,
     });
-    expect(aggiungiRigaBom).toHaveBeenNthCalledWith('tenant-1', 'bom-1', {
+    expect(aggiungiRigaBom).toHaveBeenNthCalledWith(2, 'tenant-1', 'bom-1', {
       categoria: 'FERRAMENTA',
       codice: 'CER-01',
       descrizione: 'Cerniera',
