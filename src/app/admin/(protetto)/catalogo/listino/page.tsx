@@ -91,7 +91,7 @@ export default async function ListinoPage({ searchParams }: { searchParams: Sear
             {righeVisibili.map((riga, indice) => {
               const storico = storici[indice];
               return <tr key={riga.id}>
-                <td className="p-3"><div className="font-medium">{riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice} · {riga.categoria}</div></td>
+                <td className="p-3"><div className="font-medium">{riga.tipo === 'COMPOSIZIONE' ? <Link href={`/admin/catalogo/listino/${riga.id}`} className="underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground">{riga.nome}</Link> : riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice} · {riga.categoria}{riga.tipo === 'COMPOSIZIONE' ? ' · apri distinta' : ''}</div></td>
                 <td className="p-3">{tipi.find((tipo) => tipo.value === riga.tipo)?.label ?? riga.tipo}</td>
                 <td className="p-3">{riga.materiale ?? '—'}</td>
                 <td className="p-3">{dimensioni(riga) ?? '—'}</td>
