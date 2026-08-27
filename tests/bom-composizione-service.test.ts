@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { queryRaw, aggiungiRigaBom } = vi.hoisted(() => ({
   queryRaw: vi.fn(),
@@ -17,6 +17,11 @@ import {
   aggiungiComposizioneABom,
   mappaRigaComposizioneInBom,
 } from '@/server/services/bom-composizione-service';
+
+beforeEach(() => {
+  queryRaw.mockReset();
+  aggiungiRigaBom.mockReset();
+});
 
 describe('mappaRigaComposizioneInBom', () => {
   it('trasferisce quantità, unità e costo snapshot senza ricalcolo', () => {
