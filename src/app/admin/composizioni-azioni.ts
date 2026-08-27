@@ -7,6 +7,7 @@ import {
   aggiornaRigaComposizione,
   rimuoviRigaComposizione,
 } from '@/server/services/listino-composizioni-service';
+import { aggiungiComposizioneABom } from '@/server/services/bom-composizione-service';
 
 function numero(formData: FormData, nome: string) {
   const valore = Number(formData.get(nome));
@@ -39,4 +40,15 @@ export async function rimuoviRigaComposizioneAzione(formData: FormData) {
   if (!id || !composizioneId) throw new Error('Riga non valida.');
   await rimuoviRigaComposizione(contesto.tenantId, id);
   revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+}
+
+export async function aggiungiComposizioneABomAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
+  const composizioneId = String(formData.get('composizioneId') ?? '');
+  const bomId = String(formData.get('bomId') ?? '');
+  if (!composizioneId || !bomId) throw new Error('Seleziona una BOM.');
+
+  await aggiungiComposizioneABom(contesto.tenantId, bomId, composizioneId);
+  revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+  revalidatePath(`/admin/bom/${bomId}`);
 }
