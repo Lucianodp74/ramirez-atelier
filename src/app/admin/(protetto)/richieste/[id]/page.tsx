@@ -56,7 +56,7 @@ export default async function DettaglioRichiestaPage({
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-6 py-12">
+    <div className="mx-auto max-w-[1800px] px-6 py-12">
       <Link
         href="/admin/richieste"
         className="mb-6 inline-block text-sm text-muted-foreground hover:underline"
