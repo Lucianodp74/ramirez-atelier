@@ -52,15 +52,11 @@ export default async function DettaglioRichiestaPage({
   );
   const datiForm: Record<string, unknown> = {
     ...datiFormPiatti(richiesta),
-    // Il campo è un "select" guidato da fonteOpzioni (fasce di budget dinamiche):
-    // qui mostriamo direttamente il nome già risolto invece dell'id, così il
-    // riepilogo generico (che cerca l'opzione per valore) mostra comunque il
-    // testo corretto anche senza rieseguire la risoluzione dinamica in questa pagina.
     fasciaBudgetId: richiesta.fasciaBudget?.nome ?? null,
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12">
+    <div className="mx-auto max-w-[1600px] px-6 py-12">
       <Link
         href="/admin/richieste"
         className="mb-6 inline-block text-sm text-muted-foreground hover:underline"
