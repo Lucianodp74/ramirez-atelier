@@ -85,19 +85,20 @@ export default async function ListinoPage({ searchParams }: { searchParams: Sear
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[1300px] text-sm">
-          <thead className="bg-secondary/40 text-left text-muted-foreground"><tr><th className="p-3">Voce</th><th className="p-3">Tipo</th><th className="p-3">Materiale</th><th className="p-3">Dimensioni</th><th className="p-3">Unità</th><th className="p-3">Prezzo</th><th className="p-3">Stato</th><th className="p-3">Aggiorna</th></tr></thead>
+        <table className="w-full min-w-[1420px] text-sm">
+          <thead className="bg-secondary/40 text-left text-muted-foreground"><tr><th className="p-3">Voce</th><th className="p-3">Tipo</th><th className="p-3">Materiale</th><th className="p-3">Dimensioni</th><th className="p-3">Unità</th><th className="p-3">Prezzo</th><th className="p-3">Stato</th><th className="p-3">Distinta</th><th className="p-3">Aggiorna</th></tr></thead>
           <tbody className="divide-y">
             {righeVisibili.map((riga, indice) => {
               const storico = storici[indice];
               return <tr key={riga.id}>
-                <td className="p-3"><div className="font-medium">{riga.tipo === 'COMPOSIZIONE' ? <Link href={`/admin/catalogo/listino/${riga.id}`} className="underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground">{riga.nome}</Link> : riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice} · {riga.categoria}{riga.tipo === 'COMPOSIZIONE' ? ' · apri distinta' : ''}</div></td>
+                <td className="p-3"><div className="font-medium">{riga.tipo === 'COMPOSIZIONE' ? <Link href={`/admin/catalogo/listino/${riga.id}`} className="underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground">{riga.nome}</Link> : riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice} · {riga.categoria}</div></td>
                 <td className="p-3">{tipi.find((tipo) => tipo.value === riga.tipo)?.label ?? riga.tipo}</td>
                 <td className="p-3">{riga.materiale ?? '—'}</td>
                 <td className="p-3">{dimensioni(riga) ?? '—'}</td>
                 <td className="p-3">{riga.unita}</td>
                 <td className="p-3 font-semibold">{euro.format(riga.prezzo)}</td>
                 <td className="p-3">{riga.attivo ? 'Attivo' : 'Disattivo'}</td>
+                <td className="p-3">{riga.tipo === 'COMPOSIZIONE' ? <Link href={`/admin/catalogo/listino/${riga.id}`} className="inline-flex rounded-md border px-3 py-2 font-medium hover:bg-secondary">Apri distinta</Link> : '—'}</td>
                 <td className="p-3"><form action={aggiornaPrezzoListinoAzione} className="flex flex-wrap items-center gap-2">
                   <input type="hidden" name="id" value={riga.id} />
                   <input name="prezzo" required min="0" step="0.01" type="number" defaultValue={riga.prezzo} className="w-28 rounded-md border p-2" />
@@ -108,7 +109,7 @@ export default async function ListinoPage({ searchParams }: { searchParams: Sear
                 </form></td>
               </tr>;
             })}
-            {righeVisibili.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Nessuna voce corrisponde ai filtri.</td></tr>}
+            {righeVisibili.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Nessuna voce corrisponde ai filtri.</td></tr>}
           </tbody>
         </table>
       </div>
