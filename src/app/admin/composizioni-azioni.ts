@@ -1,0 +1,42 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { richiediContesto } from '@/server/identity/contesto';
+import {
+  aggiungiRigaComposizione,
+  aggiornaRigaComposizione,
+  rimuoviRigaComposizione,
+} from '@/server/services/listino-composizioni-service';
+
+function numero(formData: FormData, nome: string) {
+  const valore = Number(formData.get(nome));
+  if (!Number.isFinite(valore) || valore <= 0) throw new Error(`${nome} non valido.`);
+  return valore;
+}
+
+export async function aggiungiRigaComposizioneAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const composizioneId = String(formData.get('composizioneId') ?? '');
+  const componenteId = String(formData.get('componenteId') ?? '');
+  if (!composizioneId || !componenteId) throw new Error('Seleziona una composizione e un componente.');
+  await aggiungiRigaComposizione(contesto.tenantId, composizioneId, componenteId, numero(formData, 'quantita'));
+  revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+}
+
+export async function aggiornaRigaComposizioneAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const id = String(formData.get('id') ?? '');
+  const composizioneId = String(formData.get('composizioneId') ?? '');
+  if (!id || !composizioneId) throw new Error('Riga non valida.');
+  await aggiornaRigaComposizione(contesto.tenantId, id, numero(formData, 'quantita'));
+  revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+}
+
+export async function rimuoviRigaComposizioneAzione(formData: FormData) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const id = String(formData.get('id') ?? '');
+  const composizioneId = String(formData.get('composizioneId') ?? '');
+  if (!id || !composizioneId) throw new Error('Riga non valida.');
+  await rimuoviRigaComposizione(contesto.tenantId, id);
+  revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+}
