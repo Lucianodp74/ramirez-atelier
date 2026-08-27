@@ -22,10 +22,25 @@ function dimensioni(riga: { larghezzaCm: number | null; altezzaCm: number | null
   return `${valori.map((valore) => (valore == null ? '—' : valore)).join(' × ')} cm`;
 }
 
-export default async function ListinoPage() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function primoValore(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+}
+
+export default async function ListinoPage({ searchParams }: { searchParams: SearchParams }) {
   const c = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
-  const righe = await elencoPrezziListino(c.tenantId);
-  const storici = await Promise.all(righe.map((riga) => storicoPrezzoListino(c.tenantId, riga.id)));
+  const [righe, params] = await Promise.all([elencoPrezziListino(c.tenantId), searchParams]);
+  const cerca = primoValore(params.q).trim();
+  const tipoFiltro = primoValore(params.tipo).trim();
+  const categoriaFiltro = primoValore(params.categoria).trim();
+  const categorie = [...new Set(righe.map((riga) => riga.categoria))].sort((a, b) => a.localeCompare(b, 'it'));
+  const termine = cerca.toLocaleLowerCase('it-IT');
+  const righeVisibili = righe.filter((riga) => {
+    const testo = [riga.nome, riga.codice, riga.categoria, riga.materiale ?? '', riga.descrizione ?? ''].join(' ').toLocaleLowerCase('it-IT');
+    return (!termine || testo.includes(termine)) && (!tipoFiltro || riga.tipo === tipoFiltro) && (!categoriaFiltro || riga.categoria === categoriaFiltro);
+  });
+  const storici = await Promise.all(righeVisibili.map((riga) => storicoPrezzoListino(c.tenantId, riga.id)));
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-12">
@@ -37,7 +52,7 @@ export default async function ListinoPage() {
         </p>
       </div>
 
-      <form action={creaPrezzoListinoAzione} className="mb-8 grid gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-6">
+      <form action={creaPrezzoListinoAzione} className="mb-6 grid gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-6">
         <label className="text-sm">Tipo<select name="tipo" defaultValue="COMPONENTE" className="mt-1 w-full rounded-md border p-2">{tipi.map((tipo) => <option key={tipo.value} value={tipo.value}>{tipo.label}</option>)}</select></label>
         <label className="text-sm">Categoria<input name="categoria" required className="mt-1 w-full rounded-md border p-2" placeholder="pannelli" /></label>
         <label className="text-sm">Codice<input name="codice" required className="mt-1 w-full rounded-md border p-2" placeholder="MUL-BET-18" /></label>
@@ -52,18 +67,28 @@ export default async function ListinoPage() {
         <div className="flex items-end"><button className="w-full rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Aggiungi al listino</button></div>
       </form>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        {tipi.map((tipo) => {
-          const count = righe.filter((riga) => riga.tipo === tipo.value).length;
-          return <div key={tipo.value} className="rounded-lg border p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{tipo.label}</div><div className="mt-1 text-2xl font-semibold">{count}</div></div>;
-        })}
+      <form method="get" className="mb-6 grid gap-3 rounded-lg border bg-secondary/20 p-4 sm:grid-cols-2 lg:grid-cols-5">
+        <label className="text-sm lg:col-span-2">Cerca nel listino<input name="q" defaultValue={cerca} className="mt-1 w-full rounded-md border bg-background p-2" placeholder="es. multistrato, betulla, colonna 90..." /></label>
+        <label className="text-sm">Tipo<select name="tipo" defaultValue={tipoFiltro} className="mt-1 w-full rounded-md border bg-background p-2"><option value="">Tutti</option>{tipi.map((tipo) => <option key={tipo.value} value={tipo.value}>{tipo.label}</option>)}</select></label>
+        <label className="text-sm">Categoria<select name="categoria" defaultValue={categoriaFiltro} className="mt-1 w-full rounded-md border bg-background p-2"><option value="">Tutte</option>{categorie.map((categoria) => <option key={categoria} value={categoria}>{categoria}</option>)}</select></label>
+        <div className="flex items-end gap-2"><button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Filtra</button><Link href="/admin/catalogo/listino" className="rounded-md border px-4 py-2 text-sm">Azzera</Link></div>
+      </form>
+
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="grid flex-1 gap-3 sm:grid-cols-3">
+          {tipi.map((tipo) => {
+            const count = righe.filter((riga) => riga.tipo === tipo.value).length;
+            return <div key={tipo.value} className="rounded-lg border p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{tipo.label}</div><div className="mt-1 text-2xl font-semibold">{count}</div></div>;
+          })}
+        </div>
+        <div className="text-sm text-muted-foreground">Visualizzate {righeVisibili.length} di {righe.length} voci</div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full min-w-[1300px] text-sm">
           <thead className="bg-secondary/40 text-left text-muted-foreground"><tr><th className="p-3">Voce</th><th className="p-3">Tipo</th><th className="p-3">Materiale</th><th className="p-3">Dimensioni</th><th className="p-3">Unità</th><th className="p-3">Prezzo</th><th className="p-3">Stato</th><th className="p-3">Aggiorna</th></tr></thead>
           <tbody className="divide-y">
-            {righe.map((riga, indice) => {
+            {righeVisibili.map((riga, indice) => {
               const storico = storici[indice];
               return <tr key={riga.id}>
                 <td className="p-3"><div className="font-medium">{riga.nome}</div><div className="text-xs text-muted-foreground">{riga.codice} · {riga.categoria}</div></td>
@@ -83,7 +108,7 @@ export default async function ListinoPage() {
                 </form></td>
               </tr>;
             })}
-            {righe.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Nessun prezzo personale inserito.</td></tr>}
+            {righeVisibili.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Nessuna voce corrisponde ai filtri.</td></tr>}
           </tbody>
         </table>
       </div>
