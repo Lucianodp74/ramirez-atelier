@@ -52,9 +52,14 @@ jobs:
 
       - name: Format check
         run: |
-          npx prettier --write src/components/admin/BOMCostSummary.tsx
-          git diff -- src/components/admin/BOMCostSummary.tsx
-          npx prettier --check src/components/admin/BOMCostSummary.tsx
+          files=$(git diff --name-only --diff-filter=ACMR "${{ github.event.pull_request.base.sha }}...${{ github.sha }}" | grep -E '\.(cjs|cts|css|html|js|jsx|json|md|mdx|mjs|scss|ts|tsx|yml|yaml)$' || true)
+          if [ -z "$files" ]; then
+            echo "No supported files changed; format check skipped."
+          else
+            while IFS= read -r file; do
+              npx prettier --check "$file"
+            done <<< "$files"
+          fi
 
       - name: Lint
         run: npm run lint
