@@ -42,13 +42,35 @@ export async function rimuoviRigaComposizioneAzione(formData: FormData) {
   revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
 }
 
-export async function aggiungiComposizioneABomAzione(formData: FormData) {
-  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
-  const composizioneId = String(formData.get('composizioneId') ?? '');
-  const bomId = String(formData.get('bomId') ?? '');
-  if (!composizioneId || !bomId) throw new Error('Seleziona una BOM.');
+type ComposizioneBomActionState = {
+  ok: boolean;
+  message: string;
+  bomId?: string;
+};
 
-  await aggiungiComposizioneABom(contesto.tenantId, bomId, composizioneId);
-  revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
-  revalidatePath(`/admin/bom/${bomId}`);
+export async function aggiungiComposizioneABomAzione(
+  _previousState: ComposizioneBomActionState,
+  formData: FormData,
+): Promise<ComposizioneBomActionState> {
+  try {
+    const contesto = await richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
+    const composizioneId = String(formData.get('composizioneId') ?? '');
+    const bomId = String(formData.get('bomId') ?? '');
+    if (!composizioneId || !bomId) throw new Error('Seleziona una BOM.');
+
+    const risultato = await aggiungiComposizioneABom(contesto.tenantId, bomId, composizioneId);
+    revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
+    revalidatePath(`/admin/bom/${bomId}`);
+
+    return {
+      ok: true,
+      message: `${risultato.righeAggiunte} ${risultato.righeAggiunte === 1 ? 'riga aggiunta' : 'righe aggiunte'} alla BOM.`,
+      bomId,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Trasferimento non riuscito.',
+    };
+  }
 }
