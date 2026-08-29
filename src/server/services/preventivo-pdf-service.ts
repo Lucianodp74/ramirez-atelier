@@ -117,7 +117,14 @@ export async function datiPreventivoPdf(tenantId: string, richiestaId: string): 
 }
 
 async function recuperaPreventivoCommerciale(tenantId: string, richiestaId: string) {
-  const bom = await db.bom.findFirst({ where: { tenantId, richiestaId }, orderBy: { versione: 'desc' }, select: { id: true } });
-  if (!bom) return null;
-  return ultimoPreventivoBom(tenantId, bom.id);
+  // La BOM è gestita con SQL raw e non come modello Prisma: cerchiamo quella
+  // della richiesta e lasciamo al servizio BOM la lettura dello snapshot.
+  const righe = await db.$queryRaw<Array<{ id: string }>>`
+    SELECT "id" FROM "bom"
+    WHERE "tenantId" = ${tenantId} AND "richiestaId" = ${richiestaId}
+    ORDER BY "versione" DESC
+    LIMIT 1
+  `;
+  if (!righe[0]) return null;
+  return ultimoPreventivoBom(tenantId, righe[0].id);
 }
