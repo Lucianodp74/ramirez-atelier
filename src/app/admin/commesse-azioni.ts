@@ -16,10 +16,9 @@ export async function creaCommessaDaRichiestaAzione(richiestaId: string) {
   return { id };
 }
 
-export async function cambiaStatoCommessaAzione(id: string, stato: StatoCommessa) {
+export async function cambiaStatoCommessaAzione(id: string, stato: StatoCommessa): Promise<void> {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
-  const commessa = await cambiaStatoCommessa(contesto.tenantId, id, stato);
+  await cambiaStatoCommessa(contesto.tenantId, id, stato);
   revalidatePath('/admin/commesse');
   revalidatePath(`/admin/commesse/${id}`);
-  return commessa;
 }
