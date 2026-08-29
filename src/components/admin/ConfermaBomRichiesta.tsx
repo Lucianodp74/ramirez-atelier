@@ -39,12 +39,5 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
   if (!bom || bom.stato !== 'BOZZA') return null;
   const completa = bom.righe.length > 0 && bom.righe.every((riga) => riga.costoUnitario != null);
 
-  return <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="font-medium text-emerald-900">BOM in bozza</p><p className="text-sm text-emerald-800">{completa ? 'Tutte le righe hanno un costo: la BOM è pronta per essere confermata.' : 'Completa tutti i costi delle righe prima di confermare.'}</p></div>
-      <button type="button" onClick={() => void conferma()} disabled={busy || !completa} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Conferma…' : 'Conferma BOM'}</button>
-    </div>
-    {message && <p className="mt-2 text-sm font-medium text-emerald-800">{message}</p>}
-    {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-  </div>;
+  return <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium text-emerald-900">BOM in bozza</p><p className="text-sm text-emerald-800">{completa ? 'Tutte le righe hanno un costo: la BOM è pronta per essere confermata.' : 'Completa tutti i costi delle righe prima di confermare.'}</p></div><button type="button" onClick={() => void conferma()} disabled={busy || !completa} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Conferma…' : 'Conferma BOM'}</button></div>{message && <p className="mt-2 text-sm font-medium text-emerald-800">{message}</p>}{error && <p className="mt-2 text-sm text-red-600">{error}</p>}</div>;
 }
