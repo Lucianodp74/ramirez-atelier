@@ -10,6 +10,8 @@ import {
   dettaglioBomAdmin,
   eliminaRigaBomAdmin,
 } from '@/server/services/bom-admin-service';
+import { salvaPreventivoBom } from '@/server/services/bom-preventivo-service';
+import type { BomPrezzoInput } from '@/server/services/bom-pricing-service';
 import type { StatoBom } from '@/server/services/bom-service';
 
 function errorResponse(error: unknown) {
@@ -58,6 +60,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
       await cambiaStatoBomAdmin(identity.tenantId, id, body.stato as StatoBom);
       return NextResponse.json({ ok: true });
+    }
+
+    if (body?.azione === 'salva-preventivo') {
+      const pricing = body?.pricing as BomPrezzoInput | undefined;
+      const preventivo = await salvaPreventivoBom(identity.tenantId, id, pricing ?? {});
+      return NextResponse.json({ ok: true, preventivo });
     }
 
     if (body?.azione === 'elimina-riga') {
