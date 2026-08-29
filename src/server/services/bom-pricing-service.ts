@@ -53,6 +53,10 @@ function importoValido(nome: string, valore: number) {
   }
 }
 
+function arrotondaImporto(valore: number) {
+  return Math.round((valore + Number.EPSILON) * 1000) / 1000;
+}
+
 /**
  * Primo livello del pricing engine: calcola il costo osservato dalle righe BOM
  * che hanno un costo unitario esplicito.
@@ -99,7 +103,9 @@ export async function riepilogoCostoBom(
 /**
  * Calcola il prezzo commerciale a partire dal costo BOM e da costi aggiuntivi
  * espliciti. `costiFissi` resta supportato per compatibilità con il pricing v0.
- * Tutti i valori economici hanno default zero: nessun prezzo viene inventato.
+ * Il ricarico si applica al costo di produzione; i costi aggiuntivi vengono
+ * sommati dopo il ricarico e prima di sconto e IVA. Tutti i valori economici
+ * hanno default zero: nessun prezzo viene inventato.
  */
 export function calcolaPrezzoBom(
   costoProduzione: number,
@@ -124,11 +130,11 @@ export function calcolaPrezzoBom(
   percentualeValida("L'IVA", ivaPercentuale);
 
   const costiAggiuntivi = costiFissi + lavorazioni + manodopera + spese;
-  const baseConRicarico = (costoProduzione + costiAggiuntivi) * (1 + ricaricoPercentuale / 100);
-  const sconto = baseConRicarico * (scontoPercentuale / 100);
-  const imponibile = Math.max(0, baseConRicarico - sconto);
-  const iva = imponibile * (ivaPercentuale / 100);
-  const totale = imponibile + iva;
+  const baseConRicarico = costoProduzione * (1 + ricaricoPercentuale / 100) + costiAggiuntivi;
+  const sconto = arrotondaImporto(baseConRicarico * (scontoPercentuale / 100));
+  const imponibile = arrotondaImporto(Math.max(0, baseConRicarico - sconto));
+  const iva = arrotondaImporto(imponibile * (ivaPercentuale / 100));
+  const totale = arrotondaImporto(imponibile + iva);
 
   return {
     costoProduzione,
@@ -137,7 +143,7 @@ export function calcolaPrezzoBom(
     manodopera,
     spese,
     costiAggiuntivi,
-    baseConRicarico,
+    baseConRicarico: arrotondaImporto(baseConRicarico),
     sconto,
     imponibile,
     iva,
