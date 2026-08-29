@@ -22,14 +22,44 @@ describe('calcolaPrezzoBom', () => {
     expect(risultato).toEqual({
       costoProduzione: 100,
       costiFissi: 10,
-      baseConRicarico: 130,
-      sconto: 13,
-      imponibile: 117,
-      iva: 25.74,
-      totale: 142.74,
+      lavorazioni: 0,
+      manodopera: 0,
+      spese: 0,
+      costiAggiuntivi: 10,
+      baseConRicarico: 132,
+      sconto: 13.2,
+      imponibile: 118.8,
+      iva: 26.136,
+      totale: 144.936,
       ricaricoPercentuale: 20,
       scontoPercentuale: 10,
       ivaPercentuale: 22,
+    });
+  });
+
+  it('calcola separatamente lavorazioni, manodopera e spese prima del ricarico', () => {
+    expect(
+      calcolaPrezzoBom(1000, {
+        lavorazioni: 150,
+        manodopera: 200,
+        spese: 50,
+        ricaricoPercentuale: 25,
+      }),
+    ).toEqual({
+      costoProduzione: 1000,
+      costiFissi: 0,
+      lavorazioni: 150,
+      manodopera: 200,
+      spese: 50,
+      costiAggiuntivi: 400,
+      baseConRicarico: 1750,
+      sconto: 0,
+      imponibile: 1750,
+      iva: 0,
+      totale: 1750,
+      ricaricoPercentuale: 25,
+      scontoPercentuale: 0,
+      ivaPercentuale: 0,
     });
   });
 
@@ -37,6 +67,10 @@ describe('calcolaPrezzoBom', () => {
     expect(calcolaPrezzoBom(125)).toEqual({
       costoProduzione: 125,
       costiFissi: 0,
+      lavorazioni: 0,
+      manodopera: 0,
+      spese: 0,
+      costiAggiuntivi: 0,
       baseConRicarico: 125,
       sconto: 0,
       imponibile: 125,
@@ -54,6 +88,9 @@ describe('calcolaPrezzoBom', () => {
     expect(() => calcolaPrezzoBom(100, { ivaPercentuale: Number.NaN })).toThrow();
     expect(() => calcolaPrezzoBom(-1)).toThrow();
     expect(() => calcolaPrezzoBom(100, { costiFissi: -1 })).toThrow();
+    expect(() => calcolaPrezzoBom(100, { lavorazioni: -1 })).toThrow();
+    expect(() => calcolaPrezzoBom(100, { manodopera: -1 })).toThrow();
+    expect(() => calcolaPrezzoBom(100, { spese: -1 })).toThrow();
   });
 });
 
