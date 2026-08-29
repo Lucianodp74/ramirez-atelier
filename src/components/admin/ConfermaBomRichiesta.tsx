@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 type Bom = { id: string; richiestaId: string; stato: string; righe: Array<{ costoUnitario: number | null }> };
 
@@ -10,7 +10,7 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function carica() {
+  const carica = useCallback(async () => {
     const response = await fetch(`/api/admin/bom?richiestaId=${encodeURIComponent(richiestaId)}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la BOM.');
@@ -20,9 +20,9 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
     const dettaglio = await dettaglioResponse.json();
     if (!dettaglioResponse.ok) throw new Error(dettaglio.error ?? 'Impossibile leggere il dettaglio della BOM.');
     setBom({ id: dettaglio.id, richiestaId: dettaglio.richiestaId, stato: dettaglio.stato, righe: Array.isArray(dettaglio.righe) ? dettaglio.righe : [] });
-  }
+  }, [richiestaId]);
 
-  useEffect(() => { void carica().catch((e) => setError(e instanceof Error ? e.message : 'Impossibile leggere la BOM.')); }, [richiestaId]);
+  useEffect(() => { void carica().catch((e) => setError(e instanceof Error ? e.message : 'Impossibile leggere la BOM.')); }, [carica]);
 
   async function conferma() {
     if (!bom) return;
