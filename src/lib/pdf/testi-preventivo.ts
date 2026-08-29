@@ -1,8 +1,5 @@
 /**
- * Ogni testo mostrato nel Preventivo PDF, in un solo posto. Cambiare il tono,
- * correggere una frase, o tradurre il documento richiede di modificare solo
- * questo file - mai il layout in PreventivoDocument.tsx, e viceversa: un
- * cambio di impaginazione non deve mai comportare di ritoccare le parole.
+ * Ogni testo mostrato nel Preventivo PDF, in un solo posto.
  */
 export const testiPreventivo = {
   etichettaPer: 'Per',
@@ -29,6 +26,12 @@ export const testiPreventivo = {
   notaStima:
     'Una stima orientativa, non un impegno definitivo: la cifra reale dipenderà dal progetto ' +
     'che definiremo insieme, nel dettaglio, durante il sopralluogo.',
+
+  titoloRiepilogoEconomico: 'Riepilogo economico',
+  etichettaImponibile: 'Imponibile',
+  etichettaIva: 'IVA',
+  etichettaTotale: 'Totale preventivo',
+  notaPrezzo: 'Importo calcolato sulla distinta e sulla configurazione commerciale salvate.',
 
   validita(dataScadenza: string): string {
     return (
