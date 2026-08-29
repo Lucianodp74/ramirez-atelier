@@ -1,11 +1,26 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calcolaPrezzoBom } from '@/lib/bom-pricing-calculation';
 
-type Props = { costoProduzione: number };
+type Props = { bomId: string; costoProduzione: number };
 
-export function PreventivoSummary({ costoProduzione }: Props) {
+type PreventivoSalvato = {
+  versione: number;
+  salvatoIl: string;
+  pricing: {
+    ricaricoPercentuale?: number;
+    costiFissi?: number;
+    lavorazioni?: number;
+    manodopera?: number;
+    spese?: number;
+    scontoPercentuale?: number;
+    ivaPercentuale?: number;
+  };
+  prezzo: ReturnType<typeof calcolaPrezzoBom>;
+};
+
+export function PreventivoSummary({ bomId, costoProduzione }: Props) {
   const [ricarico, setRicarico] = useState(20);
   const [costiFissi, setCostiFissi] = useState(0);
   const [lavorazioni, setLavorazioni] = useState(0);
@@ -13,6 +28,36 @@ export function PreventivoSummary({ costoProduzione }: Props) {
   const [spese, setSpese] = useState(0);
   const [sconto, setSconto] = useState(0);
   const [iva, setIva] = useState(22);
+  const [salvataggio, setSalvataggio] = useState<PreventivoSalvato | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/admin/bom/preventivo?bomId=${encodeURIComponent(bomId)}`)
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as { preventivo: PreventivoSalvato | null };
+      })
+      .then((data) => {
+        if (!active || !data?.preventivo) return;
+        const pricing = data.preventivo.pricing;
+        setRicarico(pricing.ricaricoPercentuale ?? 0);
+        setCostiFissi(pricing.costiFissi ?? 0);
+        setLavorazioni(pricing.lavorazioni ?? 0);
+        setManodopera(pricing.manodopera ?? 0);
+        setSpese(pricing.spese ?? 0);
+        setSconto(pricing.scontoPercentuale ?? 0);
+        setIva(pricing.ivaPercentuale ?? 0);
+        setSalvataggio(data.preventivo);
+      })
+      .catch(() => {
+        if (active) setError('Impossibile leggere il preventivo salvato.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [bomId]);
 
   const risultato = useMemo(
     () =>
@@ -27,6 +72,34 @@ export function PreventivoSummary({ costoProduzione }: Props) {
       }),
     [costoProduzione, ricarico, costiFissi, lavorazioni, manodopera, spese, sconto, iva],
   );
+
+  async function salva() {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/admin/bom/preventivo', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          bomId,
+          ricaricoPercentuale: ricarico,
+          costiFissi,
+          lavorazioni,
+          manodopera,
+          spese,
+          scontoPercentuale: sconto,
+          ivaPercentuale: iva,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Impossibile salvare il preventivo.');
+      setSalvataggio(data.preventivo as PreventivoSalvato);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Errore salvataggio preventivo');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const money = (value: number) => `${value.toFixed(2)} €`;
   const campo = (label: string, value: number, setValue: (value: number) => void, step = '0.01') => (
@@ -49,7 +122,7 @@ export function PreventivoSummary({ costoProduzione }: Props) {
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Preventivo</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-            Calcolo commerciale basato sul costo della BOM. Modifica i valori per simulare il prezzo di vendita: nulla viene salvato automaticamente.
+            Calcolo commerciale basato sul costo della BOM. Modifica i valori e salva il preventivo per usarlo nel PDF cliente.
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
@@ -91,10 +164,23 @@ export function PreventivoSummary({ costoProduzione }: Props) {
             <div className="mt-2 text-sm text-slate-300">IVA inclusa · sconto applicato prima dell&apos;IVA</div>
           </div>
           <div className="mt-6 border-t border-slate-700 pt-4 text-xs text-slate-400">
-            Il prezzo resta una simulazione finché non viene salvato nel preventivo cliente.
+            {salvataggio ? `Salvato v${salvataggio.versione} · ${new Date(salvataggio.salvatoIl).toLocaleString('it-IT')}` : 'Non ancora salvato nel preventivo cliente.'}
           </div>
         </div>
       </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-slate-500">Il PDF utilizzerà l&apos;ultimo snapshot commerciale salvato.</div>
+        <button
+          type="button"
+          onClick={() => void salva()}
+          disabled={saving}
+          className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {saving ? 'Salvataggio…' : 'Salva preventivo'}
+        </button>
+      </div>
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </section>
   );
 }
