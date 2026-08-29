@@ -17,6 +17,9 @@ export type BomCostoSummary = {
 export type BomPrezzoInput = {
   ricaricoPercentuale?: number;
   costiFissi?: number;
+  lavorazioni?: number;
+  manodopera?: number;
+  spese?: number;
   scontoPercentuale?: number;
   ivaPercentuale?: number;
 };
@@ -24,6 +27,10 @@ export type BomPrezzoInput = {
 export type BomPrezzoSummary = {
   costoProduzione: number;
   costiFissi: number;
+  lavorazioni: number;
+  manodopera: number;
+  spese: number;
+  costiAggiuntivi: number;
   baseConRicarico: number;
   sconto: number;
   imponibile: number;
@@ -46,13 +53,6 @@ function importoValido(nome: string, valore: number) {
   }
 }
 
-/**
- * Primo livello del pricing engine: calcola esclusivamente il costo osservato
- * dalle righe BOM che hanno un costo unitario esplicito.
- *
- * Non applica margini, ricarichi, IVA, sconti o prezzi inventati. Una BOM è
- * `completo` solo quando ogni riga possiede un costo unitario numerico.
- */
 export async function riepilogoCostoBom(
   tenantId: string,
   bomId: string,
@@ -96,9 +96,9 @@ export async function riepilogoCostoBom(
 }
 
 /**
- * Calcola un prezzo commerciale solo da parametri espliciti forniti dal dominio.
- * Nessun valore di default economico viene inventato: i default sono zero.
- * La funzione è pura e quindi verificabile senza database.
+ * Calcola il prezzo commerciale a partire dal costo BOM e da costi aggiuntivi
+ * espliciti. I parametri hanno default zero per non introdurre valori economici
+ * arbitrari. L'API resta compatibile con il precedente `costiFissi`.
  */
 export function calcolaPrezzoBom(
   costoProduzione: number,
@@ -108,15 +108,22 @@ export function calcolaPrezzoBom(
 
   const ricaricoPercentuale = input.ricaricoPercentuale ?? 0;
   const costiFissi = input.costiFissi ?? 0;
+  const lavorazioni = input.lavorazioni ?? 0;
+  const manodopera = input.manodopera ?? 0;
+  const spese = input.spese ?? 0;
   const scontoPercentuale = input.scontoPercentuale ?? 0;
   const ivaPercentuale = input.ivaPercentuale ?? 0;
 
   percentualeValida('Il ricarico', ricaricoPercentuale);
   importoValido('I costi fissi', costiFissi);
+  importoValido('Le lavorazioni', lavorazioni);
+  importoValido('La manodopera', manodopera);
+  importoValido('Le spese', spese);
   percentualeValida('Lo sconto', scontoPercentuale);
   percentualeValida("L'IVA", ivaPercentuale);
 
-  const baseConRicarico = costoProduzione * (1 + ricaricoPercentuale / 100) + costiFissi;
+  const costiAggiuntivi = costiFissi + lavorazioni + manodopera + spese;
+  const baseConRicarico = (costoProduzione + costiAggiuntivi) * (1 + ricaricoPercentuale / 100);
   const sconto = baseConRicarico * (scontoPercentuale / 100);
   const imponibile = Math.max(0, baseConRicarico - sconto);
   const iva = imponibile * (ivaPercentuale / 100);
@@ -125,6 +132,10 @@ export function calcolaPrezzoBom(
   return {
     costoProduzione,
     costiFissi,
+    lavorazioni,
+    manodopera,
+    spese,
+    costiAggiuntivi,
     baseConRicarico,
     sconto,
     imponibile,
