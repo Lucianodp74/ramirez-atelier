@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ControlloCambioStato } from '@/components/admin/ControlloCambioStato';
 import { AzionePuntoDiPartenza } from '@/components/admin/AzionePuntoDiPartenza';
+import { ConfermaBomRichiesta } from '@/components/admin/ConfermaBomRichiesta';
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
@@ -151,6 +152,7 @@ export default async function DettaglioRichiestaPage({
           </Card>
 
           <BOMCard richiestaId={richiesta.id} />
+          <ConfermaBomRichiesta richiestaId={richiesta.id} />
 
           <Card>
             <CardHeader>
