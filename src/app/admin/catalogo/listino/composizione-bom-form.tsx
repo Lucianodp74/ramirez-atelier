@@ -1,0 +1,6 @@
+'use client';
+import Link from 'next/link';
+import { useActionState } from 'react';
+import { aggiungiComposizioneABomAzione } from '@/app/admin/composizioni-azioni';
+type BomOption={id:string;richiestaId:string;versione:number;righeCount:number};
+export function ComposizioneBomForm({composizioneId,bomBozza}:{composizioneId:string;bomBozza:BomOption[]}){const [state,formAction,pending]=useActionState(aggiungiComposizioneABomAzione,{ok:false,message:''});return <div className="space-y-3"><form action={formAction} className="grid gap-3 md:grid-cols-[1fr_auto]"><input type="hidden" name="composizioneId" value={composizioneId}/><select name="bomId" required defaultValue="" className="rounded-md border bg-background p-2" disabled={pending}><option value="">Seleziona BOM in bozza…</option>{bomBozza.map(i=><option key={i.id} value={i.id}>{i.richiestaId} · v{i.versione} · {i.righeCount} righe</option>)}</select><button type="submit" disabled={pending} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">{pending?'Trasferimento in corso…':'Aggiungi alla BOM'}</button></form>{state.message&&<div className="rounded-md border p-3 text-sm">{state.message}{state.ok&&state.bomId?<Link href={`/admin/bom/${state.bomId}`} className="ml-2 font-medium underline">Apri BOM</Link>:null}</div>}</div>}
