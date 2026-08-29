@@ -25,7 +25,6 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
       setBom(null);
       return;
     }
-
     const dettaglioResponse = await fetch(`/api/admin/bom?id=${encodeURIComponent(candidata.id)}`);
     const dettaglio = await dettaglioResponse.json();
     if (!dettaglioResponse.ok) throw new Error(dettaglio.error ?? 'Impossibile leggere il dettaglio della BOM.');
@@ -64,7 +63,6 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
   }
 
   if (!bom || bom.stato !== 'BOZZA') return null;
-
   const completa = bom.righe.length > 0 && bom.righe.every((riga) => riga.costoUnitario != null);
 
   return (
@@ -76,12 +74,7 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
             {completa ? 'Tutte le righe hanno un costo: la BOM è pronta per essere confermata.' : 'Completa tutti i costi delle righe prima di confermare.'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void conferma()}
-          disabled={busy || !completa}
-          className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <button type="button" onClick={() => void conferma()} disabled={busy || !completa} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
           {busy ? 'Conferma…' : 'Conferma BOM'}
         </button>
       </div>
