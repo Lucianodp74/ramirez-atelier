@@ -186,18 +186,40 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
     `;
 
     if (fonteBom) {
-      await tx.$executeRaw`
-        INSERT INTO "commessa_riga_produzione" (
-          "id", "tenantId", "commessaId", "ordinamento", "categoria", "codice",
-          "descrizione", "unita", "quantita", "materiale", "lavorazione",
-          "costoUnitario", "note", "createdAt", "updatedAt"
-        )
-        SELECT gen_random_uuid()::text, "tenantId", ${id}, "ordinamento", "categoria", "codice",
-               "descrizione", "unita", "quantita", "materiale", "lavorazione",
-               "costoUnitario", "note", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      const righeBom = await tx.$queryRaw<Array<{
+        ordinamento: number;
+        categoria: string;
+        codice: string | null;
+        descrizione: string;
+        unita: string;
+        quantita: number;
+        materiale: string | null;
+        lavorazione: string | null;
+        costoUnitario: number | null;
+        note: string | null;
+      }>>`
+        SELECT "ordinamento", "categoria", "codice", "descrizione", "unita",
+               "quantita"::float8 AS "quantita", "materiale", "lavorazione",
+               "costoUnitario"::float8 AS "costoUnitario", "note"
         FROM "bom_riga"
         WHERE "tenantId" = ${tenantId} AND "bomId" = ${fonteBom.id}
+        ORDER BY "ordinamento", "createdAt"
       `;
+
+      for (const riga of righeBom) {
+        await tx.$executeRaw`
+          INSERT INTO "commessa_riga_produzione" (
+            "id", "tenantId", "commessaId", "ordinamento", "categoria", "codice",
+            "descrizione", "unita", "quantita", "materiale", "lavorazione",
+            "costoUnitario", "note", "createdAt", "updatedAt"
+          ) VALUES (
+            ${crypto.randomUUID()}, ${tenantId}, ${id}, ${riga.ordinamento}, ${riga.categoria},
+            ${riga.codice}, ${riga.descrizione}, ${riga.unita}, ${riga.quantita},
+            ${riga.materiale}, ${riga.lavorazione}, ${riga.costoUnitario}, ${riga.note},
+            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          )
+        `;
+      }
     }
 
     return id;
