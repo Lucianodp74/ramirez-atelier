@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { StatoBadge } from './StatoBadge';
 import { prossimiStatiPossibili, ETICHETTA_STATO } from '@/lib/workflow';
 import { cambiaStatoRichiesta } from '@/app/admin/azioni';
+import { creaCommessaDaRichiestaAzione } from '@/app/admin/commesse-azioni';
 import type { StatoRichiesta } from '@prisma/client';
 
 interface Props {
@@ -28,6 +29,18 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
         return;
       }
       router.refresh();
+    });
+  }
+
+  function creaCommessa() {
+    setErrore(null);
+    iniziaTransizione(async () => {
+      try {
+        const esito = await creaCommessaDaRichiestaAzione(richiestaId);
+        router.push(`/admin/commesse/${esito.id}`);
+      } catch (error) {
+        setErrore(error instanceof Error ? error.message : 'Impossibile creare la commessa.');
+      }
     });
   }
 
@@ -54,6 +67,24 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">Nessuna transizione ulteriore disponibile.</p>
+      )}
+      {statoCorrente === 'CONVERTITA' && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+          <p className="text-sm font-medium">Preventivo accettato: crea la commessa operativa.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Se esiste una BOM, deve essere già confermata. Le righe vengono copiate come snapshot di produzione.
+          </p>
+          <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            className="mt-3"
+            disabled={inCorso}
+            onClick={creaCommessa}
+          >
+            Crea commessa
+          </Button>
+        </div>
       )}
       {errore && <p className="text-sm text-destructive">{errore}</p>}
     </div>
