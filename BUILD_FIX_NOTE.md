@@ -1,0 +1,1 @@
+Build fix checkpoint: server action returns { id } and BOM effect dependency warning is fixed. This file is temporary and will be removed before merge.
