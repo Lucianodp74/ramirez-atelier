@@ -11,6 +11,7 @@ import { ConfermaBomRichiesta } from '@/components/admin/ConfermaBomRichiesta';
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
+import { creaCommessaDaRichiestaAzione } from '@/app/admin/commesse-azioni';
 import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
@@ -187,6 +188,23 @@ export default async function DettaglioRichiestaPage({
             </CardHeader>
             <CardContent>
               <ControlloCambioStato richiestaId={richiesta.id} statoCorrente={richiesta.stato} />
+              {richiesta.stato === 'CONVERTITA' && (
+                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="font-medium text-emerald-900">Richiesta convertita</p>
+                  <p className="mt-1 text-sm text-emerald-800">
+                    La richiesta può essere trasformata in una commessa operativa. Se la BOM è
+                    confermata, verrà copiata come snapshot nella distinta di produzione.
+                  </p>
+                  <form action={creaCommessaDaRichiestaAzione.bind(null, richiesta.id)} className="mt-3">
+                    <button
+                      type="submit"
+                      className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+                    >
+                      Crea commessa
+                    </button>
+                  </form>
+                </div>
+              )}
             </CardContent>
           </Card>
 
