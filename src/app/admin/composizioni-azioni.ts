@@ -1,6 +1,5 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { richiediContesto } from '@/server/identity/contesto';
 import {
@@ -53,28 +52,25 @@ export async function aggiungiComposizioneABomAzione(
   _previousState: ComposizioneBomActionState,
   formData: FormData,
 ): Promise<ComposizioneBomActionState> {
-  let bomId = '';
-
   try {
     const contesto = await richiediContesto({ modulo: 'richieste', azione: 'gestisci' });
     const composizioneId = String(formData.get('composizioneId') ?? '');
-    bomId = String(formData.get('bomId') ?? '');
+    const bomId = String(formData.get('bomId') ?? '');
     if (!composizioneId || !bomId) throw new Error('Seleziona una BOM.');
 
     const risultato = await aggiungiComposizioneABom(contesto.tenantId, bomId, composizioneId);
     revalidatePath(`/admin/catalogo/listino/${composizioneId}`);
     revalidatePath(`/admin/bom/${bomId}`);
 
-    // Dopo un trasferimento riuscito apriamo direttamente la BOM: l'operatore
-    // vede subito le righe realmente inserite, senza dipendere dallo stato
-    // client del form dopo la revalidazione della pagina.
-    void risultato;
+    return {
+      ok: true,
+      bomId,
+      message: `${risultato.righeAggiunte} ${risultato.righeAggiunte === 1 ? 'riga aggiunta' : 'righe aggiunte'} alla BOM.`,
+    };
   } catch (error) {
     return {
       ok: false,
       message: error instanceof Error ? error.message : 'Trasferimento non riuscito.',
     };
   }
-
-  redirect(`/admin/bom/${bomId}`);
 }
