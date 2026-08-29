@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { dettaglioRichiesta } from '@/server/services/richieste-service';
 import { esecuzioniPerEntita } from '@/server/services/regole-service';
 import { richiediContesto } from '@/server/identity/contesto';
@@ -31,6 +31,14 @@ const ETICHETTA_ESITO_REGOLA: Record<string, string> = {
   CONDIZIONE_FALSA: 'Non applicabile',
   ERRORE: 'Errore',
 };
+
+async function creaCommessaDaRichiestaFormAzione(
+  richiestaId: string,
+  _formData: FormData,
+): Promise<void> {
+  const esito = await creaCommessaDaRichiestaAzione(richiestaId);
+  redirect(`/admin/commesse/${esito.id}`);
+}
 
 export default async function DettaglioRichiestaPage({
   params,
@@ -195,7 +203,7 @@ export default async function DettaglioRichiestaPage({
                     La richiesta può essere trasformata in una commessa operativa. Se la BOM è
                     confermata, verrà copiata come snapshot nella distinta di produzione.
                   </p>
-                  <form action={creaCommessaDaRichiestaAzione.bind(null, richiesta.id)} className="mt-3">
+                  <form action={creaCommessaDaRichiestaFormAzione.bind(null, richiesta.id)} className="mt-3">
                     <button
                       type="submit"
                       className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
