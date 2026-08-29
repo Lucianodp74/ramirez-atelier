@@ -19,13 +19,19 @@ function errorResponse(error: unknown) {
 export async function GET(request: Request) {
   try {
     const identity = await contesto();
-    const id = new URL(request.url).searchParams.get('id');
+    const params = new URL(request.url).searchParams;
+    const id = params.get('id');
+    const richiestaId = params.get('richiestaId');
     if (id) {
       const bom = await dettaglioBomAdmin(identity.tenantId, id);
       if (!bom) return NextResponse.json({ error: 'Distinta non trovata' }, { status: 404 });
       return NextResponse.json(bom);
     }
-    return NextResponse.json({ data: await listaBomAdmin(identity.tenantId) });
+    const data = await listaBomAdmin(identity.tenantId);
+    if (richiestaId) {
+      return NextResponse.json({ data: data.filter((bom) => bom.richiestaId === richiestaId) });
+    }
+    return NextResponse.json({ data });
   } catch (error) {
     return errorResponse(error);
   }
