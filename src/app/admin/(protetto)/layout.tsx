@@ -22,43 +22,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
             Home
           </Link>
-          <Link
-            href="/admin/richieste"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/richieste" className="text-sm text-muted-foreground hover:text-foreground">
             Richieste
           </Link>
-          <Link
-            href="/admin/clienti"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/commesse" className="text-sm font-medium text-foreground hover:underline">
+            Commesse
+          </Link>
+          <Link href="/admin/clienti" className="text-sm text-muted-foreground hover:text-foreground">
             Clienti
           </Link>
-          <Link
-            href="/admin/fasce-budget"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/fasce-budget" className="text-sm text-muted-foreground hover:text-foreground">
             Fasce di budget
           </Link>
           <Link href="/admin/spese" className="text-sm text-muted-foreground hover:text-foreground">
             Spese
           </Link>
-          <Link
-            href="/admin/catalogo"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/catalogo" className="text-sm text-muted-foreground hover:text-foreground">
             Catalogo
           </Link>
-          <Link
-            href="/admin/regole"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/regole" className="text-sm text-muted-foreground hover:text-foreground">
             Regole
           </Link>
-          <Link
-            href="/admin/utenti"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/admin/utenti" className="text-sm text-muted-foreground hover:text-foreground">
             Utenti
           </Link>
           <Link href="/admin/kpi" className="text-sm text-muted-foreground hover:text-foreground">
