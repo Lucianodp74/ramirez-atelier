@@ -60,7 +60,12 @@ export function calcolaPrezzoBom(costoProduzione: number, input: BomPrezzoInput 
 
   const costiVariabili = arrotonda(lavorazioni + manodopera + spese);
   const costiAggiuntivi = arrotonda(costiFissi + costiVariabili);
-  const baseConRicarico = arrotonda((costoProduzione + costiVariabili) * (1 + ricaricoPercentuale / 100) + costiFissi);
+
+  // Il ricarico commerciale si applica al solo costo di produzione.
+  // Costi fissi, lavorazioni, manodopera e spese vengono poi aggiunti senza ricarico.
+  const baseConRicarico = arrotonda(
+    costoProduzione * (1 + ricaricoPercentuale / 100) + costiAggiuntivi,
+  );
   const sconto = arrotonda(baseConRicarico * scontoPercentuale / 100);
   const imponibile = arrotonda(Math.max(0, baseConRicarico - sconto));
   const iva = arrotonda(imponibile * ivaPercentuale / 100);
