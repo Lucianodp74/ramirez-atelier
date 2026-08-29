@@ -20,7 +20,21 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la BOM.');
     const lista = Array.isArray(data.data) ? data.data : [];
-    setBom(lista[0] ?? null);
+    const candidata = lista[0];
+    if (!candidata?.id) {
+      setBom(null);
+      return;
+    }
+
+    const dettaglioResponse = await fetch(`/api/admin/bom?id=${encodeURIComponent(candidata.id)}`);
+    const dettaglio = await dettaglioResponse.json();
+    if (!dettaglioResponse.ok) throw new Error(dettaglio.error ?? 'Impossibile leggere il dettaglio della BOM.');
+    setBom({
+      id: dettaglio.id,
+      richiestaId: dettaglio.richiestaId,
+      stato: dettaglio.stato,
+      righe: Array.isArray(dettaglio.righe) ? dettaglio.righe : [],
+    });
   }
 
   useEffect(() => {
