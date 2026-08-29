@@ -90,7 +90,7 @@ export function BOMCostSummary({
         )}
       </div>
 
-      {summary.completo && <PreventivoSummary costoProduzione={summary.subtotale} />}
+      {summary.completo && <PreventivoSummary bomId={bomId as string} costoProduzione={summary.subtotale} />}
     </>
   );
 }
