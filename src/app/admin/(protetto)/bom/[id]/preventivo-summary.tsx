@@ -69,7 +69,7 @@ export function PreventivoSummary({ costoProduzione }: Props) {
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">Prezzo di vendita</div>
             <div className="mt-2 text-4xl font-bold tracking-tight">{money(risultato.totale)}</div>
-            <div className="mt-2 text-sm text-slate-300">IVA inclusa · sconto applicato prima dell'IVA</div>
+            <div className="mt-2 text-sm text-slate-300">IVA inclusa · sconto applicato prima dell&apos;IVA</div>
           </div>
           <div className="mt-6 border-t border-slate-700 pt-4 text-xs text-slate-400">Il prezzo resta una simulazione finché non viene salvato nel preventivo cliente.</div>
         </div>
