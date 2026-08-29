@@ -7,7 +7,7 @@ describe('calcolaPrezzoBom', () => {
   it('calcola ricarico, costi fissi, sconto e IVA senza inventare valori', () => {
     expect(calcolaPrezzoBom(100,{ricaricoPercentuale:20,costiFissi:10,scontoPercentuale:10,ivaPercentuale:22})).toEqual({costoProduzione:100,costiFissi:10,lavorazioni:0,manodopera:0,spese:0,costiAggiuntivi:10,baseConRicarico:130,sconto:13,imponibile:117,iva:25.74,totale:142.74,ricaricoPercentuale:20,scontoPercentuale:10,ivaPercentuale:22});
   });
-  it('somma lavorazioni, manodopera e spese come costi aggiuntivi senza applicare loro il ricarico', () => expect(calcolaPrezzoBom(1000,{lavorazioni:150,manodopera:200,spese:50,ricaricoPercentuale:25})).toMatchObject({costoProduzione:1000,costiAggiuntivi:400,baseConRicarico:1750,totale:1750}));
+  it('somma lavorazioni, manodopera e spese come costi aggiuntivi senza applicare loro il ricarico', () => expect(calcolaPrezzoBom(1000,{lavorazioni:150,manodopera:200,spese:50,ricaricoPercentuale:25})).toMatchObject({costoProduzione:1000,costiAggiuntivi:400,baseConRicarico:1650,totale:1650}));
   it('usa zero come default per i parametri economici omessi',()=>expect(calcolaPrezzoBom(125)).toMatchObject({costoProduzione:125,costiFissi:0,costiAggiuntivi:0,totale:125}));
   it('rifiuta percentuali e importi non validi',()=>{expect(()=>calcolaPrezzoBom(100,{ricaricoPercentuale:101})).toThrow();expect(()=>calcolaPrezzoBom(100,{scontoPercentuale:-1})).toThrow();expect(()=>calcolaPrezzoBom(100,{ivaPercentuale:Number.NaN})).toThrow();expect(()=>calcolaPrezzoBom(-1)).toThrow();expect(()=>calcolaPrezzoBom(100,{costiFissi:-1})).toThrow();});
 });
