@@ -1,4 +1,5 @@
 import { dettaglioBom } from '@/server/services/bom-service';
+import { db } from '@/server/db';
 import {
   calcolaPrezzoBom,
   type BomPrezzoInput,
@@ -22,6 +23,15 @@ export type PreventivoBomSnapshot = {
     costoUnitario: number | null;
     totaleCosto: number | null;
   }>;
+};
+
+export type PreventivoSalvato = {
+  versione: number;
+  salvatoIl: string;
+  bomId: string;
+  bomVersione: number;
+  pricing: BomPrezzoInput;
+  prezzo: BomPrezzoSummary;
 };
 
 /**
@@ -70,4 +80,76 @@ export async function preparaSnapshotPreventivoBom(
     prezzo: calcolaPrezzoBom(costoProduzione, pricing),
     righe,
   };
+}
+
+/**
+ * Salva l'ultima simulazione commerciale direttamente sulla richiesta.
+ * `datiEstensione.preventivo` è volutamente uno snapshot JSON: in questo
+ * incremento evita di introdurre un nuovo modello storico prima di aver
+ * validato il flusso reale. La versione viene incrementata a ogni salvataggio.
+ */
+export async function salvaPreventivoBom(
+  tenantId: string,
+  bomId: string,
+  pricing: BomPrezzoInput = {},
+): Promise<PreventivoSalvato> {
+  const snapshot = await preparaSnapshotPreventivoBom(tenantId, bomId, pricing);
+  if (!snapshot) throw new Error('Distinta non trovata.');
+
+  const richiesta = await db.richiestaProgetto.findUnique({
+    where: { id: snapshot.richiestaId },
+    select: { id: true, tenantId: true, datiEstensione: true },
+  });
+  if (!richiesta || richiesta.tenantId !== tenantId) {
+    throw new Error('Richiesta non trovata.');
+  }
+
+  const estensione =
+    richiesta.datiEstensione && typeof richiesta.datiEstensione === 'object'
+      ? (richiesta.datiEstensione as Record<string, unknown>)
+      : {};
+  const precedente =
+    estensione.preventivo && typeof estensione.preventivo === 'object'
+      ? (estensione.preventivo as { versione?: unknown })
+      : null;
+  const versione = Number.isInteger(precedente?.versione) ? Number(precedente?.versione) + 1 : 1;
+  const salvatoIl = new Date().toISOString();
+  const preventivo: PreventivoSalvato = {
+    versione,
+    salvatoIl,
+    bomId: snapshot.bomId,
+    bomVersione: snapshot.versioneBom,
+    pricing,
+    prezzo: snapshot.prezzo,
+  };
+
+  await db.richiestaProgetto.update({
+    where: { id: richiesta.id },
+    data: {
+      datiEstensione: {
+        ...estensione,
+        preventivo,
+      },
+    },
+  });
+
+  return preventivo;
+}
+
+export async function ultimoPreventivoBom(
+  tenantId: string,
+  bomId: string,
+): Promise<PreventivoSalvato | null> {
+  const bom = await dettaglioBom(tenantId, bomId);
+  if (!bom) return null;
+  const richiesta = await db.richiestaProgetto.findUnique({
+    where: { id: bom.richiestaId },
+    select: { tenantId: true, datiEstensione: true },
+  });
+  if (!richiesta || richiesta.tenantId !== tenantId) return null;
+  const estensione = richiesta.datiEstensione;
+  if (!estensione || typeof estensione !== 'object') return null;
+  const preventivo = (estensione as Record<string, unknown>).preventivo;
+  if (!preventivo || typeof preventivo !== 'object') return null;
+  return preventivo as PreventivoSalvato;
 }
