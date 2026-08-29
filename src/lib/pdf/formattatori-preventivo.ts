@@ -1,13 +1,11 @@
-/**
- * Formattatori di presentazione per il preventivo - separati dal layout
- * (PreventivoDocument.tsx) perché qualunque futuro canale (email, snapshot,
- * un riepilogo testuale) deve poter mostrare lo stesso importo o la stessa
- * data con le stesse regole, senza duplicare la logica o importare un
- * componente React per prendere in prestito una funzione.
- */
+/** Formattatori condivisi per i documenti commerciali. */
 
 export function formattaEuro(valore: number): string {
   return valore.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+export function formattaEuroPreciso(valore: number): string {
+  return valore.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function formattaData(data: Date): string {
