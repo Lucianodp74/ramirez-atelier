@@ -30,7 +30,7 @@ export default async function CommessePage({
   const commesse = await listaCommesse(contesto.tenantId, stato);
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">Area operativa</p>
@@ -72,13 +72,14 @@ export default async function CommessePage({
       ) : (
         <section className="overflow-hidden rounded-lg border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="w-full min-w-[1000px] text-left text-sm">
               <thead className="bg-secondary/40 text-muted-foreground">
                 <tr>
                   <th className="p-4">Commessa</th>
                   <th className="p-4">Cliente</th>
                   <th className="p-4">Progetto</th>
                   <th className="p-4">Stato</th>
+                  <th className="p-4">Consegna prevista</th>
                   <th className="p-4">Righe produzione</th>
                   <th className="p-4">Aggiornata</th>
                   <th className="p-4" />
@@ -94,6 +95,11 @@ export default async function CommessePage({
                       <span className="rounded-full border px-2.5 py-1 text-xs">
                         {ETICHETTA_STATO_COMMESSA[commessa.stato]}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      {commessa.dataPrevistaConsegna
+                        ? commessa.dataPrevistaConsegna.toLocaleDateString('it-IT')
+                        : '—'}
                     </td>
                     <td className="p-4">{commessa.righeCount ?? 0}</td>
                     <td className="p-4 text-muted-foreground">{commessa.updatedAt.toLocaleString('it-IT')}</td>

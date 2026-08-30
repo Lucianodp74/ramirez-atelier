@@ -8,6 +8,7 @@ import {
   type StatoCommessa,
 } from '@/server/services/commessa-service';
 import { cambiaStatoCommessaAzione } from '@/app/admin/commesse-azioni';
+import { DatiOperativiCommessa } from '@/components/admin/DatiOperativiCommessa';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ export default async function CommessaDetailPage({
   );
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <Link href="/admin/commesse" className="text-sm text-muted-foreground hover:underline">
         ← Commesse
       </Link>
@@ -118,6 +119,20 @@ export default async function CommessaDetailPage({
           </section>
 
           <section className="rounded-lg border bg-card p-5">
+            <h2 className="font-semibold">Dati operativi</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Informazioni modificabili dal laboratorio senza alterare lo snapshot della BOM.
+            </p>
+            <div className="mt-4">
+              <DatiOperativiCommessa
+                commessaId={commessa.id}
+                dataPrevistaConsegna={commessa.dataPrevistaConsegna}
+                noteProduzione={commessa.noteProduzione}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-lg border bg-card p-5">
             <h2 className="font-semibold">Contatti cliente</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div><p className="text-xs text-muted-foreground">Nome</p><p className="text-sm">{commessa.clienteNome ?? '—'}</p></div>
@@ -137,6 +152,7 @@ export default async function CommessaDetailPage({
               <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Pronta</dt><dd>{commessa.prontaIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Consegnata</dt><dd>{commessa.consegnataIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Chiusa</dt><dd>{commessa.chiusaIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
+              <div className="flex justify-between gap-3 border-t pt-3"><dt className="text-muted-foreground">Consegna prevista</dt><dd className="font-medium">{commessa.dataPrevistaConsegna?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
             </dl>
           </section>
 

@@ -262,3 +262,21 @@ export async function cambiaStatoCommessa(
 
   return dettaglioCommessa(tenantId, id);
 }
+
+export async function aggiornaDatiOperativiCommessa(
+  tenantId: string,
+  id: string,
+  dataPrevistaConsegna: Date | null,
+  noteProduzione: string | null,
+) {
+  const risultato = await db.$executeRaw`
+    UPDATE "commessa"
+    SET "dataPrevistaConsegna" = ${dataPrevistaConsegna},
+        "noteProduzione" = ${noteProduzione},
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = ${id} AND "tenantId" = ${tenantId}
+  `;
+
+  if (risultato === 0) throw new Error('Commessa non trovata.');
+  return dettaglioCommessa(tenantId, id);
+}
