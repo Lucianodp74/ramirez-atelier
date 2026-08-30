@@ -40,7 +40,9 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
     iniziaTransizione(async () => {
       try {
         await creaCommessaDaRichiestaAzione(richiestaId);
-        setSuccesso('Commessa creata. Apri la sezione Commesse per visualizzarla.');
+        // La mutation è conclusa; navighiamo con una navigazione browser completa
+        // per evitare un secondo render RSC della pagina richiesta.
+        window.location.assign('/admin/commesse');
       } catch (error) {
         setErrore(error instanceof Error ? error.message : 'Impossibile creare la commessa.');
       }

@@ -12,8 +12,11 @@ import {
 export async function creaCommessaDaRichiestaAzione(richiestaId: string) {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
   const id = await creaCommessaDaRichiesta(contesto.tenantId, richiestaId);
+
+  // Non invalidiamo la pagina della richiesta qui: la creazione viene completata
+  // come operazione atomica e il client naviga esplicitamente verso Commesse.
+  // Evitiamo così un render RSC immediato della pagina corrente dopo la mutation.
   revalidatePath('/admin/commesse');
-  revalidatePath(`/admin/richieste/${richiestaId}`);
   return { id };
 }
 
