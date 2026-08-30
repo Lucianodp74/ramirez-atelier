@@ -5,6 +5,19 @@ import { contestoOpzionale } from '@/server/identity/contesto';
 import { db } from '@/server/db';
 import { LogoutButton } from '@/components/admin/LogoutButton';
 
+const LINK_NAV = [
+  ['/admin', 'Home'],
+  ['/admin/richieste', 'Richieste'],
+  ['/admin/commesse', 'Commesse'],
+  ['/admin/clienti', 'Clienti'],
+  ['/admin/fasce-budget', 'Fasce di budget'],
+  ['/admin/spese', 'Spese'],
+  ['/admin/catalogo', 'Catalogo'],
+  ['/admin/regole', 'Regole'],
+  ['/admin/utenti', 'Utenti'],
+  ['/admin/kpi', 'KPI'],
+] as const;
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const contesto = await contestoOpzionale();
   if (!contesto) redirect('/admin/login');
@@ -15,48 +28,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-background text-foreground">
       <nav className="border-b border-border px-4 py-3 sm:px-6 sm:py-4">
         <div className="mx-auto max-w-7xl">
-          <div className="flex min-w-max items-center gap-4">
-            <span className="flex shrink-0 items-center gap-2 font-semibold">
-              <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} />
-              Ramirez Atelier — Area operativa
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex min-w-0 items-center gap-2 font-semibold">
+              <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} className="shrink-0" />
+              <span className="truncate">Ramirez Atelier — Area operativa</span>
             </span>
-            <div className="flex shrink-0 items-center gap-4 overflow-x-auto pb-1">
-              <Link href="/admin" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Home
-              </Link>
-              <Link href="/admin/richieste" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Richieste
-              </Link>
-              <Link href="/admin/commesse" className="shrink-0 text-sm font-medium text-foreground hover:underline">
-                Commesse
-              </Link>
-              <Link href="/admin/clienti" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Clienti
-              </Link>
-              <Link href="/admin/fasce-budget" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Fasce di budget
-              </Link>
-              <Link href="/admin/spese" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Spese
-              </Link>
-              <Link href="/admin/catalogo" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Catalogo
-              </Link>
-              <Link href="/admin/regole" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Regole
-              </Link>
-              <Link href="/admin/utenti" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                Utenti
-              </Link>
-              <Link href="/admin/kpi" className="shrink-0 text-sm text-muted-foreground hover:text-foreground">
-                KPI
-              </Link>
-            </div>
-            <div className="ml-auto flex shrink-0 items-center gap-3 text-sm text-muted-foreground">
-              <span className="hidden sm:inline">
-                {contesto.utenteNome} · {tenant?.nome}
-              </span>
+            <div className="flex shrink-0 items-center gap-3 text-sm text-muted-foreground">
+              <span className="hidden md:inline">{contesto.utenteNome} · {tenant?.nome}</span>
               <LogoutButton />
+            </div>
+          </div>
+          <div className="mt-3 -mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+            <div className="flex w-max min-w-full items-center gap-5 pb-1">
+              {LINK_NAV.map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`shrink-0 text-sm ${label === 'Commesse' ? 'font-medium text-foreground' : 'text-muted-foreground'} hover:text-foreground hover:underline`}
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
