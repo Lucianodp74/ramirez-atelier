@@ -5,6 +5,19 @@ import { contestoOpzionale } from '@/server/identity/contesto';
 import { db } from '@/server/db';
 import { LogoutButton } from '@/components/admin/LogoutButton';
 
+const LINK_NAV = [
+  ['/admin', 'Home'],
+  ['/admin/richieste', 'Richieste'],
+  ['/admin/commesse', 'Commesse'],
+  ['/admin/clienti', 'Clienti'],
+  ['/admin/fasce-budget', 'Fasce di budget'],
+  ['/admin/spese', 'Spese'],
+  ['/admin/catalogo', 'Catalogo'],
+  ['/admin/regole', 'Regole'],
+  ['/admin/utenti', 'Utenti'],
+  ['/admin/kpi', 'KPI'],
+] as const;
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const contesto = await contestoOpzionale();
   if (!contesto) redirect('/admin/login');
@@ -13,47 +26,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="border-b border-border px-6 py-4">
-        <div className="mx-auto flex max-w-7xl items-center gap-6">
-          <span className="flex items-center gap-2 font-semibold">
-            <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} />
-            Ramirez Atelier — Area operativa
-          </span>
-          <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
-            Home
-          </Link>
-          <Link href="/admin/richieste" className="text-sm text-muted-foreground hover:text-foreground">
-            Richieste
-          </Link>
-          <Link href="/admin/commesse" className="text-sm font-medium text-foreground hover:underline">
-            Commesse
-          </Link>
-          <Link href="/admin/clienti" className="text-sm text-muted-foreground hover:text-foreground">
-            Clienti
-          </Link>
-          <Link href="/admin/fasce-budget" className="text-sm text-muted-foreground hover:text-foreground">
-            Fasce di budget
-          </Link>
-          <Link href="/admin/spese" className="text-sm text-muted-foreground hover:text-foreground">
-            Spese
-          </Link>
-          <Link href="/admin/catalogo" className="text-sm text-muted-foreground hover:text-foreground">
-            Catalogo
-          </Link>
-          <Link href="/admin/regole" className="text-sm text-muted-foreground hover:text-foreground">
-            Regole
-          </Link>
-          <Link href="/admin/utenti" className="text-sm text-muted-foreground hover:text-foreground">
-            Utenti
-          </Link>
-          <Link href="/admin/kpi" className="text-sm text-muted-foreground hover:text-foreground">
-            KPI
-          </Link>
-          <div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
-            <span>
-              {contesto.utenteNome} · {tenant?.nome}
+      <nav className="border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex min-w-0 items-center gap-2 font-semibold">
+              <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} className="shrink-0" />
+              <span className="truncate">Ramirez Atelier — Area operativa</span>
             </span>
-            <LogoutButton />
+            <div className="flex shrink-0 items-center gap-3 text-sm text-muted-foreground">
+              <span className="hidden md:inline">{contesto.utenteNome} · {tenant?.nome}</span>
+              <LogoutButton />
+            </div>
+          </div>
+          <div className="mt-3 -mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+            <div className="flex w-max min-w-full items-center gap-5 pb-1">
+              {LINK_NAV.map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`shrink-0 text-sm ${label === 'Commesse' ? 'font-medium text-foreground' : 'text-muted-foreground'} hover:text-foreground hover:underline`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
