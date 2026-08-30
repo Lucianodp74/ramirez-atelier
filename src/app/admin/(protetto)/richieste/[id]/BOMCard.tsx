@@ -59,6 +59,22 @@ function categoriaBom(categoria: string) {
   return 'COMPONENTE';
 }
 
+function normalizzaRighe(data: unknown): BomRow[] {
+  return Array.isArray(data) ? data : [];
+}
+
+function normalizzaSummary(data: unknown): BomCostSummary | null {
+  if (!data || typeof data !== 'object') return null;
+  const value = data as Partial<BomCostSummary>;
+  return {
+    righeConCosto: typeof value.righeConCosto === 'number' ? value.righeConCosto : 0,
+    righeSenzaCosto: typeof value.righeSenzaCosto === 'number' ? value.righeSenzaCosto : 0,
+    subtotale: typeof value.subtotale === 'number' ? value.subtotale : 0,
+    categorie: Array.isArray(value.categorie) ? value.categorie : [],
+    completo: value.completo === true,
+  };
+}
+
 export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [bomId, setBomId] = useState<string | null>(null);
   const [rows, setRows] = useState<BomRow[]>([]);
@@ -97,7 +113,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
         const response = await fetch(`/api/admin/benchmark?${params.toString()}`, { signal: controller.signal });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'Impossibile cercare i benchmark.');
-        setSuggerimenti(data.suggerimenti ?? []);
+        setSuggerimenti(Array.isArray(data.suggerimenti) ? data.suggerimenti : []);
       } catch (e) {
         if (!(e instanceof DOMException && e.name === 'AbortError')) setSuggerimenti([]);
       } finally {
@@ -124,12 +140,12 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la distinta.');
     setBomId(id);
-    setRows(data.righe ?? []);
+    setRows(normalizzaRighe(data.righe));
 
     const costResponse = await fetch(`/api/admin/bom/prezzo?bomId=${encodeURIComponent(id)}`);
     const costData = await costResponse.json();
     if (!costResponse.ok) throw new Error(costData.error ?? 'Impossibile calcolare il riepilogo costi.');
-    setSummary(costData);
+    setSummary(normalizzaSummary(costData));
   }
 
   async function crea() {
@@ -223,7 +239,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
       const response = await fetch(`/api/admin/bom/righe/${encodeURIComponent(rowId)}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere lo storico.');
-      setHistory(data.storico ?? []);
+      setHistory(Array.isArray(data.storico) ? data.storico : []);
     } catch (e) {
       setHistory([]);
       setError(e instanceof Error ? e.message : 'Errore storico prezzo');
