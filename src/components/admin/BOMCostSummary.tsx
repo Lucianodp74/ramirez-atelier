@@ -16,6 +16,18 @@ type Summary = {
   completo: boolean;
 };
 
+function normalizzaSummary(data: unknown): Summary | null {
+  if (!data || typeof data !== 'object') return null;
+  const value = data as Partial<Summary>;
+  return {
+    righeConCosto: typeof value.righeConCosto === 'number' ? value.righeConCosto : 0,
+    righeSenzaCosto: typeof value.righeSenzaCosto === 'number' ? value.righeSenzaCosto : 0,
+    subtotale: typeof value.subtotale === 'number' ? value.subtotale : 0,
+    categorie: Array.isArray(value.categorie) ? value.categorie : [],
+    completo: value.completo === true,
+  };
+}
+
 export function BOMCostSummary({
   bomId,
   refreshKey,
@@ -34,7 +46,7 @@ export function BOMCostSummary({
     fetch(`/api/admin/bom/prezzo?bomId=${encodeURIComponent(bomId)}`)
       .then(async (response) => {
         if (!response.ok) return null;
-        return (await response.json()) as Summary;
+        return normalizzaSummary(await response.json());
       })
       .then((data) => {
         if (active) setSummary(data);
