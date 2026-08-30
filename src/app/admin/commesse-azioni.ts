@@ -13,10 +13,10 @@ export async function creaCommessaDaRichiestaAzione(richiestaId: string) {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
   const id = await creaCommessaDaRichiesta(contesto.tenantId, richiestaId);
 
-  // Non invalidiamo la pagina della richiesta qui: la creazione viene completata
-  // come operazione atomica e il client naviga esplicitamente verso Commesse.
-  // Evitiamo così un render RSC immediato della pagina corrente dopo la mutation.
-  revalidatePath('/admin/commesse');
+  // La creazione è completata atomicamente. Il client esegue una navigazione
+  // browser completa verso /admin/commesse, quindi non serve invalidare la cache
+  // della route durante la Server Action. Questo evita qualsiasi aggiornamento RSC
+  // concorrente mentre la risposta dell'action viene restituita al browser.
   return { id };
 }
 
