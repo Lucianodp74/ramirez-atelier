@@ -18,10 +18,12 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
   const router = useRouter();
   const [inCorso, iniziaTransizione] = useTransition();
   const [errore, setErrore] = useState<string | null>(null);
+  const [successo, setSuccesso] = useState<string | null>(null);
   const prossimi = prossimiStatiPossibili(statoCorrente);
 
   function applica(nuovoStato: StatoRichiesta) {
     setErrore(null);
+    setSuccesso(null);
     iniziaTransizione(async () => {
       const esito = await cambiaStatoRichiesta(richiestaId, nuovoStato);
       if (!esito.successo) {
@@ -34,10 +36,12 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
 
   function creaCommessa() {
     setErrore(null);
+    setSuccesso(null);
     iniziaTransizione(async () => {
       try {
-        const esito = await creaCommessaDaRichiestaAzione(richiestaId);
-        router.push(`/admin/commesse/${esito.id}`);
+        await creaCommessaDaRichiestaAzione(richiestaId);
+        setSuccesso('Commessa creata. Puoi aprirla dalla sezione Commesse.');
+        router.refresh();
       } catch (error) {
         setErrore(error instanceof Error ? error.message : 'Impossibile creare la commessa.');
       }
@@ -86,6 +90,7 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
           </Button>
         </div>
       )}
+      {successo && <p className="text-sm text-emerald-700">{successo}</p>}
       {errore && <p className="text-sm text-destructive">{errore}</p>}
     </div>
   );
