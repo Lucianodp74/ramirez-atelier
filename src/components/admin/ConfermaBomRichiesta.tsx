@@ -36,13 +36,22 @@ export function ConfermaBomRichiesta({ richiestaId }: { richiestaId: string }) {
     finally { setBusy(false); }
   }
 
-  if (!bom || bom.stato !== 'BOZZA') return null;
+  if (!bom) return null;
   const completa = bom.righe.length > 0 && bom.righe.every((riga) => riga.costoUnitario != null);
+  const stato = bom.stato.toUpperCase();
+  const confermata = stato === 'CONFERMATA';
+  const chiusa = stato === 'CHIUSA';
 
-  return <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+  return <div className={`mt-4 rounded-md border p-4 ${confermata || chiusa ? 'border-slate-200 bg-slate-50' : 'border-emerald-200 bg-emerald-50'}`}>
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="font-medium text-emerald-900">BOM in bozza</p><p className="text-sm text-emerald-800">{completa ? 'Tutte le righe hanno un costo: la BOM è pronta per essere confermata.' : 'Completa tutti i costi delle righe prima di confermare.'}</p></div>
-      <button type="button" onClick={() => void conferma()} disabled={busy || !completa} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Conferma…' : 'Conferma BOM'}</button>
+      <div>
+        <p className={`font-medium ${confermata || chiusa ? 'text-slate-900' : 'text-emerald-900'}`}>Distinta di produzione</p>
+        <p className="text-sm text-muted-foreground">Stato BOM: <span className="font-semibold">{stato}</span> · {bom.righe.length} righe</p>
+        {stato === 'BOZZA' && <p className="mt-1 text-sm text-emerald-800">{completa ? 'Tutte le righe hanno un costo: la BOM è pronta per essere confermata.' : 'Completa tutti i costi delle righe prima di confermare.'}</p>}
+        {confermata && <p className="mt-1 text-sm text-slate-700">BOM confermata e non più modificabile.</p>}
+        {chiusa && <p className="mt-1 text-sm text-slate-700">BOM chiusa.</p>}
+      </div>
+      {stato === 'BOZZA' && <button type="button" onClick={() => void conferma()} disabled={busy || !completa} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Conferma…' : 'Conferma BOM'}</button>}
     </div>
     {message && <p className="mt-2 text-sm font-medium text-emerald-800">{message}</p>}
     {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
