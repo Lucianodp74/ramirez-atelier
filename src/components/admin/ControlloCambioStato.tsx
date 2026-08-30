@@ -40,8 +40,7 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
     iniziaTransizione(async () => {
       try {
         await creaCommessaDaRichiestaAzione(richiestaId);
-        setSuccesso('Commessa creata. Puoi aprirla dalla sezione Commesse.');
-        router.refresh();
+        setSuccesso('Commessa creata. Apri la sezione Commesse per visualizzarla.');
       } catch (error) {
         setErrore(error instanceof Error ? error.message : 'Impossibile creare la commessa.');
       }
@@ -83,10 +82,10 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
             variant="accent"
             size="sm"
             className="mt-3"
-            disabled={inCorso}
+            disabled={inCorso || Boolean(successo)}
             onClick={creaCommessa}
           >
-            Crea commessa
+            {successo ? 'Commessa creata' : 'Crea commessa'}
           </Button>
         </div>
       )}
