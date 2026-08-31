@@ -1,0 +1,1 @@
+Diagnostica creazione commessa: il fallimento della Server Action viene restituito come risultato applicativo invece di propagarsi come errore RSC.

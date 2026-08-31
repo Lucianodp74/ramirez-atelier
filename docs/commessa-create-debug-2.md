@@ -1,0 +1,1 @@
+Gestione diagnostica del fallimento di creazione commessa: la Server Action restituisce un risultato discriminato e il client mostra l'errore senza generare un RSC 500. La mutation resta transazionale.

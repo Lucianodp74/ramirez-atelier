@@ -9,15 +9,27 @@ import {
   type StatoCommessa,
 } from '@/server/services/commessa-service';
 
-export async function creaCommessaDaRichiestaAzione(richiestaId: string) {
-  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
-  const id = await creaCommessaDaRichiesta(contesto.tenantId, richiestaId);
+export async function creaCommessaDaRichiestaAzione(
+  richiestaId: string,
+): Promise<{ successo: true; id: string } | { successo: false; errore: string }> {
+  try {
+    const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
+    const id = await creaCommessaDaRichiesta(contesto.tenantId, richiestaId);
 
-  // La creazione è completata atomicamente. Il client esegue una navigazione
-  // browser completa verso /admin/commesse, quindi non serve invalidare la cache
-  // della route durante la Server Action. Questo evita qualsiasi aggiornamento RSC
-  // concorrente mentre la risposta dell'action viene restituita al browser.
-  return { id };
+    // La mutation è conclusa atomicamente. Il client esegue una navigazione
+    // browser completa verso /admin/commesse, quindi non serve invalidare la
+    // cache della route durante la Server Action.
+    return { successo: true, id };
+  } catch (error) {
+    // Evitiamo che un errore della mutation diventi un generico RSC 500.
+    // Il messaggio viene mostrato solo nell'area admin per rendere diagnosticabile
+    // un eventuale problema di database/configurazione in produzione.
+    console.error('creaCommessaDaRichiestaAzione fallita', { richiestaId, error });
+    return {
+      successo: false,
+      errore: error instanceof Error ? error.message : 'Impossibile creare la commessa.',
+    };
+  }
 }
 
 export async function cambiaStatoCommessaAzione(id: string, stato: StatoCommessa): Promise<void> {

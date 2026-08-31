@@ -39,7 +39,12 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
     setSuccesso(null);
     iniziaTransizione(async () => {
       try {
-        await creaCommessaDaRichiestaAzione(richiestaId);
+        const esito = await creaCommessaDaRichiestaAzione(richiestaId);
+        if (!esito.successo) {
+          setErrore(esito.errore);
+          return;
+        }
+        setSuccesso('Commessa creata.');
         // La mutation è conclusa; navighiamo con una navigazione browser completa
         // per evitare un secondo render RSC della pagina richiesta.
         window.location.assign('/admin/commesse');
