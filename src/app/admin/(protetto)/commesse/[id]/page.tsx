@@ -8,6 +8,7 @@ import {
   type StatoCommessa,
 } from '@/server/services/commessa-service';
 import { cambiaStatoCommessaAzione } from '@/app/admin/commesse-azioni';
+import { AvanzamentoCommessa } from '@/components/admin/AvanzamentoCommessa';
 import { DatiOperativiCommessa } from '@/components/admin/DatiOperativiCommessa';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +22,8 @@ const LABEL_PROSSIMO: Record<StatoCommessa, string> = {
   DA_AVVIARE: 'Da avviare',
   IN_PRODUZIONE: 'Avvia produzione',
   PRONTA: 'Segna pronta',
-  CONSEGNATA: 'Segna consegnata',
   CHIUSA: 'Chiudi commessa',
+  CONSEGNATA: 'Segna consegnata',
   ANNULLATA: 'Annulla commessa',
 };
 
@@ -69,6 +70,13 @@ export default async function CommessaDetailPage({
             </form>
           ))}
         </div>
+      </div>
+
+      <div className="mb-6">
+        <AvanzamentoCommessa
+          stato={commessa.stato}
+          dataPrevistaConsegna={commessa.dataPrevistaConsegna}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
