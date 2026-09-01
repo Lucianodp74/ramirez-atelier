@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { riepilogoDashboard } from '@/server/services/richieste-service';
+import { listaCommesse } from '@/server/services/commessa-service';
 import { richiediContesto } from '@/server/identity/contesto';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatoBadge } from '@/components/admin/StatoBadge';
@@ -17,7 +18,10 @@ function formattaEuro(valore: number): string {
 
 export default async function DashboardHomePage() {
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
-  const riepilogo = await riepilogoDashboard(contesto.tenantId);
+  const [riepilogo, commesse] = await Promise.all([
+    riepilogoDashboard(contesto.tenantId),
+    listaCommesse(contesto.tenantId),
+  ]);
 
   const kpiPrincipali = [
     { etichetta: 'Nuove', valore: riepilogo.conteggiPerStato.NUOVA },
@@ -25,6 +29,17 @@ export default async function DashboardHomePage() {
     { etichetta: 'Preventivo inviato', valore: riepilogo.conteggiPerStato.PREVENTIVO_INVIATO },
     { etichetta: 'Convertite', valore: riepilogo.conteggiPerStato.CONVERTITA },
   ];
+
+  const produzione = {
+    daAvviare: commesse.filter((c) => c.stato === 'DA_AVVIARE').length,
+    inProduzione: commesse.filter((c) => c.stato === 'IN_PRODUZIONE').length,
+    pronte: commesse.filter((c) => c.stato === 'PRONTA').length,
+    consegnate: commesse.filter((c) => c.stato === 'CONSEGNATA').length,
+  };
+
+  const lavoriAttivi = commesse.filter((c) =>
+    ['DA_AVVIARE', 'IN_PRODUZIONE', 'PRONTA', 'CONSEGNATA'].includes(c.stato),
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -78,6 +93,87 @@ export default async function DashboardHomePage() {
           </CardContent>
         </Card>
       </div>
+
+      <section className="mt-10">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-medium">Produzione</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Situazione delle commesse operative.</p>
+          </div>
+          <Link href="/admin/commesse" className="text-sm text-accent hover:underline">
+            Vedi commesse →
+          </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: 'Da avviare', value: produzione.daAvviare, stato: 'DA_AVVIARE' },
+            { label: 'In produzione', value: produzione.inProduzione, stato: 'IN_PRODUZIONE' },
+            { label: 'Pronte', value: produzione.pronte, stato: 'PRONTA' },
+            { label: 'Consegnate', value: produzione.consegnate, stato: 'CONSEGNATA' },
+          ].map((kpi) => (
+            <Link key={kpi.stato} href={`/admin/commesse?stato=${kpi.stato}`}>
+              <Card className="h-full transition-colors hover:bg-secondary/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal text-muted-foreground">
+                    {kpi.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-semibold">{kpi.value}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+
+        {lavoriAttivi.length > 0 && (
+          <div className="mt-6 overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/40 text-left text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-normal">Commessa</th>
+                  <th className="px-4 py-3 font-normal">Cliente</th>
+                  <th className="px-4 py-3 font-normal">Progetto</th>
+                  <th className="px-4 py-3 font-normal">Stato</th>
+                  <th className="px-4 py-3 font-normal">Consegna</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {lavoriAttivi.slice(0, 6).map((commessa) => (
+                  <tr key={commessa.id} className="border-t border-border hover:bg-secondary/20">
+                    <td className="px-4 py-3 font-medium">{commessa.numero}</td>
+                    <td className="px-4 py-3">{commessa.clienteNome ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{commessa.tipoProgettoNome}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full border px-2.5 py-1 text-xs">
+                        {commessa.stato.replaceAll('_', ' ').toLowerCase() === 'da avviare'
+                          ? 'Da avviare'
+                          : commessa.stato === 'IN_PRODUZIONE'
+                            ? 'In produzione'
+                            : commessa.stato === 'PRONTA'
+                              ? 'Pronta'
+                              : 'Consegnata'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {commessa.dataPrevistaConsegna
+                        ? commessa.dataPrevistaConsegna.toLocaleDateString('it-IT')
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={`/admin/commesse/${commessa.id}`} className="font-medium underline">
+                        Apri
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <div className="mt-10">
         <div className="mb-4 flex items-center justify-between">
