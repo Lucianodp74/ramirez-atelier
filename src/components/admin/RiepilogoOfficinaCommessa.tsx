@@ -10,6 +10,9 @@ export function RiepilogoOfficinaCommessa({ righe, stato, noteProduzione }: Prop
   const quantitaTotale = righe.reduce((totale, riga) => totale + riga.quantita, 0);
   const categorie = new Set(righe.map((riga) => riga.categoria)).size;
   const righeConNote = righe.filter((riga) => riga.note?.trim()).length;
+  const completate = righe.filter((riga) => riga.statoLavorazione === 'COMPLETATA').length;
+  const inLavorazione = righe.filter((riga) => riga.statoLavorazione === 'IN_LAVORAZIONE').length;
+  const percentuale = righe.length ? Math.round((completate / righe.length) * 100) : 0;
 
   return (
     <section className="rounded-lg border bg-card p-5">
@@ -21,7 +24,7 @@ export function RiepilogoOfficinaCommessa({ righe, stato, noteProduzione }: Prop
         <span className="rounded-full border px-3 py-1 text-xs font-medium">{stato.replaceAll('_', ' ')}</span>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border p-3">
           <p className="text-xs text-muted-foreground">Righe produzione</p>
           <p className="mt-1 text-xl font-semibold">{righe.length}</p>
@@ -34,7 +37,24 @@ export function RiepilogoOfficinaCommessa({ righe, stato, noteProduzione }: Prop
           <p className="text-xs text-muted-foreground">Categorie</p>
           <p className="mt-1 text-xl font-semibold">{categorie}</p>
         </div>
+        <div className="rounded-md border p-3">
+          <p className="text-xs text-muted-foreground">Avanzamento righe</p>
+          <p className="mt-1 text-xl font-semibold">{percentuale}%</p>
+          <p className="mt-1 text-xs text-muted-foreground">{completate} completate · {inLavorazione} in lavorazione</p>
+        </div>
       </div>
+
+      {righe.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-1 flex justify-between text-xs">
+            <span className="text-muted-foreground">Avanzamento produzione</span>
+            <span className="font-medium">{completate}/{righe.length} righe</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${percentuale}%` }} />
+          </div>
+        </div>
+      )}
 
       {noteProduzione?.trim() && (
         <div className="mt-4 rounded-md border p-4">
