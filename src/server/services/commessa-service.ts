@@ -121,12 +121,12 @@ export async function dettaglioCommessa(tenantId: string, id: string): Promise<C
   if (!commesse[0]) return null;
 
   const righe = await db.$queryRaw<RigaProduzione[]>`
-    SELECT "id", "ordinamento", "categoria", "codice", "descrizione", "unita",
-           "quantita"::float8 AS "quantita", "materiale", "lavorazione",
-           "costoUnitario"::float8 AS "costoUnitario", "note"
-    FROM "commessa_riga_produzione"
-    WHERE "tenantId" = ${tenantId} AND "commessaId" = ${id}
-    ORDER BY "ordinamento", "createdAt"
+    SELECT cr."id", cr."ordinamento", cr."categoria", cr."codice", cr."descrizione", cr."unita",
+           cr."quantita"::float8 AS "quantita", cr."materiale", cr."lavorazione",
+           cr."costoUnitario"::float8 AS "costoUnitario", cr."note"
+    FROM "commessa_riga_produzione" cr
+    WHERE cr."tenantId" = ${tenantId} AND cr."commessaId" = ${id}
+    ORDER BY cr."ordinamento", cr."createdAt"
   `;
 
   return { ...commesse[0], righe };
@@ -198,12 +198,13 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
         costoUnitario: number | null;
         note: string | null;
       }>>`
-        SELECT "ordinamento", "categoria", "codice", "descrizione", "unita",
-               "quantita"::float8 AS "quantita", "materiale", "lavorazione",
-               "costoUnitario"::float8 AS "costoUnitario", "note"
-        FROM "bom_riga"
-        WHERE "tenantId" = ${tenantId} AND "bomId" = ${fonteBom.id}
-        ORDER BY "ordinamento", "createdAt"
+        SELECT br."ordinamento", br."categoria", br."codice", br."descrizione", br."unita",
+               br."quantita"::float8 AS "quantita", br."materiale", br."lavorazione",
+               br."costoUnitario"::float8 AS "costoUnitario", br."note"
+        FROM "bom_riga" br
+        JOIN "bom" b ON b."id" = br."bomId"
+        WHERE b."tenantId" = ${tenantId} AND br."bomId" = ${fonteBom.id}
+        ORDER BY br."ordinamento", br."createdAt"
       `;
 
       for (const riga of righeBom) {
