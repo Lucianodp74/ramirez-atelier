@@ -39,9 +39,14 @@ export default async function CommessePage({
             Il lavoro vero dopo il preventivo: stato di produzione e distinta operativa congelata al momento dell&apos;avvio.
           </p>
         </div>
-        <Link href="/admin/richieste?stato=CONVERTITA" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-secondary">
-          Vedi richieste convertite
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/commesse/produzione" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
+            Board produzione
+          </Link>
+          <Link href="/admin/richieste?stato=CONVERTITA" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-secondary">
+            Vedi richieste convertite
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
