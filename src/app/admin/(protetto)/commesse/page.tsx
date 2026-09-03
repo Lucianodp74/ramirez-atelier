@@ -96,23 +96,11 @@ export default async function CommessePage({
                     <td className="p-4 font-semibold">{commessa.numero}</td>
                     <td className="p-4">{commessa.clienteNome ?? '—'}</td>
                     <td className="p-4">{commessa.tipoProgettoNome}</td>
-                    <td className="p-4">
-                      <span className="rounded-full border px-2.5 py-1 text-xs">
-                        {ETICHETTA_STATO_COMMESSA[commessa.stato]}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {commessa.dataPrevistaConsegna
-                        ? commessa.dataPrevistaConsegna.toLocaleDateString('it-IT')
-                        : '—'}
-                    </td>
+                    <td className="p-4"><span className="rounded-full border px-2.5 py-1 text-xs">{ETICHETTA_STATO_COMMESSA[commessa.stato]}</span></td>
+                    <td className="p-4">{commessa.dataPrevistaConsegna ? commessa.dataPrevistaConsegna.toLocaleDateString('it-IT') : '—'}</td>
                     <td className="p-4">{commessa.righeCount ?? 0}</td>
                     <td className="p-4 text-muted-foreground">{commessa.updatedAt.toLocaleString('it-IT')}</td>
-                    <td className="p-4 text-right">
-                      <Link href={`/admin/commesse/${commessa.id}`} className="font-medium underline">
-                        Apri
-                      </Link>
-                    </td>
+                    <td className="p-4 text-right"><Link href={`/admin/commesse/${commessa.id}`} className="font-medium underline">Apri</Link></td>
                   </tr>
                 ))}
               </tbody>
