@@ -46,6 +46,7 @@ export default async function CommessaDetailPage({
   );
   const datiOperativiBloccati = ['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa.stato);
   const righeModificabili = commessa.stato === 'IN_PRODUZIONE';
+  const righeIncomplete = commessa.righe.filter((riga) => riga.statoLavorazione !== 'COMPLETATA').length;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -63,16 +64,21 @@ export default async function CommessaDetailPage({
           <span className="rounded-full border px-3 py-1.5 text-sm font-medium">
             {ETICHETTA_STATO_COMMESSA[commessa.stato]}
           </span>
-          {prossimi.map((stato) => (
-            <form key={stato} action={cambiaStatoCommessaAzione.bind(null, commessa.id, stato)}>
-              <button
-                type="submit"
-                className={`rounded-md px-4 py-2 text-sm font-medium ${stato === 'ANNULLATA' ? 'border' : 'bg-primary text-primary-foreground'}`}
-              >
-                {LABEL_PROSSIMO[stato]}
-              </button>
-            </form>
-          ))}
+          {prossimi.map((stato) => {
+            const bloccaPronta = stato === 'PRONTA' && righeIncomplete > 0;
+            return (
+              <form key={stato} action={cambiaStatoCommessaAzione.bind(null, commessa.id, stato)}>
+                <button
+                  type="submit"
+                  disabled={bloccaPronta}
+                  title={bloccaPronta ? `Completa prima le ${righeIncomplete} righe di produzione ancora aperte.` : undefined}
+                  className={`rounded-md px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${stato === 'ANNULLATA' ? 'border' : 'bg-primary text-primary-foreground'}`}
+                >
+                  {LABEL_PROSSIMO[stato]}
+                </button>
+              </form>
+            );
+          })}
         </div>
       </div>
 
