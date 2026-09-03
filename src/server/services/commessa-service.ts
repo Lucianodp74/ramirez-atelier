@@ -44,6 +44,8 @@ export interface CommessaRow {
   clienteNome: string | null;
   tipoProgettoNome: string;
   righeCount?: number;
+  righeCompletateCount?: number;
+  righeInLavorazioneCount?: number;
 }
 
 export interface CommessaDetail extends CommessaRow {
@@ -91,7 +93,9 @@ export async function listaCommesse(tenantId: string, stato?: StatoCommessa) {
            c."dataPrevistaConsegna", c."avviataIl", c."prontaIl",
            c."consegnataIl", c."chiusaIl", c."createdAt", c."updatedAt",
            r."clienteNome", tp."nome" AS "tipoProgettoNome",
-           COUNT(cr."id")::int AS "righeCount"
+           COUNT(cr."id")::int AS "righeCount",
+           COUNT(*) FILTER (WHERE cr."statoLavorazione" = 'COMPLETATA')::int AS "righeCompletateCount",
+           COUNT(*) FILTER (WHERE cr."statoLavorazione" = 'IN_LAVORAZIONE')::int AS "righeInLavorazioneCount"
     FROM "commessa" c
     JOIN "richiesta_progetto" r ON r."id" = c."richiestaId"
     JOIN "tipo_progetto" tp ON tp."id" = r."tipoProgettoId"
