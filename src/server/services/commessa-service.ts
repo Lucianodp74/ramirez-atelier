@@ -256,6 +256,19 @@ export async function cambiaStatoCommessa(
     throw new Error(`Transizione commessa non consentita: ${commessa[0].stato} → ${nuovoStato}.`);
   }
 
+  if (nuovoStato === 'PRONTA') {
+    const incomplete = await db.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM "commessa_riga_produzione"
+      WHERE "tenantId" = ${tenantId}
+        AND "commessaId" = ${id}
+        AND "statoLavorazione" <> 'COMPLETATA'
+    `;
+    if (Number(incomplete[0]?.count ?? 0) > 0) {
+      throw new Error('La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.');
+    }
+  }
+
   const timestamp = new Date();
   const data = {
     avviataIl: nuovoStato === 'IN_PRODUZIONE' ? timestamp : null,
