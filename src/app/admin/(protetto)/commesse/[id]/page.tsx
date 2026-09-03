@@ -10,6 +10,7 @@ import {
 import { cambiaStatoCommessaAzione } from '@/app/admin/commesse-azioni';
 import { AvanzamentoCommessa } from '@/components/admin/AvanzamentoCommessa';
 import { DatiOperativiCommessa } from '@/components/admin/DatiOperativiCommessa';
+import { RiepilogoOfficinaCommessa } from '@/components/admin/RiepilogoOfficinaCommessa';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,6 +82,12 @@ export default async function CommessaDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
+          <RiepilogoOfficinaCommessa
+            righe={commessa.righe}
+            stato={ETICHETTA_STATO_COMMESSA[commessa.stato]}
+            noteProduzione={commessa.noteProduzione}
+          />
+
           <section className="overflow-hidden rounded-lg border bg-card">
             <div className="border-b p-5">
               <h2 className="font-semibold">Distinta operativa</h2>
