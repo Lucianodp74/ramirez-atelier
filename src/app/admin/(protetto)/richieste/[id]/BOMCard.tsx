@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { BOMCostSummary } from '@/components/admin/BOMCostSummary';
 
@@ -80,6 +80,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [rows, setRows] = useState<BomRow[]>([]);
   const [summary, setSummary] = useState<BomCostSummary | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [descrizione, setDescrizione] = useState('');
   const [categoria, setCategoria] = useState('COMPONENTE');
@@ -95,6 +96,48 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
   const [historyRowId, setHistoryRowId] = useState<string | null>(null);
   const [history, setHistory] = useState<BomPrezzoStorico[]>([]);
   const [historyBusy, setHistoryBusy] = useState(false);
+
+  const caricaBom = useCallback(async (id: string) => {
+    const response = await fetch(`/api/admin/bom?id=${encodeURIComponent(id)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la distinta.');
+    setBomId(id);
+    setRows(normalizzaRighe(data.righe));
+
+    const costResponse = await fetch(`/api/admin/bom/prezzo?bomId=${encodeURIComponent(id)}`);
+    const costData = await costResponse.json();
+    if (!costResponse.ok) throw new Error(costData.error ?? 'Impossibile calcolare il riepilogo costi.');
+    setSummary(normalizzaSummary(costData));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function caricaBomEsistente() {
+      setLoadingExisting(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/admin/bom?richiestaId=${encodeURIComponent(richiestaId)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? 'Impossibile verificare la distinta esistente.');
+
+        const bomEsistenti = Array.isArray(data.data) ? data.data : [];
+        const bomEsistente = bomEsistenti[0];
+        if (!cancelled && bomEsistente?.id) {
+          await caricaBom(bomEsistente.id);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Errore verifica BOM');
+      } finally {
+        if (!cancelled) setLoadingExisting(false);
+      }
+    }
+
+    void caricaBomEsistente();
+    return () => {
+      cancelled = true;
+    };
+  }, [caricaBom, richiestaId]);
 
   useEffect(() => {
     const query = descrizione.trim();
@@ -133,19 +176,6 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
     setUnita(suggerimento.unita);
     setCostoUnitario(String(suggerimento.costoConsigliato));
     setSuggerimenti([]);
-  }
-
-  async function caricaBom(id: string) {
-    const response = await fetch(`/api/admin/bom?id=${encodeURIComponent(id)}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? 'Impossibile leggere la distinta.');
-    setBomId(id);
-    setRows(normalizzaRighe(data.righe));
-
-    const costResponse = await fetch(`/api/admin/bom/prezzo?bomId=${encodeURIComponent(id)}`);
-    const costData = await costResponse.json();
-    if (!costResponse.ok) throw new Error(costData.error ?? 'Impossibile calcolare il riepilogo costi.');
-    setSummary(normalizzaSummary(costData));
   }
 
   async function crea() {
@@ -262,7 +292,7 @@ export function BOMCard({ richiestaId }: { richiestaId: string }) {
           <p className="font-medium">Distinta di produzione</p>
           <p className="text-sm text-muted-foreground">BOM interna collegata a questa richiesta.</p>
         </div>
-        {!bomId && (
+        {!loadingExisting && !bomId && (
           <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" disabled={busy} onClick={crea}>
             {busy ? 'Creazione…' : 'Crea BOM'}
           </button>
