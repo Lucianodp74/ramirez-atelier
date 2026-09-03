@@ -43,6 +43,7 @@ export default async function CommessaDetailPage({
     (totale, riga) => totale + (riga.costoUnitario ?? 0) * riga.quantita,
     0,
   );
+  const datiOperativiBloccati = ['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa.stato);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -136,11 +137,14 @@ export default async function CommessaDetailPage({
           <section className="rounded-lg border bg-card p-5">
             <h2 className="font-semibold">Dati operativi</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Informazioni modificabili dal laboratorio senza alterare lo snapshot della BOM.
+              {datiOperativiBloccati
+                ? 'Dati congelati al momento della consegna o chiusura della commessa.'
+                : 'Informazioni modificabili dal laboratorio senza alterare lo snapshot della BOM.'}
             </p>
             <div className="mt-4">
               <DatiOperativiCommessa
                 commessaId={commessa.id}
+                stato={commessa.stato}
                 dataPrevistaConsegna={commessa.dataPrevistaConsegna}
                 noteProduzione={commessa.noteProduzione}
               />
