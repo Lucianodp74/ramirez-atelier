@@ -9,6 +9,7 @@ import {
 } from '@/server/services/commessa-service';
 import { cambiaStatoCommessaAzione } from '@/app/admin/commesse-azioni';
 import { AvanzamentoCommessa } from '@/components/admin/AvanzamentoCommessa';
+import { AvanzamentoRigaProduzione } from '@/components/admin/AvanzamentoRigaProduzione';
 import { DatiOperativiCommessa } from '@/components/admin/DatiOperativiCommessa';
 import { RiepilogoOfficinaCommessa } from '@/components/admin/RiepilogoOfficinaCommessa';
 
@@ -44,6 +45,7 @@ export default async function CommessaDetailPage({
     0,
   );
   const datiOperativiBloccati = ['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa.stato);
+  const righeModificabili = commessa.stato === 'IN_PRODUZIONE';
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -95,6 +97,13 @@ export default async function CommessaDetailPage({
               <p className="mt-1 text-sm text-muted-foreground">
                 Snapshot della BOM {commessa.fonteBomVersione ? `v${commessa.fonteBomVersione}` : ''}. Le modifiche future alla BOM non alterano questa commessa.
               </p>
+              {commessa.righe.length > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {righeModificabili
+                    ? 'Aggiorna lo stato di ogni riga mentre lavori in laboratorio.'
+                    : 'L’avanzamento delle righe è bloccato fuori dalla fase In produzione.'}
+                </p>
+              )}
             </div>
             {commessa.righe.length === 0 ? (
               <div className="p-8 text-sm text-amber-700">
@@ -102,7 +111,7 @@ export default async function CommessaDetailPage({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px] text-left text-sm">
+                <table className="w-full min-w-[1120px] text-left text-sm">
                   <thead className="bg-secondary/40 text-muted-foreground">
                     <tr>
                       <th className="p-3">Categoria</th>
@@ -112,6 +121,7 @@ export default async function CommessaDetailPage({
                       <th className="p-3">Lavorazione</th>
                       <th className="p-3 text-right">Qtà</th>
                       <th className="p-3 text-right">Costo</th>
+                      <th className="p-3">Avanzamento</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -125,6 +135,14 @@ export default async function CommessaDetailPage({
                         <td className="p-3 text-right">{riga.quantita} {riga.unita}</td>
                         <td className="p-3 text-right">
                           {riga.costoUnitario == null ? '—' : EURO.format(riga.costoUnitario * riga.quantita)}
+                        </td>
+                        <td className="p-3 align-top">
+                          <AvanzamentoRigaProduzione
+                            commessaId={commessa.id}
+                            rigaId={riga.id}
+                            stato={riga.statoLavorazione}
+                            modificabile={righeModificabili}
+                          />
                         </td>
                       </tr>
                     ))}
