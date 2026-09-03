@@ -270,7 +270,19 @@ export async function aggiornaDatiOperativiCommessa(
   dataPrevistaConsegna: Date | null,
   noteProduzione: string | null,
 ) {
-  const risultato = await db.$executeRaw`
+  const commessa = await db.$queryRaw<Array<{ stato: StatoCommessa }>>`
+    SELECT "stato"
+    FROM "commessa"
+    WHERE "id" = ${id} AND "tenantId" = ${tenantId}
+    LIMIT 1
+  `;
+
+  if (!commessa[0]) throw new Error('Commessa non trovata.');
+  if (['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa[0].stato)) {
+    throw new Error('I dati operativi non sono modificabili dopo la consegna o la chiusura della commessa.');
+  }
+
+  await db.$executeRaw`
     UPDATE "commessa"
     SET "dataPrevistaConsegna" = ${dataPrevistaConsegna},
         "noteProduzione" = ${noteProduzione},
@@ -278,6 +290,5 @@ export async function aggiornaDatiOperativiCommessa(
     WHERE "id" = ${id} AND "tenantId" = ${tenantId}
   `;
 
-  if (risultato === 0) throw new Error('Commessa non trovata.');
   return dettaglioCommessa(tenantId, id);
 }
