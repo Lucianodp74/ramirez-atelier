@@ -4,8 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { richiediContesto } from '@/server/identity/contesto';
 import {
   aggiornaDatiOperativiCommessa,
+  aggiornaStatoRigaProduzione,
   cambiaStatoCommessa,
   creaCommessaDaRichiesta,
+  type StatoLavorazioneRiga,
   type StatoCommessa,
 } from '@/server/services/commessa-service';
 
@@ -15,15 +17,8 @@ export async function creaCommessaDaRichiestaAzione(
   try {
     const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
     const id = await creaCommessaDaRichiesta(contesto.tenantId, richiestaId);
-
-    // La mutation è conclusa atomicamente. Il client esegue una navigazione
-    // browser completa verso /admin/commesse, quindi non serve invalidare la
-    // cache della route durante la Server Action.
     return { successo: true, id };
   } catch (error) {
-    // Evitiamo che un errore della mutation diventi un generico RSC 500.
-    // Il messaggio viene mostrato solo nell'area admin per rendere diagnosticabile
-    // un eventuale problema di database/configurazione in produzione.
     console.error('creaCommessaDaRichiestaAzione fallita', { richiestaId, error });
     return {
       successo: false,
@@ -36,6 +31,7 @@ export async function cambiaStatoCommessaAzione(id: string, stato: StatoCommessa
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
   await cambiaStatoCommessa(contesto.tenantId, id, stato);
   revalidatePath('/admin/commesse');
+  revalidatePath('/admin/commesse/produzione');
   revalidatePath(`/admin/commesse/${id}`);
 }
 
@@ -55,13 +51,19 @@ export async function aggiornaDatiOperativiCommessaAzione(
     dataPrevistaConsegna = data;
   }
 
-  await aggiornaDatiOperativiCommessa(
-    contesto.tenantId,
-    id,
-    dataPrevistaConsegna,
-    noteRaw || null,
-  );
-
+  await aggiornaDatiOperativiCommessa(contesto.tenantId, id, dataPrevistaConsegna, noteRaw || null);
   revalidatePath('/admin/commesse');
+  revalidatePath('/admin/commesse/produzione');
   revalidatePath(`/admin/commesse/${id}`);
+}
+
+export async function aggiornaStatoRigaProduzioneAzione(
+  commessaId: string,
+  rigaId: string,
+  statoLavorazione: StatoLavorazioneRiga,
+): Promise<void> {
+  const contesto = await richiediContesto({ modulo: 'richieste', azione: 'cambia_stato' });
+  await aggiornaStatoRigaProduzione(contesto.tenantId, commessaId, rigaId, statoLavorazione);
+  revalidatePath('/admin/commesse/produzione');
+  revalidatePath(`/admin/commesse/${commessaId}`);
 }

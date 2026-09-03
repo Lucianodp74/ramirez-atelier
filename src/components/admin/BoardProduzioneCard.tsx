@@ -18,6 +18,9 @@ function statoConsegna(commessa: CommessaRow) {
 
 export function BoardProduzioneCard({ commessa }: { commessa: CommessaRow }) {
   const consegna = statoConsegna(commessa);
+  const totale = commessa.righeCount ?? 0;
+  const completate = commessa.righeCompletateCount ?? 0;
+  const percentuale = totale ? Math.round((completate / totale) * 100) : 0;
 
   return (
     <article className="rounded-lg border bg-card p-4 shadow-sm">
@@ -28,7 +31,7 @@ export function BoardProduzioneCard({ commessa }: { commessa: CommessaRow }) {
           <p className="mt-1 truncate text-sm text-muted-foreground">{commessa.tipoProgettoNome}</p>
         </div>
         <span className="shrink-0 rounded-full border px-2 py-1 text-xs">
-          {commessa.righeCount ?? 0} righe
+          {totale} {totale === 1 ? 'riga' : 'righe'}
         </span>
       </div>
 
@@ -43,11 +46,21 @@ export function BoardProduzioneCard({ commessa }: { commessa: CommessaRow }) {
         </div>
         <div className="rounded-md border bg-secondary/20 p-2">
           <p className="text-muted-foreground">Produzione</p>
-          <p className="mt-1 font-medium">
-            {commessa.righeCount ?? 0} {commessa.righeCount === 1 ? 'riga' : 'righe'} operative
-          </p>
+          <p className="mt-1 font-medium">{completate}/{totale} completate</p>
         </div>
       </div>
+
+      {totale > 0 && (
+        <div className="mt-3">
+          <div className="mb-1 flex justify-between text-xs">
+            <span className="text-muted-foreground">Avanzamento</span>
+            <span className="font-medium">{percentuale}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${percentuale}%` }} />
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 flex min-h-5 items-center justify-between gap-3 text-xs">
         {consegna ? (

@@ -8,6 +8,8 @@ export type StatoCommessa =
   | 'CHIUSA'
   | 'ANNULLATA';
 
+export type StatoLavorazioneRiga = 'DA_FARE' | 'IN_LAVORAZIONE' | 'COMPLETATA';
+
 export interface RigaProduzione {
   id: string;
   ordinamento: number;
@@ -20,6 +22,7 @@ export interface RigaProduzione {
   lavorazione: string | null;
   costoUnitario: number | null;
   note: string | null;
+  statoLavorazione: StatoLavorazioneRiga;
 }
 
 export interface CommessaRow {
@@ -41,6 +44,8 @@ export interface CommessaRow {
   clienteNome: string | null;
   tipoProgettoNome: string;
   righeCount?: number;
+  righeCompletateCount?: number;
+  righeInLavorazioneCount?: number;
 }
 
 export interface CommessaDetail extends CommessaRow {
@@ -67,6 +72,12 @@ export const ETICHETTA_STATO_COMMESSA: Record<StatoCommessa, string> = {
   ANNULLATA: 'Annullata',
 };
 
+export const ETICHETTA_STATO_LAVORAZIONE: Record<StatoLavorazioneRiga, string> = {
+  DA_FARE: 'Da fare',
+  IN_LAVORAZIONE: 'In lavorazione',
+  COMPLETATA: 'Completata',
+};
+
 export function transizioneCommessaAmmessa(da: StatoCommessa, a: StatoCommessa) {
   return TRANSIZIONI[da].includes(a);
 }
@@ -82,7 +93,9 @@ export async function listaCommesse(tenantId: string, stato?: StatoCommessa) {
            c."dataPrevistaConsegna", c."avviataIl", c."prontaIl",
            c."consegnataIl", c."chiusaIl", c."createdAt", c."updatedAt",
            r."clienteNome", tp."nome" AS "tipoProgettoNome",
-           COUNT(cr."id")::int AS "righeCount"
+           COUNT(cr."id")::int AS "righeCount",
+           COUNT(*) FILTER (WHERE cr."statoLavorazione" = 'COMPLETATA')::int AS "righeCompletateCount",
+           COUNT(*) FILTER (WHERE cr."statoLavorazione" = 'IN_LAVORAZIONE')::int AS "righeInLavorazioneCount"
     FROM "commessa" c
     JOIN "richiesta_progetto" r ON r."id" = c."richiestaId"
     JOIN "tipo_progetto" tp ON tp."id" = r."tipoProgettoId"
@@ -123,7 +136,8 @@ export async function dettaglioCommessa(tenantId: string, id: string): Promise<C
   const righe = await db.$queryRaw<RigaProduzione[]>`
     SELECT cr."id", cr."ordinamento", cr."categoria", cr."codice", cr."descrizione", cr."unita",
            cr."quantita"::float8 AS "quantita", cr."materiale", cr."lavorazione",
-           cr."costoUnitario"::float8 AS "costoUnitario", cr."note"
+           cr."costoUnitario"::float8 AS "costoUnitario", cr."note",
+           cr."statoLavorazione"
     FROM "commessa_riga_produzione" cr
     WHERE cr."tenantId" = ${tenantId} AND cr."commessaId" = ${id}
     ORDER BY cr."ordinamento", cr."createdAt"
@@ -242,6 +256,19 @@ export async function cambiaStatoCommessa(
     throw new Error(`Transizione commessa non consentita: ${commessa[0].stato} → ${nuovoStato}.`);
   }
 
+  if (nuovoStato === 'PRONTA') {
+    const incomplete = await db.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM "commessa_riga_produzione"
+      WHERE "tenantId" = ${tenantId}
+        AND "commessaId" = ${id}
+        AND "statoLavorazione" <> 'COMPLETATA'
+    `;
+    if (Number(incomplete[0]?.count ?? 0) > 0) {
+      throw new Error('La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.');
+    }
+  }
+
   const timestamp = new Date();
   const data = {
     avviataIl: nuovoStato === 'IN_PRODUZIONE' ? timestamp : null,
@@ -291,4 +318,42 @@ export async function aggiornaDatiOperativiCommessa(
   `;
 
   return dettaglioCommessa(tenantId, id);
+}
+
+export async function aggiornaStatoRigaProduzione(
+  tenantId: string,
+  commessaId: string,
+  rigaId: string,
+  statoLavorazione: StatoLavorazioneRiga,
+) {
+  if (!['DA_FARE', 'IN_LAVORAZIONE', 'COMPLETATA'].includes(statoLavorazione)) {
+    throw new Error('Stato lavorazione non valido.');
+  }
+
+  const righe = await db.$queryRaw<Array<{ stato: StatoCommessa }>>`
+    SELECT c."stato"
+    FROM "commessa" c
+    JOIN "commessa_riga_produzione" cr ON cr."commessaId" = c."id"
+    WHERE c."tenantId" = ${tenantId}
+      AND c."id" = ${commessaId}
+      AND cr."tenantId" = ${tenantId}
+      AND cr."id" = ${rigaId}
+    LIMIT 1
+  `;
+
+  if (!righe[0]) throw new Error('Riga di produzione non trovata.');
+  if (righe[0].stato !== 'IN_PRODUZIONE') {
+    throw new Error('Le righe di produzione sono modificabili solo quando la commessa è in produzione.');
+  }
+
+  await db.$executeRaw`
+    UPDATE "commessa_riga_produzione"
+    SET "statoLavorazione" = ${statoLavorazione},
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "id" = ${rigaId}
+      AND "tenantId" = ${tenantId}
+      AND "commessaId" = ${commessaId}
+  `;
+
+  return dettaglioCommessa(tenantId, commessaId);
 }
