@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, ArrowRight, CheckCircle2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CampoRenderer } from './CampoRenderer';
 import { ProgressoWizard } from './ProgressoWizard';
@@ -35,7 +36,6 @@ interface Props {
   variantiDisponibili: VariantePreimpostata[];
 }
 
-/** Ricostruisce la vista "piatta" dati riservati + JSON, identica a quella usata dal server action. */
 function richiestaADatiForm(richiesta: RichiestaProgetto): Record<string, unknown> {
   const jsonEsistente = (richiesta.datiFormJson as Record<string, unknown>) ?? {};
   return {
@@ -75,8 +75,6 @@ export function ConfiguratoreWizard({
   const [inviando, startInvio] = useTransition();
   const [erroreInvio, setErroreInvio] = useState<string | null>(null);
 
-  // Lo step "stile di partenza" esiste solo se ci sono varianti attive per
-  // questo tipo di progetto - mai mostrato vuoto (Progressive Disclosure).
   const mostraVariante = variantiDisponibili.length > 0;
 
   const fasi: Fase[] = useMemo(
@@ -95,9 +93,6 @@ export function ConfiguratoreWizard({
       (s) => s.chiave === richiestaIniziale.ultimoStepChiave,
     );
     if (indiceRipreso < 0) return 0;
-    // Chi riprende una bozza è già oltre lo step "stile di partenza" per
-    // definizione (l'ha già visto o saltato la prima volta) - l'offset
-    // compensa la fase aggiunta in testa all'array.
     return indiceRipreso + (mostraVariante ? 1 : 0);
   });
 
@@ -110,16 +105,13 @@ export function ConfiguratoreWizard({
   }
 
   const faseCorrente = fasi[faseIndice];
-  const stepCorrente =
-    faseCorrente.tipo === 'campo' ? configurazione.step[faseCorrente.indice] : null;
+  const stepCorrente = faseCorrente?.tipo === 'campo' ? configurazione.step[faseCorrente.indice] : null;
 
   const stepMancanti = useMemo(
     () => calcolaStepMancanti(configurazione, datiForm),
     [configurazione, datiForm],
   );
 
-  // Salvataggio automatico con debounce - Requisito 1: nessuna azione esplicita
-  // dell'utente necessaria per non perdere i dati.
   useEffect(() => {
     if (!stepCorrente) return;
     const timeout = setTimeout(() => {
@@ -153,8 +145,6 @@ export function ConfiguratoreWizard({
         setErrori(erroriStep);
         return;
       }
-      // Salvataggio esplicito immediato al cambio step (oltre al debounce), per
-      // garantire che "ultimoStepChiave" sia sempre coerente con lo step visitato.
       const valoriStep: Record<string, unknown> = {};
       for (const campo of stepCorrente.campi) valoriStep[campo.chiave] = datiForm[campo.chiave];
       await new Promise<void>((resolve) => {
@@ -185,90 +175,135 @@ export function ConfiguratoreWizard({
       const risultato = await completaRichiesta(richiesta.id);
       if (!risultato.successo) {
         setErrori(risultato.errori);
-        setErroreInvio(
-          'Alcune informazioni necessarie mancano ancora - controlla lo step "Contatti".',
-        );
+        setErroreInvio('Alcune informazioni necessarie mancano ancora. Controlla i passaggi indicati.');
         return;
       }
       router.push(`/progetti/${chiaveTipoProgetto}/completato?id=${richiesta.id}`);
     });
   }
 
+  const numeroFase = faseIndice + 1;
+  const titoloFase =
+    faseCorrente?.tipo === 'variante'
+      ? 'Stile di partenza'
+      : faseCorrente?.tipo === 'campo'
+        ? stepCorrente?.titolo ?? 'Dettagli del progetto'
+        : faseCorrente?.tipo === 'allegati'
+          ? 'Documenti e riferimenti'
+          : 'Il tuo progetto, in sintesi';
+
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
-      <p className="mb-2 text-sm text-muted-foreground">{nomeTipoProgetto}</p>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight">
-        {faseCorrente.tipo === 'variante' && 'Da dove vuoi partire?'}
-        {faseCorrente.tipo === 'campo' && stepCorrente?.titolo}
-        {faseCorrente.tipo === 'allegati' && 'Documenti e riferimenti'}
-        {faseCorrente.tipo === 'riepilogo' && 'Il tuo progetto, in sintesi'}
-      </h1>
-
-      <div className="mb-8">
-        <ProgressoWizard percentuale={richiesta.indiceCompletezza} stepMancanti={stepMancanti} />
-      </div>
-
-      {faseCorrente.tipo === 'variante' && (
-        <SelettoreVariante
-          varianti={variantiDisponibili}
-          selezionata={varianteSelezionataId}
-          onSeleziona={selezionaVariante}
-        />
-      )}
-
-      {faseCorrente.tipo === 'campo' && stepCorrente && (
-        <div className="space-y-6">
-          {stepCorrente.sottotitolo && (
-            <p className="-mt-4 text-sm text-muted-foreground">{stepCorrente.sottotitolo}</p>
-          )}
-          {stepCorrente.campi.map((campo) => (
-            <CampoRenderer
-              key={campo.chiave}
-              campo={campo}
-              valore={datiForm[campo.chiave]}
-              errore={errori[campo.chiave]}
-              onChange={aggiornaCampo}
-            />
-          ))}
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ramirez Atelier</p>
+            <p className="mt-1 font-serif text-lg font-light">{nomeTipoProgetto}</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Save className="h-3.5 w-3.5" />
+            {salvando ? 'Salvataggio…' : 'Salvato automaticamente'}
+          </div>
         </div>
-      )}
+      </header>
 
-      {faseCorrente.tipo === 'allegati' && (
-        <UploadDocumenti
-          richiestaId={richiesta.id}
-          documenti={documenti}
-          onDocumentiChange={setDocumenti}
-        />
-      )}
-
-      {faseCorrente.tipo === 'riepilogo' && (
-        <div className="space-y-6">
-          <RiepilogoRichiesta
-            configurazione={configurazione}
-            datiForm={datiForm}
-            documenti={documenti}
+      <div className="mx-auto max-w-4xl px-6 pb-16 pt-8 sm:pt-10">
+        <div className="mb-8">
+          <ProgressoWizard
+            percentuale={richiesta.indiceCompletezza}
+            stepMancanti={stepMancanti}
+            faseCorrente={faseIndice}
+            totaleFasi={fasi.length}
           />
-          {erroreInvio && <p className="text-sm text-destructive">{erroreInvio}</p>}
         </div>
-      )}
 
-      <div className="mt-10 flex items-center justify-between">
-        <Button variant="ghost" onClick={vaiIndietro} disabled={faseIndice === 0}>
-          Indietro
-        </Button>
-        <span className="text-xs text-muted-foreground">
-          {salvando ? 'Salvataggio in corso…' : 'Salvato automaticamente'}
-        </span>
-        {faseCorrente.tipo !== 'riepilogo' ? (
-          <Button variant="accent" onClick={vaiAvanti}>
-            Avanti
-          </Button>
-        ) : (
-          <Button variant="accent" onClick={invia} disabled={inviando}>
-            {inviando ? 'Invio in corso…' : 'Invia la richiesta'}
-          </Button>
-        )}
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="mb-8">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Passaggio {numeroFase}
+            </p>
+            <h1 className="mt-2 text-balance font-serif text-3xl font-light tracking-tight sm:text-4xl">
+              {titoloFase}
+            </h1>
+            {faseCorrente?.tipo === 'campo' && stepCorrente?.sottotitolo && (
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {stepCorrente.sottotitolo}
+              </p>
+            )}
+          </div>
+
+          {faseCorrente?.tipo === 'variante' && (
+            <SelettoreVariante
+              varianti={variantiDisponibili}
+              selezionata={varianteSelezionataId}
+              onSeleziona={selezionaVariante}
+            />
+          )}
+
+          {faseCorrente?.tipo === 'campo' && stepCorrente && (
+            <div className="space-y-6">
+              {stepCorrente.campi.map((campo) => (
+                <CampoRenderer
+                  key={campo.chiave}
+                  campo={campo}
+                  valore={datiForm[campo.chiave]}
+                  errore={errori[campo.chiave]}
+                  onChange={aggiornaCampo}
+                />
+              ))}
+            </div>
+          )}
+
+          {faseCorrente?.tipo === 'allegati' && (
+            <UploadDocumenti
+              richiestaId={richiesta.id}
+              documenti={documenti}
+              onDocumentiChange={setDocumenti}
+            />
+          )}
+
+          {faseCorrente?.tipo === 'riepilogo' && (
+            <div className="space-y-6">
+              <RiepilogoRichiesta
+                configurazione={configurazione}
+                datiForm={datiForm}
+                documenti={documenti}
+              />
+              <div className="rounded-xl border border-border bg-background p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Quasi fatto.</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      Inviando il progetto ci permetterai di valutarlo e ricontattarti per definire
+                      insieme i dettagli e la stima.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {erroreInvio && <p className="text-sm text-destructive">{erroreInvio}</p>}
+            </div>
+          )}
+
+          <div className="mt-10 flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="ghost" onClick={vaiIndietro} disabled={faseIndice === 0 || salvando}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Indietro
+            </Button>
+            {faseCorrente?.tipo !== 'riepilogo' ? (
+              <Button variant="accent" onClick={vaiAvanti} disabled={salvando}>
+                Continua
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button variant="accent" onClick={invia} disabled={inviando || salvando}>
+                {inviando ? 'Invio in corso…' : 'Invia il progetto'}
+                {!inviando && <ArrowRight className="ml-2 h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

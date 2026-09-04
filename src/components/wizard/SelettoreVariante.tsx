@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VariantePreimpostata } from '@prisma/client';
 
@@ -10,21 +10,16 @@ interface Props {
   onSeleziona: (variante: VariantePreimpostata) => void;
 }
 
-/**
- * Non un componente "select" generico: la scelta dello stile di partenza non
- * è un campo del form (non vive in tipo-progetto-schema.ts), è una fase a sé
- * del wizard, orchestrata da ConfiguratoreWizard - mostrata solo se esistono
- * varianti attive per questo tipo di progetto. Nessun pulsante "parti da
- * zero": il pulsante "Avanti" già esistente nel wizard basta - non scegliere
- * nessuna card è già una scelta valida, non serve un secondo modo di dirlo.
- */
 export function SelettoreVariante({ varianti, selezionata, onSeleziona }: Props) {
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Parti da uno stile già pensato per te, o prosegui senza sceglierne uno — potrai comunque
-        cambiare ogni scelta più avanti.
-      </p>
+    <div className="space-y-5">
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-background p-4">
+        <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Scegli un punto di partenza se vuoi. Potrai modificare ogni dettaglio nei passaggi
+          successivi, quindi non serve avere già tutto deciso.
+        </p>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {varianti.map((v) => (
@@ -32,21 +27,22 @@ export function SelettoreVariante({ varianti, selezionata, onSeleziona }: Props)
             key={v.id}
             type="button"
             onClick={() => onSeleziona(v)}
+            aria-pressed={selezionata === v.id}
             className={cn(
-              'relative rounded-lg border p-4 text-left transition-all',
+              'relative min-h-32 rounded-xl border p-5 text-left transition-all duration-200',
               selezionata === v.id
-                ? 'border-accent bg-accent/10 ring-2 ring-accent ring-offset-2 ring-offset-background'
-                : 'border-input hover:border-muted-foreground',
+                ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary'
+                : 'border-border bg-background hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-sm',
             )}
           >
             {selezionata === v.id && (
-              <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                <Check className="h-3 w-3" strokeWidth={3} />
+              <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
               </span>
             )}
-            <div className="pr-6 font-medium">{v.nome}</div>
+            <div className="pr-8 font-medium">{v.nome}</div>
             {v.descrizione && (
-              <div className="mt-1 pr-6 text-sm text-muted-foreground">{v.descrizione}</div>
+              <div className="mt-2 pr-8 text-sm leading-relaxed text-muted-foreground">{v.descrizione}</div>
             )}
           </button>
         ))}
