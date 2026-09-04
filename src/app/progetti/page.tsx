@@ -52,24 +52,15 @@ export default async function ProgettiPage() {
           </p>
         </div>
 
-        <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-12 sm:auto-rows-[150px]">
-          {progettiVisuali.map((progetto, indice) => (
-            <div
-              key={progetto.immagine}
-              className={
-                indice === 0
-                  ? 'relative overflow-hidden rounded-sm sm:col-span-7 sm:row-span-3'
-                  : indice === 1
-                    ? 'relative overflow-hidden rounded-sm sm:col-span-5 sm:row-span-2'
-                    : 'relative overflow-hidden rounded-sm sm:col-span-5 sm:row-span-1'
-              }
-            >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {progettiVisuali.map((progetto) => (
+            <div key={progetto.immagine} className="group relative aspect-[4/3] overflow-hidden rounded-sm">
               <Image
                 src={progetto.immagine}
                 alt={progetto.etichetta}
                 fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
               <p className="absolute bottom-4 left-5 text-sm tracking-wide text-white">{progetto.etichetta}</p>
