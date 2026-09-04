@@ -1,9 +1,17 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Bath, ChefHat, DoorOpen, Layers3, Sofa, SquareStack } from 'lucide-react';
 import { db } from '@/server/db';
-import { Card, CardContent } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
+
+const progettiVisuali = [
+  { immagine: '/foto-elemento-parete-attrezzata.jpg', indice: 0, etichetta: 'Zona giorno' },
+  { immagine: '/foto-elemento-credenza.jpg', indice: 1, etichetta: 'Contenitori su misura' },
+  { immagine: '/foto-elemento-libreria.jpg', indice: 2, etichetta: 'Librerie' },
+  { immagine: '/foto-elemento-mobile-tv.jpg', indice: 3, etichetta: 'Arredi' },
+  { immagine: '/foto-elemento-altro-zona-giorno.jpg', indice: 4, etichetta: 'Soluzioni personalizzate' },
+];
 
 const icone = [ChefHat, Layers3, SquareStack, Bath, Sofa, DoorOpen];
 
@@ -15,89 +23,132 @@ export default async function ProgettiPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="border-b border-border bg-card">
-        <div className="mx-auto max-w-6xl px-6 pb-16 pt-10 sm:pb-20 sm:pt-14">
+      <section className="relative overflow-hidden border-b border-border bg-card">
+        <div className="mx-auto max-w-6xl px-6 pb-16 pt-8 sm:pb-24 sm:pt-10">
           <Link href="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             ← Ramirez Atelier
           </Link>
-          <div className="mx-auto mt-12 max-w-3xl text-center">
-            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
-              Il primo passo
-            </p>
-            <h1 className="text-balance font-serif text-4xl font-light tracking-tight sm:text-6xl">
-              Che cosa vuoi creare?
+          <div className="mx-auto mt-16 max-w-4xl text-center sm:mt-20">
+            <p className="mb-5 text-xs uppercase tracking-[0.3em] text-muted-foreground">Il tuo progetto</p>
+            <h1 className="text-balance font-serif text-5xl font-light leading-[1.04] tracking-tight sm:text-7xl">
+              Immagina lo spazio.<br />
+              <span className="italic text-primary">Noi gli diamo forma.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground">
-              Scegli il progetto più vicino alla tua idea. Ti accompagneremo nella scelta di
-              dimensioni, materiali e dettagli, senza complicazioni.
+            <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Parti da una stanza, da un&apos;esigenza o semplicemente da un&apos;idea. Scegli il percorso più vicino a ciò che vuoi realizzare.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tipiProgetto.map((tipo, indice) => {
-            const Icona = icone[indice % icone.length];
-            return (
-              <Link key={tipo.id} href={`/progetti/${tipo.chiave}`} className="group">
-                <Card className="h-full overflow-hidden border-border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/50 group-hover:shadow-sm">
-                  <CardContent className="flex h-full min-h-52 flex-col p-6 sm:p-7">
-                    <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                      <Icona className="h-5 w-5" strokeWidth={1.6} />
+      <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+        <div className="mb-10 flex items-end justify-between gap-6">
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-muted-foreground">L&apos;atelier</p>
+            <h2 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">Alcune possibilità</h2>
+          </div>
+          <p className="hidden max-w-xs text-right text-sm leading-relaxed text-muted-foreground sm:block">
+            Ogni immagine è un punto di partenza. Il risultato nasce sempre dalle tue misure e dal tuo modo di vivere la casa.
+          </p>
+        </div>
+
+        <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-12 sm:auto-rows-[150px]">
+          {progettiVisuali.map((progetto, indice) => (
+            <div
+              key={progetto.immagine}
+              className={
+                indice === 0
+                  ? 'relative overflow-hidden rounded-sm sm:col-span-7 sm:row-span-3'
+                  : indice === 1
+                    ? 'relative overflow-hidden rounded-sm sm:col-span-5 sm:row-span-2'
+                    : 'relative overflow-hidden rounded-sm sm:col-span-5 sm:row-span-1'
+              }
+            >
+              <Image
+                src={progetto.immagine}
+                alt={progetto.etichetta}
+                fill
+                sizes="(min-width: 640px) 50vw, 100vw"
+                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+              <p className="absolute bottom-4 left-5 text-sm tracking-wide text-white">{progetto.etichetta}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-card">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+          <div className="mb-10 max-w-2xl">
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-muted-foreground">Da dove partiamo</p>
+            <h2 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">Scegli il tuo progetto</h2>
+            <p className="mt-4 text-muted-foreground">Non serve avere già tutto deciso. Ti guideremo passo dopo passo.</p>
+          </div>
+
+          <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+            {tipiProgetto.map((tipo, indice) => {
+              const Icona = icone[indice % icone.length];
+              const visuale = progettiVisuali[indice % progettiVisuali.length];
+              return (
+                <Link key={tipo.id} href={`/progetti/${tipo.chiave}`} className="group bg-background">
+                  <article className="relative flex min-h-[330px] flex-col overflow-hidden p-6 sm:p-7">
+                    <div className="absolute inset-x-0 top-0 h-36 overflow-hidden opacity-25 transition-opacity duration-500 group-hover:opacity-45">
+                      <Image src={visuale.immagine} alt="" fill sizes="33vw" className="object-cover" aria-hidden="true" />
+                      <div className="absolute inset-0 bg-background/65" />
                     </div>
-                    <h2 className="font-serif text-2xl font-light tracking-tight">{tipo.nome}</h2>
-                    {tipo.descrizione && (
-                      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                        {tipo.descrizione}
-                      </p>
-                    )}
-                    <span className="mt-auto flex items-center gap-2 pt-8 text-sm font-medium">
-                      Inizia a progettare
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+                    <div className="relative flex h-full flex-col">
+                      <div className="flex items-center justify-between">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 text-primary backdrop-blur-sm">
+                          <Icona className="h-4 w-4" strokeWidth={1.6} />
+                        </span>
+                        <span className="text-xs tracking-[0.2em] text-muted-foreground">0{indice + 1}</span>
+                      </div>
+                      <div className="mt-auto pt-24">
+                        <h3 className="font-serif text-2xl font-light tracking-tight">{tipo.nome}</h3>
+                        {tipo.descrizione && (
+                          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{tipo.descrizione}</p>
+                        )}
+                        <span className="mt-6 flex items-center gap-2 text-sm font-medium">
+                          Inizia a progettare
+                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              );
+            })}
+          </div>
 
-        {tipiProgetto.length === 0 && (
-          <div className="mx-auto max-w-xl rounded-lg border border-dashed border-border p-10 text-center">
-            <p className="font-medium">Stiamo preparando i nuovi progetti.</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Torna presto: troverai qui le categorie disponibili per iniziare il tuo percorso.
-            </p>
-          </div>
-        )}
-      </section>
-
-      <section className="border-t border-border bg-card">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-3 sm:py-14">
-          <div>
-            <p className="font-serif text-2xl font-light">01</p>
-            <p className="mt-2 font-medium">Parti dalla tua idea</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Anche se non hai ancora tutto definito.
-            </p>
-          </div>
-          <div>
-            <p className="font-serif text-2xl font-light">02</p>
-            <p className="mt-2 font-medium">Costruisci il progetto</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Il percorso salva automaticamente le tue scelte.
-            </p>
-          </div>
-          <div>
-            <p className="font-serif text-2xl font-light">03</p>
-            <p className="mt-2 font-medium">Ricevi una prima stima</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Poi definiamo insieme ogni dettaglio in laboratorio.
-            </p>
-          </div>
+          {tipiProgetto.length === 0 && (
+            <div className="mx-auto max-w-xl rounded-sm border border-dashed border-border p-10 text-center">
+              <p className="font-medium">Stiamo preparando i nuovi progetti.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Torna presto: troverai qui le categorie disponibili per iniziare il tuo percorso.</p>
+            </div>
+          )}
         </div>
       </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+        <div className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+          {[
+            ['01', 'Parti dalla tua idea', 'Anche se non hai ancora tutto definito.'],
+            ['02', 'Costruisci il progetto', 'Il percorso salva automaticamente le tue scelte.'],
+            ['03', 'Ricevi una prima stima', 'Poi definiamo insieme ogni dettaglio in laboratorio.'],
+          ].map(([numero, titolo, descrizione]) => (
+            <div key={numero} className="border-t border-border pt-5">
+              <p className="font-serif text-3xl font-light text-primary/60">{numero}</p>
+              <p className="mt-4 font-medium">{titolo}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{descrizione}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="border-t border-border px-6 py-10 text-center text-sm text-muted-foreground">
+        Ramirez Atelier — Laboratorio artigiano dal 1987
+      </footer>
     </main>
   );
 }
