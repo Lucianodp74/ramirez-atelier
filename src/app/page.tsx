@@ -27,14 +27,17 @@ const fasi = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-        <span className="flex items-center gap-2.5">
-          <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={30} height={22} priority />
-          <span className="font-serif text-lg tracking-tight">Ramirez Atelier</span>
-        </span>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/admin/login">Accedi all&apos;area riservata</Link>
-        </Button>
+      <nav className="mx-auto flex min-h-[112px] max-w-6xl items-center justify-center px-6 py-6 sm:min-h-[128px]">
+        <Link href="/" aria-label="Ramirez Atelier" className="block">
+          <Image
+            src="/logo-completo.png"
+            alt="Ramirez Atelier — Arredi su misura"
+            width={230}
+            height={128}
+            priority
+            className="h-auto w-[190px] sm:w-[230px]"
+          />
+        </Link>
       </nav>
 
       <section className="relative overflow-hidden border-y border-border/70 bg-card/40">
@@ -144,7 +147,15 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-border px-6 py-10 text-center text-sm text-muted-foreground">
-        Ramirez Atelier — Laboratorio artigiano dal 1987
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
+          <span>Ramirez Atelier — Laboratorio artigiano dal 1987</span>
+          <Link
+            href="/admin/login"
+            className="uppercase tracking-[0.16em] text-foreground transition-opacity hover:opacity-60"
+          >
+            Accedi all&apos;area riservata
+          </Link>
+        </div>
       </footer>
     </main>
   );
