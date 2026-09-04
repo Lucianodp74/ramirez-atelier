@@ -90,26 +90,26 @@ export default async function ProgettiPage() {
               const visuale = progettiCategoriaVisuali[indice % progettiCategoriaVisuali.length];
               return (
                 <Link key={tipo.id} href={`/progetti/${tipo.chiave}`} className="group bg-background">
-                  <article className="relative flex min-h-[330px] flex-col overflow-hidden p-6 sm:p-7">
-                    <div className="absolute inset-x-0 top-0 h-44 overflow-hidden opacity-45 transition-opacity duration-500 group-hover:opacity-65">
+                  <article className="relative flex min-h-[390px] flex-col overflow-hidden p-6 sm:p-7">
+                    <div className="absolute inset-x-0 top-0 h-48 overflow-hidden">
                       <Image
                         src={visuale.immagine}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover"
+                        className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                         aria-hidden="true"
                       />
-                      <div className="absolute inset-0 bg-background/45" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-transparent to-background/10" />
                     </div>
                     <div className="relative flex h-full flex-col">
                       <div className="flex items-center justify-between">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 text-primary backdrop-blur-sm">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-primary shadow-sm backdrop-blur-sm">
                           <Icona className="h-4 w-4" strokeWidth={1.6} />
                         </span>
-                        <span className="text-xs tracking-[0.2em] text-muted-foreground">0{indice + 1}</span>
+                        <span className="text-xs tracking-[0.2em] text-foreground/80">0{indice + 1}</span>
                       </div>
-                      <div className="mt-auto pt-24">
+                      <div className="mt-auto pt-52">
                         <h3 className="font-serif text-2xl font-light tracking-tight">{tipo.nome}</h3>
                         {tipo.descrizione && (
                           <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{tipo.descrizione}</p>
