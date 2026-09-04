@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { StellaHero3D } from '@/components/StellaHero3D';
 
 const fasi = [
   {
@@ -36,46 +37,41 @@ export default function HomePage() {
         </Button>
       </nav>
 
-      {/* Hero - foto delle venature in trasparenza, velo dello sfondo sopra
-          per garantire la leggibilità del testo (Unsplash, licenza gratuita
-          per uso commerciale). */}
-      <section className="relative overflow-hidden">
-        <Image
-          src="/foto-venature-legno.jpg"
-          alt=""
-          fill
-          priority
-          className="object-cover opacity-[0.16]"
-          aria-hidden="true"
-        />
-        <div className="relative mx-auto max-w-5xl px-6 pb-24 pt-16 text-center sm:pb-32 sm:pt-24">
-          <p className="mb-8 text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            Falegnameria artigiana — dal 1987
-          </p>
-          <h1 className="text-balance font-serif text-[2.75rem] font-light leading-[1.1] tracking-tight sm:text-7xl">
-            La tua casa,
-            <br />
-            disegnata a mano,
-            <br />
-            <span className="italic text-primary">costruita per durare.</span>
-          </h1>
-          <p className="mx-auto mt-8 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">
-            Raccontaci il tuo spazio. Un maestro d&apos;ascia trasforma l&apos;idea in progetto, il
-            progetto in una stima chiara — in pochi minuti, non in settimane.
-          </p>
-          <div className="mt-12">
-            <Button size="lg" variant="accent" asChild>
-              <Link href="/progetti">Inizia il tuo progetto</Link>
-            </Button>
+      <section className="relative overflow-hidden border-y border-border/70 bg-card/40">
+        <div className="mx-auto grid max-w-7xl items-center gap-4 px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-10">
+          <div className="relative z-10 py-16 sm:py-20 lg:py-24">
+            <p className="mb-6 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              Falegnameria artigiana — dal 1987
+            </p>
+            <p className="mb-5 font-serif text-sm italic text-primary">STELLA · Madia manifesto</p>
+            <h1 className="text-balance font-serif text-[2.8rem] font-light leading-[1.04] tracking-tight sm:text-6xl xl:text-7xl">
+              La tua casa,
+              <br />
+              disegnata a mano,
+              <br />
+              <span className="italic text-primary">costruita per durare.</span>
+            </h1>
+            <p className="mt-7 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">
+              Un oggetto di falegnameria contemporanea, esplorabile in 3D. Materiali, proporzioni e
+              dettagli nascono dal dialogo tra progetto e materia.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <Button size="lg" variant="accent" asChild>
+                <Link href="/progetti">Inizia il tuo progetto</Link>
+              </Button>
+              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Modello interattivo
+              </span>
+            </div>
+          </div>
+
+          <div className="-mx-6 sm:-mx-8 lg:mx-0">
+            <StellaHero3D />
           </div>
         </div>
       </section>
 
-      {/* La Materia - una sola foto illustrativa (generata, non un catalogo
-          specifico) che comunica varietà, non un elenco di campioni reali
-          spacciati per fotografia - i campioni veri, quelli che contano
-          davvero, restano nel configuratore dove hanno un ruolo funzionale. */}
-      <section className="border-y border-border bg-card py-24">
+      <section className="border-b border-border bg-card py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="overflow-hidden rounded-lg">
@@ -104,8 +100,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Il processo - numerazione giustificata: è davvero una sequenza,
-          non una decorazione (le tre fasi reali del Customer Journey). */}
       <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <div className="mb-16 text-center">
           <p className="mb-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
@@ -128,9 +122,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Chiusura - foto del laboratorio in trasparenza (Pexels, licenza
-          gratuita per uso commerciale) - ambientazione generale, non
-          dichiarata come "il nostro laboratorio" specifico. */}
       <section className="relative overflow-hidden border-t border-border px-6 py-24 text-center sm:py-32">
         <Image
           src="/foto-laboratorio.jpg"
