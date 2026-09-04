@@ -156,15 +156,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-border px-6 py-10 text-center text-sm text-muted-foreground">
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
-          <span>Ramirez Atelier — Laboratorio artigiano dal 1987</span>
-          <Link
-            href="/admin/login"
-            className="uppercase tracking-[0.16em] text-[#8F4525] transition-opacity hover:opacity-60"
-          >
-            Accedi all&apos;area riservata
-          </Link>
+      <footer className="border-t border-border bg-card px-6 py-12 sm:py-14">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 sm:grid-cols-[1.1fr_1fr] sm:items-end">
+            <div>
+              <p className="font-serif text-2xl tracking-tight text-foreground">RAMIREZ ATELIER</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[#A6532B]">
+                Arredi su misura · Falegnameria artigiana dal 1987
+              </p>
+            </div>
+
+            <div className="sm:text-right">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Laboratorio</p>
+              <address className="mt-3 not-italic leading-relaxed text-foreground">
+                Via S. Andrea, Zona Artigianale
+                <br />
+                Borgagne di Melendugno, 73026
+              </address>
+              <a
+                href="mailto:info@ramirezatelier.it"
+                className="mt-2 inline-block text-[#8F4525] underline-offset-4 transition-colors hover:text-[#A6532B] hover:underline"
+              >
+                info@ramirezatelier.it
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-4 border-t border-border pt-6 text-xs uppercase tracking-[0.14em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <span>Ramirez Atelier — Laboratorio artigiano dal 1987</span>
+            <Link
+              href="/admin/login"
+              className="text-[#8F4525] transition-opacity hover:opacity-60"
+            >
+              Accedi all&apos;area riservata
+            </Link>
+          </div>
         </div>
       </footer>
     </main>
