@@ -13,6 +13,13 @@ const progettiVisuali = [
   { immagine: '/foto-elemento-altro-zona-giorno.jpg', indice: 4, etichetta: 'Soluzioni personalizzate' },
 ];
 
+const progettiCategoriaVisuali = [
+  { immagine: '/progetti/cucina-su-misura.jpg', etichetta: 'Cucina su misura' },
+  { immagine: '/progetti/armadio-cabina.jpg', etichetta: 'Armadio e cabina armadio su misura' },
+  { immagine: '/progetti/zona-giorno-su-misura.jpg', etichetta: 'Zona giorno su misura' },
+  { immagine: '/progetti/falegnameria-su-misura.jpg', etichetta: 'Falegnameria su misura' },
+];
+
 const icone = [ChefHat, Layers3, SquareStack, Bath, Sofa, DoorOpen];
 
 export default async function ProgettiPage() {
@@ -80,13 +87,20 @@ export default async function ProgettiPage() {
           <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {tipiProgetto.map((tipo, indice) => {
               const Icona = icone[indice % icone.length];
-              const visuale = progettiVisuali[indice % progettiVisuali.length];
+              const visuale = progettiCategoriaVisuali[indice % progettiCategoriaVisuali.length];
               return (
                 <Link key={tipo.id} href={`/progetti/${tipo.chiave}`} className="group bg-background">
                   <article className="relative flex min-h-[330px] flex-col overflow-hidden p-6 sm:p-7">
-                    <div className="absolute inset-x-0 top-0 h-36 overflow-hidden opacity-25 transition-opacity duration-500 group-hover:opacity-45">
-                      <Image src={visuale.immagine} alt="" fill sizes="33vw" className="object-cover" aria-hidden="true" />
-                      <div className="absolute inset-0 bg-background/65" />
+                    <div className="absolute inset-x-0 top-0 h-44 overflow-hidden opacity-45 transition-opacity duration-500 group-hover:opacity-65">
+                      <Image
+                        src={visuale.immagine}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover"
+                        aria-hidden="true"
+                      />
+                      <div className="absolute inset-0 bg-background/45" />
                     </div>
                     <div className="relative flex h-full flex-col">
                       <div className="flex items-center justify-between">
