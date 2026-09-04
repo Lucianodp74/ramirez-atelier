@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Bath, ChefHat, DoorOpen, Layers3, Sofa, SquareStack } from 'lucide-react';
 import { db } from '@/server/db';
-export const dynamic = 'force-dynamic';
+export const dynamic='force-dynamic';
 const progettiVisuali=[{immagine:'/foto-elemento-parete-attrezzata.jpg',indice:0,etichetta:'Zona giorno'},{immagine:'/foto-elemento-credenza.jpg',indice:1,etichetta:'Contenitori su misura'},{immagine:'/foto-elemento-libreria.jpg',indice:2,etichetta:'Librerie'},{immagine:'/foto-elemento-mobile-tv.jpg',indice:3,etichetta:'Arredi'},{immagine:'/foto-elemento-altro-zona-giorno.jpg',indice:4,etichetta:'Soluzioni personalizzate'}];
 const progettiCategoriaVisuali=[{immagine:'/progetti/cucina-su-misura.jpg',etichetta:'Cucina su misura'},{immagine:'/progetti/armadio-cabina.jpg',etichetta:'Armadio e cabina armadio su misura'},{immagine:'/progetti/zona-giorno-su-misura.jpg',etichetta:'Zona giorno su misura'},{immagine:'/progetti/falegnameria-su-misura.jpg',etichetta:'Falegnameria su misura'}];
 const icone=[ChefHat,Layers3,SquareStack,Bath,Sofa,DoorOpen];
