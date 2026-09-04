@@ -131,10 +131,10 @@ export default function HomePage() {
           src="/foto-laboratorio.jpg"
           alt=""
           fill
-          className="object-cover opacity-[0.22]"
+          className="object-cover opacity-[0.34]"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-card/60" aria-hidden="true" />
+        <div className="absolute inset-0 bg-card/35" aria-hidden="true" />
         <div className="relative">
           <h2 className="mx-auto max-w-2xl text-balance font-serif text-4xl font-light tracking-tight sm:text-5xl">
             Il legno aspetta solo la tua idea.
