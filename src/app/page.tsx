@@ -27,15 +27,15 @@ const fasi = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <nav className="mx-auto flex min-h-[112px] max-w-6xl items-center justify-center px-6 py-6 sm:min-h-[128px]">
+      <nav className="mx-auto flex min-h-[160px] max-w-6xl items-center justify-center px-6 py-8 sm:min-h-[190px] sm:py-10">
         <Link href="/" aria-label="Ramirez Atelier" className="block">
           <Image
             src="/logo-completo.png"
             alt="Ramirez Atelier — Arredi su misura"
-            width={230}
-            height={128}
+            width={320}
+            height={178}
             priority
-            className="h-auto w-[190px] sm:w-[230px]"
+            className="h-auto w-[250px] sm:w-[320px]"
           />
         </Link>
       </nav>
