@@ -1,10 +1,10 @@
 'use client';
 
 import Script from 'next/script';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ElementType } from 'react';
 import { useState } from 'react';
 
-const ModelViewer = 'model-viewer' as unknown as React.ElementType;
+const ModelViewer = 'model-viewer' as unknown as ElementType;
 
 const modelStyle: CSSProperties = {
   width: '100%',
