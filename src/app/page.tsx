@@ -115,7 +115,7 @@ export default function HomePage() {
         <div className="grid gap-12 sm:grid-cols-3 sm:gap-8">
           {fasi.map((fase) => (
             <div key={fase.numero}>
-              <p className="font-serif text-5xl font-light text-primary/40">{fase.numero}</p>
+              <p className="font-serif text-5xl font-light text-primary/60">{fase.numero}</p>
               <h3 className="mt-4 text-lg font-medium">{fase.titolo}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {fase.descrizione}
