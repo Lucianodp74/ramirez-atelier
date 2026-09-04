@@ -40,29 +40,34 @@ export default function HomePage() {
         </Link>
       </nav>
 
-      <section className="relative overflow-hidden border-y border-border/70 bg-card/40">
+      <section className="relative overflow-hidden border-y border-border/70 bg-[radial-gradient(circle_at_78%_48%,rgba(166,83,43,0.10),transparent_34%),linear-gradient(135deg,rgba(166,83,43,0.05),transparent_42%)]">
         <div className="mx-auto grid max-w-7xl items-center gap-4 px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-10">
           <div className="relative z-10 py-16 sm:py-20 lg:py-24">
-            <p className="mb-6 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="mb-6 text-xs uppercase tracking-[0.25em] text-[#A6532B]">
               Falegnameria artigiana — dal 1987
             </p>
-            <p className="mb-5 font-serif text-sm italic text-primary">STELLA · Madia manifesto</p>
+            <p className="mb-5 font-serif text-sm italic text-[#A6532B]">STELLA · Madia manifesto</p>
             <h1 className="text-balance font-serif text-[2.8rem] font-light leading-[1.04] tracking-tight sm:text-6xl xl:text-7xl">
               La tua casa,
               <br />
               disegnata a mano,
               <br />
-              <span className="italic text-primary">costruita per durare.</span>
+              <span className="italic text-[#A6532B]">costruita per durare.</span>
             </h1>
             <p className="mt-7 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">
               Un oggetto di falegnameria contemporanea, esplorabile in 3D. Materiali, proporzioni e
               dettagli nascono dal dialogo tra progetto e materia.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Button size="lg" variant="accent" asChild>
+              <Button
+                size="lg"
+                variant="accent"
+                className="border-[#A6532B] bg-[#A6532B] text-white shadow-[0_10px_30px_rgba(166,83,43,0.22)] hover:bg-[#8F4525]"
+                asChild
+              >
                 <Link href="/progetti">Inizia il tuo progetto</Link>
               </Button>
-              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-xs uppercase tracking-[0.18em] text-[#8F4525]">
                 Modello interattivo
               </span>
             </div>
@@ -87,7 +92,7 @@ export default function HomePage() {
               />
             </div>
             <div>
-              <p className="mb-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">
                 La materia
               </p>
               <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
@@ -105,7 +110,7 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <div className="mb-16 text-center">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">
             Come funziona
           </p>
           <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
@@ -115,7 +120,7 @@ export default function HomePage() {
         <div className="grid gap-12 sm:grid-cols-3 sm:gap-8">
           {fasi.map((fase) => (
             <div key={fase.numero}>
-              <p className="font-serif text-5xl font-light text-primary/60">{fase.numero}</p>
+              <p className="font-serif text-5xl font-light text-[#A6532B]">{fase.numero}</p>
               <h3 className="mt-4 text-lg font-medium">{fase.titolo}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {fase.descrizione}
@@ -139,7 +144,12 @@ export default function HomePage() {
             Il legno aspetta solo la tua idea.
           </h2>
           <div className="mt-10">
-            <Button size="lg" variant="accent" asChild>
+            <Button
+              size="lg"
+              variant="accent"
+              className="border-[#A6532B] bg-[#A6532B] text-white shadow-[0_10px_30px_rgba(166,83,43,0.22)] hover:bg-[#8F4525]"
+              asChild
+            >
               <Link href="/progetti">Inizia il tuo progetto</Link>
             </Button>
           </div>
@@ -151,7 +161,7 @@ export default function HomePage() {
           <span>Ramirez Atelier — Laboratorio artigiano dal 1987</span>
           <Link
             href="/admin/login"
-            className="uppercase tracking-[0.16em] text-foreground transition-opacity hover:opacity-60"
+            className="uppercase tracking-[0.16em] text-[#8F4525] transition-opacity hover:opacity-60"
           >
             Accedi all&apos;area riservata
           </Link>
