@@ -92,9 +92,7 @@ export default function HomePage() {
               />
             </div>
             <div>
-              <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">
-                La materia
-              </p>
+              <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">La materia</p>
               <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
                 Ogni progetto comincia da qui.
               </h2>
@@ -110,9 +108,7 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <div className="mb-16 text-center">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">
-            Come funziona
-          </p>
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">Come funziona</p>
           <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
             Non un modulo. Una consulenza.
           </h2>
@@ -156,9 +152,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-border bg-card px-6 py-12 sm:py-14">
+      <footer className="border-t border-border bg-card px-6 py-8 sm:py-10">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-10 sm:grid-cols-[1.1fr_1fr] sm:items-end">
+          <div className="grid gap-8 sm:grid-cols-[1.1fr_1fr] sm:items-end">
             <div>
               <p className="font-serif text-2xl tracking-tight text-foreground">RAMIREZ ATELIER</p>
               <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[#A6532B]">
@@ -182,12 +178,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 border-t border-border pt-6 text-xs uppercase tracking-[0.14em] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>Ramirez Atelier — Laboratorio artigiano dal 1987</span>
-            <Link
-              href="/admin/login"
-              className="text-[#8F4525] transition-opacity hover:opacity-60"
-            >
+          <div className="mt-7 flex justify-end border-t border-border pt-5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <Link href="/admin/login" className="text-[#8F4525] transition-opacity hover:opacity-60">
               Accedi all&apos;area riservata
             </Link>
           </div>
