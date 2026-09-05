@@ -1,1 +1,0 @@
-Brand favicon is provided by Next.js app/icon.svg.
