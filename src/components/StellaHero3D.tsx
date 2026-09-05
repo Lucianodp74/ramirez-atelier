@@ -11,7 +11,7 @@ const modelStyle: CSSProperties = {
   height: '100%',
   background: 'transparent',
   '--poster-color': 'transparent',
-  touchAction: 'pan-y',
+  touchAction: 'none',
 } as CSSProperties;
 
 export function StellaHero3D() {
@@ -44,25 +44,27 @@ export function StellaHero3D() {
         alt="Madia STELLA di Ramirez Atelier, modello tridimensionale"
         camera-controls
         auto-rotate
-        auto-rotate-delay="1400"
-        rotation-per-second="6deg"
+        auto-rotate-delay="3000"
+        rotation-per-second="3deg"
         shadow-intensity="1.05"
         shadow-softness="0.75"
         exposure="0.95"
         environment-image="neutral"
         interaction-prompt="auto"
-        interaction-prompt-threshold="1800"
+        interaction-prompt-threshold="1200"
         loading="eager"
         reveal="auto"
-        camera-orbit="25deg 72deg auto"
-        min-camera-orbit="auto 28deg auto"
-        max-camera-orbit="auto 105deg auto"
+        camera-orbit="0deg 72deg auto"
+        min-camera-orbit="-180deg 25deg auto"
+        max-camera-orbit="180deg 110deg auto"
+        min-field-of-view="20deg"
+        max-field-of-view="45deg"
         disable-tap
         style={modelStyle}
         className="relative z-[1]"
       />
 
-      <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/70 bg-background/75 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur sm:bottom-10">
+      <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border/70 bg-background/75 px-4 py-2 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur sm:bottom-10">
         Trascina per ruotare · pizzica per zoomare
       </div>
 
