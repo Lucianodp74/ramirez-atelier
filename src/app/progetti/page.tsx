@@ -10,9 +10,9 @@ const progettiVisuali = [
   { immagine: '/foto-elemento-mobile-tv.jpg', indice: 3, etichetta: 'Arredi' },
   { immagine: '/foto-elemento-altro-zona-giorno.jpg', indice: 4, etichetta: 'Soluzioni personalizzate' },
 ];
-// Usiamo solo asset già presenti e verificati nel repository: niente immagini categoria rotte o compresse.
+// Usiamo gli asset categoria presenti nel repository; la cucina punta alla foto HQ caricata nel percorso dedicato.
 const progettiCategoriaVisuali = [
-  { immagine: '/foto-finiture.jpg', etichetta: 'Cucina su misura' },
+  { immagine: '/progetti/cucina-su-misura.jpg', etichetta: 'Cucina su misura' },
   { immagine: '/foto-elemento-altro-zona-giorno.jpg', etichetta: 'Armadio e cabina armadio su misura' },
   { immagine: '/foto-elemento-parete-attrezzata.jpg', etichetta: 'Zona giorno su misura' },
   { immagine: '/progetti/falegnameria-su-misura.jpg', etichetta: 'Falegnameria su misura' },
