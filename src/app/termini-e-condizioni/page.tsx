@@ -16,8 +16,9 @@ export default function TermsPage() {
             <h1 className="mt-4 font-serif text-4xl font-light sm:text-6xl">Termini e condizioni</h1>
           </header>
           <section className="space-y-4 leading-relaxed text-muted-foreground">
-            <h2 className="font-serif text-2xl text-foreground">1. Utilizzo del sito</h2>
-            <p>Il sito Ramirez Atelier presenta servizi, lavorazioni e percorsi per la progettazione di arredi su misura. I contenuti hanno finalità informative e non costituiscono, salvo diversa indicazione, un’offerta contrattuale vincolante.</p>
+            <h2 className="font-serif text-2xl text-foreground">1. Titolare e utilizzo del sito</h2>
+            <p>Il sito Ramirez Atelier è riferito a <strong className="text-foreground">ITALDESIGN DI RAMIREZ ROBERTO</strong>, P.IVA 04951160755, e presenta servizi, lavorazioni e percorsi per la progettazione di arredi su misura.</p>
+            <p>I contenuti hanno finalità informative e non costituiscono, salvo diversa indicazione, un’offerta contrattuale vincolante.</p>
           </section>
           <section className="space-y-4 leading-relaxed text-muted-foreground">
             <h2 className="font-serif text-2xl text-foreground">2. Progetti e stime</h2>
@@ -30,9 +31,6 @@ export default function TermsPage() {
           <section className="space-y-4 leading-relaxed text-muted-foreground">
             <h2 className="font-serif text-2xl text-foreground">4. Contatti</h2>
             <p>Per informazioni sul sito o sui progetti: <a className="text-[#8F4525] underline-offset-4 hover:underline" href="mailto:info@ramirezatelier.it">info@ramirezatelier.it</a>.</p>
-          </section>
-          <section className="space-y-4 leading-relaxed text-muted-foreground">
-            <p><strong className="text-foreground">Prima della pubblicazione definitiva, verificare con il titolare la denominazione giuridica, i dati fiscali e le eventuali condizioni commerciali specifiche da inserire in questa pagina.</strong></p>
           </section>
         </article>
       </div>
