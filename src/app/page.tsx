@@ -79,19 +79,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-b border-border bg-card py-24">
+      <section className="border-b border-border bg-card py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="overflow-hidden rounded-lg">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-background shadow-[0_20px_60px_rgba(42,38,34,0.08)]">
               <Image
                 src="/foto-finiture.jpg"
                 alt="Ventaglio di finiture e materiali disponibili - legni, laccati, pietre"
                 width={1536}
                 height={1024}
-                className="h-auto w-full object-cover"
+                className="aspect-[4/3] h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
               />
             </div>
-            <div>
+            <div className="max-w-xl">
               <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">La materia</p>
               <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
                 Ogni progetto comincia da qui.
@@ -101,21 +101,28 @@ export default function HomePage() {
                 personalizzabili, per un progetto che sia davvero il tuo. Le vedrai tutte, una a
                 una, nel momento in cui inizierai a costruire la tua idea con noi.
               </p>
+              <div className="mt-8 h-px w-16 bg-[#A6532B]" aria-hidden="true" />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
-        <div className="mb-16 text-center">
+      <section className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+        <div className="mb-14 text-center sm:mb-16">
           <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">Come funziona</p>
           <h2 className="font-serif text-4xl font-light tracking-tight sm:text-5xl">
             Non un modulo. Una consulenza.
           </h2>
         </div>
-        <div className="grid gap-12 sm:grid-cols-3 sm:gap-8">
-          {fasi.map((fase) => (
-            <div key={fase.numero}>
+        <div className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+          {fasi.map((fase, index) => (
+            <div key={fase.numero} className="relative sm:px-3">
+              {index < fasi.length - 1 && (
+                <span
+                  className="absolute left-[calc(100%+0.5rem)] top-7 hidden h-px w-[calc(100%-1rem)] bg-border sm:block"
+                  aria-hidden="true"
+                />
+              )}
               <p className="font-serif text-5xl font-light text-[#A6532B]">{fase.numero}</p>
               <h3 className="mt-4 text-lg font-medium">{fase.titolo}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -136,6 +143,7 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-card/35" aria-hidden="true" />
         <div className="relative">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-[#A6532B]">Dal laboratorio a casa tua</p>
           <h2 className="mx-auto max-w-2xl text-balance font-serif text-4xl font-light tracking-tight sm:text-5xl">
             Il legno aspetta solo la tua idea.
           </h2>
