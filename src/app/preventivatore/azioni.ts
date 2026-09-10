@@ -67,23 +67,30 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
     for (const [indice, riga] of preventivo.righe.entries()) {
       const modulo = moduli.find((m) => m.id === riga.id);
       if (!modulo) continue;
+      const w = modulo.larghezzaCm / 100;
+      const h = modulo.altezzaCm / 100;
+      const d = modulo.profonditaCm / 100;
+      const areaFianchi = 2 * h * d;
+      const areaBaseCielo = 2 * w * d;
+      const areaFronte = w * h;
+      const areaRipiani = (riga.distinta.ripiani * w * d);
+      const areaTotale = areaFianchi + areaBaseCielo + areaFronte + areaRipiani;
+      const quota = (area: number) => riga.materiale * (area / Math.max(areaTotale, 0.0001));
       const descrizione = `${modulo.tipo} ${modulo.larghezzaCm}×${modulo.altezzaCm}×${modulo.profonditaCm} cm · ${modulo.materiale} · ${modulo.finitura}`;
       const righe = [
-        ['STRUTTURA', 'PANNELLO-FIANCO', 'Fianchi struttura', 'PZ', riga.distinta.fianchi, riga.materiale / Math.max(riga.superficieM2, 0.0001) * (riga.superficieM2 * 0.45)],
-        ['STRUTTURA', 'PANNELLO-BASE', 'Base', 'PZ', riga.distinta.base, riga.materiale / Math.max(riga.distinta.fianchi + riga.distinta.base + riga.distinta.cielo, 1)],
-        ['STRUTTURA', 'PANNELLO-CIELO', 'Cielo', 'PZ', riga.distinta.cielo, riga.materiale / Math.max(riga.distinta.fianchi + riga.distinta.base + riga.distinta.cielo, 1)],
-        ['STRUTTURA', 'SCHIENALE', 'Schienale', 'M2', riga.distinta.schienale, riga.retro],
-        ['STRUTTURA', 'RIPIANO', 'Ripiani', 'PZ', riga.distinta.ripiani, riga.materiale * 0.10],
-        ['FRONTALE', 'ANTA', 'Ante', 'PZ', riga.distinta.ante, riga.finitura * 0.15],
-        ['FRONTALE', 'CASSETTO', 'Cassetti', 'PZ', riga.distinta.cassetti, riga.ferramenta * 0.25],
-        ['BORDO', 'BORDO-ML', 'Bordatura', 'ML', riga.distinta.bordaturaMl, riga.bordo],
-        ['FERRAMENTA', 'FER-HARDWARE', 'Ferramenta', 'PZ', riga.distinta.ferramentaPz, riga.ferramenta / Math.max(riga.distinta.ferramentaPz, 1)],
-        ['MANODOPERA', 'MAN-ORE', 'Lavorazione e assemblaggio', 'H', riga.distinta.ore, riga.manodopera / Math.max(riga.distinta.ore, 0.0001)],
-      ] as const;
-      for (const [categoria, codice, voce, unita, quantita, costoTotale] of righe) {
-        if (quantita <= 0 || costoTotale <= 0) continue;
-        const costoUnitario = costoTotale / quantita;
-        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + righe.indexOf(righe.find((x) => x[1] === codice)!)}, ${categoria}, ${codice}, ${`${voce} · ${descrizione}`}, ${unita}, ${quantita}, ${modulo.materiale}, ${modulo.finitura}, ${costoUnitario}, 'Snapshot generato dal Preventivatore Modulare', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+        { categoria: 'STRUTTURA', codice: 'PANNELLO-FIANCO', voce: 'Fianchi struttura', unita: 'PZ', quantita: 2, costo: quota(areaFianchi) },
+        { categoria: 'STRUTTURA', codice: 'PANNELLO-BASE', voce: 'Base', unita: 'PZ', quantita: 1, costo: quota(w * d) },
+        { categoria: 'STRUTTURA', codice: 'PANNELLO-CIELO', voce: 'Cielo', unita: 'PZ', quantita: 1, costo: quota(w * d) },
+        { categoria: 'STRUTTURA', codice: 'RIPIANO', voce: 'Ripiani', unita: 'PZ', quantita: riga.distinta.ripiani, costo: quota(areaRipiani) },
+        { categoria: 'FRONTALE', codice: 'ANTA', voce: 'Ante / frontale', unita: 'PZ', quantita: Math.max(riga.distinta.ante, 1), costo: quota(areaFronte) },
+        { categoria: 'STRUTTURA', codice: 'SCHIENALE', voce: 'Schienale', unita: 'M2', quantita: 1, costo: riga.retro },
+        { categoria: 'BORDO', codice: 'BORDO-ML', voce: 'Bordatura', unita: 'ML', quantita: riga.distinta.bordaturaMl, costo: riga.bordo },
+        { categoria: 'FERRAMENTA', codice: 'FER-HARDWARE', voce: 'Ferramenta', unita: 'PZ', quantita: riga.distinta.ferramentaPz, costo: riga.ferramenta },
+        { categoria: 'MANODOPERA', codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', unita: 'H', quantita: riga.distinta.ore, costo: riga.manodopera },
+      ];
+      for (const [posizione, item] of righe.entries()) {
+        if (item.quantita <= 0 || item.costo <= 0) continue;
+        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + posizione}, ${item.categoria}, ${item.codice}, ${`${item.voce} · ${descrizione}`}, ${item.unita}, ${item.quantita}, ${modulo.materiale}, ${modulo.finitura}, ${item.costo / item.quantita}, 'Snapshot parametrico: verificare dimensioni esecutive prima della produzione', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
       }
     }
 
