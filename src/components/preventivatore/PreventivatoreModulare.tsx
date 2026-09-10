@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import type { ConfigurazioneModulo, Finitura, Materiale, ModuloConfigurato, ModuloTipo } from '@/lib/preventivatore/moduli';
 import { CATALOGO_MODULI } from '@/lib/preventivatore/moduli';
-import { calcolaStimaPreventivatore } from '@/app/preventivatore/azioni';
+import { calcolaStimaPreventivatore, salvaRichiestaPreventivatore } from '@/app/preventivatore/azioni';
 
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const labels: Record<ModuloTipo, string> = { BASE: 'Base', PENSILE: 'Pensile', COLONNA: 'Colonna', CASSETTIERA: 'Cassettiera', LIBRERIA: 'Libreria / contenitore' };
@@ -27,52 +27,38 @@ export function PreventivatoreModulare() {
   const [indice, setIndice] = useState(0);
   const [stima, setStima] = useState<number | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
+  const [richiestaAperta, setRichiestaAperta] = useState(false);
+  const [inviata, setInviata] = useState(false);
   const [isPending, startTransition] = useTransition();
   const modulo = moduli[indice];
   const catalogo = catalogoPer(modulo.tipo);
 
-  function aggiorna(patch: Partial<ModuloConfigurato>) {
-    setModuli((current) => current.map((m, i) => i === indice ? { ...m, ...patch } : m));
-    setStima(null);
-  }
-
-  function aggiungi(tipo: ModuloTipo) {
-    const nuovo = nuovoModulo(tipo);
-    setModuli((current) => [...current, nuovo]);
-    setIndice(moduli.length);
-    setStima(null);
-  }
-
-  function duplica() {
-    const nuovo = { ...modulo, id: crypto.randomUUID() };
-    setModuli((current) => [...current, nuovo]);
-    setIndice(moduli.length);
-    setStima(null);
-  }
-
-  function elimina() {
-    if (moduli.length === 1) return;
-    const next = moduli.filter((_, i) => i !== indice);
-    setModuli(next);
-    setIndice(Math.min(indice, next.length - 1));
-    setStima(null);
-  }
-
+  function aggiorna(patch: Partial<ModuloConfigurato>) { setModuli((current) => current.map((m, i) => i === indice ? { ...m, ...patch } : m)); setStima(null); setInviata(false); }
+  function aggiungi(tipo: ModuloTipo) { const nuovo = nuovoModulo(tipo); setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(false); }
+  function duplica() { const nuovo = { ...modulo, id: crypto.randomUUID() }; setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(false); }
+  function elimina() { if (moduli.length === 1) return; const next = moduli.filter((_, i) => i !== indice); setModuli(next); setIndice(Math.min(indice, next.length - 1)); setStima(null); setInviata(false); }
   function calcola() {
     setMessaggio(null);
     startTransition(async () => {
       try {
         const result = await calcolaStimaPreventivatore(moduli);
-        if (result.preventivo.errori.length) {
-          setMessaggio(result.preventivo.errori.join(' '));
-          setStima(null);
-          return;
-        }
+        if (result.preventivo.errori.length) { setMessaggio(result.preventivo.errori.join(' ')); setStima(null); return; }
         setStima(result.preventivo.prezzoIndicativo);
-      } catch (error) {
-        setMessaggio(error instanceof Error ? error.message : 'Impossibile calcolare la stima.');
-        setStima(null);
-      }
+      } catch (error) { setMessaggio(error instanceof Error ? error.message : 'Impossibile calcolare la stima.'); setStima(null); }
+    });
+  }
+  function inviaRichiesta(formData: FormData) {
+    setMessaggio(null);
+    startTransition(async () => {
+      try {
+        const result = await salvaRichiestaPreventivatore(moduli, {
+          nome: String(formData.get('nome') ?? ''),
+          email: String(formData.get('email') ?? ''),
+          telefono: String(formData.get('telefono') ?? ''),
+          messaggio: String(formData.get('messaggio') ?? ''),
+        });
+        if (result.successo) setInviata(true);
+      } catch (error) { setMessaggio(error instanceof Error ? error.message : 'Impossibile inviare la richiesta.'); }
     });
   }
 
@@ -84,38 +70,21 @@ export function PreventivatoreModulare() {
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Costruisci il tuo arredo su misura.</h1>
           <p className="mt-4 text-base leading-7 text-muted-foreground">Componi i moduli, inserisci le misure e scegli materiale e finitura. La stima viene calcolata sul listino Ramirez in modo sicuro.</p>
         </div>
-
         <div className="grid gap-8 lg:grid-cols-[1.6fr_0.9fr]">
           <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-7">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div><p className="text-sm font-medium">Modulo {indice + 1} di {moduli.length}</p><p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p></div>
-              <div className="flex gap-2"><button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button><button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button></div>
-            </div>
-
-            <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {CATALOGO_MODULI.map((item) => { const tipo = item.codice; return <button key={tipo} type="button" onClick={() => aggiorna({ ...nuovoModulo(tipo), id: modulo.id })} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>{labels[tipo]}</button>; })}
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-3">
-              {(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => <label key={campo} className="text-sm font-medium">{campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'} (cm)<input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /><span className="mt-1 block text-xs font-normal text-muted-foreground">{catalogo.min[campo]}–{catalogo.max[campo]} cm</span></label>)}
-            </div>
-
-            <div className="mt-7 grid gap-6 sm:grid-cols-3">
-              <label className="text-sm font-medium">Materiale<select value={modulo.materiale} onChange={(e) => aggiorna({ materiale: e.target.value as Materiale })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.materiali.map((v) => <option key={v} value={v}>{materialLabels[v]}</option>)}</select></label>
-              <label className="text-sm font-medium">Finitura<select value={modulo.finitura} onChange={(e) => aggiorna({ finitura: e.target.value as Finitura })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.finiture.map((v) => <option key={v} value={v}>{finishLabels[v]}</option>)}</select></label>
-              <label className="text-sm font-medium">Configurazione<select value={modulo.configurazione} onChange={(e) => aggiorna({ configurazione: e.target.value as ConfigurazioneModulo })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.configurazioni.map((v) => <option key={v} value={v}>{configLabels[v]}</option>)}</select></label>
-            </div>
-
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium">Modulo {indice + 1} di {moduli.length}</p><p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p></div><div className="flex gap-2"><button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button><button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button></div></div>
+            <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-5">{CATALOGO_MODULI.map((item) => { const tipo = item.codice; return <button key={tipo} type="button" onClick={() => aggiorna({ ...nuovoModulo(tipo), id: modulo.id })} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>{labels[tipo]}</button>; })}</div>
+            <div className="grid gap-6 sm:grid-cols-3">{(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => <label key={campo} className="text-sm font-medium">{campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'} (cm)<input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /><span className="mt-1 block text-xs font-normal text-muted-foreground">{catalogo.min[campo]}–{catalogo.max[campo]} cm</span></label>)}</div>
+            <div className="mt-7 grid gap-6 sm:grid-cols-3"><label className="text-sm font-medium">Materiale<select value={modulo.materiale} onChange={(e) => aggiorna({ materiale: e.target.value as Materiale })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.materiali.map((v) => <option key={v} value={v}>{materialLabels[v]}</option>)}</select></label><label className="text-sm font-medium">Finitura<select value={modulo.finitura} onChange={(e) => aggiorna({ finitura: e.target.value as Finitura })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.finiture.map((v) => <option key={v} value={v}>{finishLabels[v]}</option>)}</select></label><label className="text-sm font-medium">Configurazione<select value={modulo.configurazione} onChange={(e) => aggiorna({ configurazione: e.target.value as ConfigurazioneModulo })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.configurazioni.map((v) => <option key={v} value={v}>{configLabels[v]}</option>)}</select></label></div>
             <label className="mt-7 block max-w-xs text-sm font-medium">Ripiani<input type="number" min="0" max="20" value={modulo.ripiani ?? 0} onChange={(e) => aggiorna({ ripiani: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /></label>
-
             <div className="mt-8 border-t pt-6"><p className="mb-3 text-sm font-medium">Aggiungi un altro modulo</p><div className="flex flex-wrap gap-2">{CATALOGO_MODULI.map((item) => <button key={item.codice} type="button" onClick={() => aggiungi(item.codice)} className="rounded-lg border px-3 py-2 text-sm">+ {labels[item.codice]}</button>)}</div></div>
           </section>
-
           <aside className="h-fit rounded-2xl border bg-card p-6 shadow-sm lg:sticky lg:top-6">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Riepilogo</p>
             <div className="mt-5 space-y-3">{moduli.map((m, i) => <button key={m.id} type="button" onClick={() => setIndice(i)} className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left ${i === indice ? 'border-foreground' : ''}`}><span><span className="block text-sm font-medium">{i + 1}. {labels[m.tipo]}</span><span className="text-xs text-muted-foreground">{m.larghezzaCm} × {m.altezzaCm} × {m.profonditaCm} cm</span></span><span className="text-xs">{materialLabels[m.materiale]}</span></button>)}</div>
             <button type="button" onClick={calcola} disabled={isPending} className="mt-6 w-full rounded-xl bg-foreground px-4 py-3 font-medium text-background disabled:opacity-50">{isPending ? 'Calcolo in corso…' : 'Calcola stima'}</button>
-            {stima !== null && <div className="mt-6 rounded-xl border p-4"><p className="text-xs uppercase tracking-wider text-muted-foreground">Stima indicativa</p><p className="mt-1 text-3xl font-semibold">{euro.format(stima)}</p><p className="mt-2 text-xs leading-5 text-muted-foreground">Valore indicativo basato sul listino attivo. Il preventivo definitivo viene verificato da Ramirez Atelier.</p></div>}
+            {stima !== null && !inviata && <div className="mt-6 rounded-xl border p-4"><p className="text-xs uppercase tracking-wider text-muted-foreground">Stima indicativa</p><p className="mt-1 text-3xl font-semibold">{euro.format(stima)}</p><p className="mt-2 text-xs leading-5 text-muted-foreground">Valore indicativo basato sul listino attivo. Il preventivo definitivo viene verificato da Ramirez Atelier.</p><button type="button" onClick={() => setRichiestaAperta((v) => !v)} className="mt-4 w-full rounded-xl border px-4 py-3 text-sm font-medium">{richiestaAperta ? 'Chiudi' : 'Richiedi il preventivo definitivo'}</button>{richiestaAperta && <form action={inviaRichiesta} className="mt-4 space-y-3"><input name="nome" required minLength={2} placeholder="Nome e cognome" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><input name="telefono" placeholder="Telefono (facoltativo)" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><textarea name="messaggio" rows={3} placeholder="Note o esigenze particolari (facoltativo)" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><button type="submit" disabled={isPending} className="w-full rounded-xl bg-foreground px-4 py-3 text-sm font-medium text-background disabled:opacity-50">{isPending ? 'Invio in corso…' : 'Invia richiesta'}</button></form>}</div>}
+            {inviata && <div className="mt-6 rounded-xl border p-4"><p className="text-sm font-semibold">Richiesta inviata.</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Abbiamo salvato la configurazione e la stima. Ramirez Atelier verificherà misure, materiali e lavorazioni prima del preventivo definitivo.</p></div>}
             {messaggio && <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{messaggio}</p>}
           </aside>
         </div>
