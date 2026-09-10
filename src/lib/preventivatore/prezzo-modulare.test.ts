@@ -17,7 +17,21 @@ describe('preventivatore modulare', () => {
     expect(riga.costoProduzione).toBeGreaterThan(riga.materiale);
   });
 
-  it('somma più moduli e applica il ricarico una sola volta al totale', () => {
+  it('produce la distinta tecnica parametrica coerente con la configurazione', () => {
+    const riga = calcolaCostoModulo(base);
+    expect(riga.distinta.fianchi).toBe(2);
+    expect(riga.distinta.base).toBe(1);
+    expect(riga.distinta.cielo).toBe(1);
+    expect(riga.distinta.schienale).toBe(1);
+    expect(riga.distinta.ripiani).toBe(1);
+    expect(riga.distinta.ante).toBe(2);
+    expect(riga.distinta.cassetti).toBe(0);
+    expect(riga.distinta.ferramentaPz).toBe(2);
+    expect(riga.distinta.bordaturaMl).toBeGreaterThan(0);
+    expect(riga.distinta.ore).toBeGreaterThan(0);
+  });
+
+  it('somma più moduli e applica il ricarico una sola volta', () => {
     const altro = { ...base, id: 'base-90', larghezzaCm: 90 };
     const preventivo = calcolaPreventivoModulare([base, altro]);
     expect(preventivo.errori).toEqual([]);
