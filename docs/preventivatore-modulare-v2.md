@@ -169,6 +169,27 @@ Per la fase iniziale usare tre livelli distinti:
 
 I valori benchmark non devono diventare automaticamente costi di produzione.
 
+## Collegamento al Listino amministrativo
+
+Il servizio `src/server/services/preventivatore-listino-service.ts` collega il motore al `listino_prezzo` esistente senza creare un secondo catalogo. I prezzi restano nel database e vengono risolti per `tenantId` usando codici tecnici stabili.
+
+Codici richiesti dal motore:
+
+- `MAT-TRUCIOLARE`, `MAT-MDF`, `MAT-MULTISTRATO` — M2
+- `FIN-MELAMINICO`, `FIN-LAMINATO`, `FIN-LACCATO` — M2
+- `SERV-BORDO-ML` — ML
+- `MAT-RETRO-M2` — M2
+- `FER-PORTA`, `FER-CASSETTO` — PZ
+- `MAN-ORE-BASE` — H
+- `MAN-ORE-M2` — H/M2
+- `MAN-ORE-PORTA`, `MAN-ORE-CASSETTO`, `MAN-ORE-RIPIANO` — H/PZ
+- `MAN-COSTO-ORA` — EUR/H
+- `COMM-RICARICO` — %
+
+Se una tariffa obbligatoria manca, è inattiva o usa un'unità diversa da quella prevista, il servizio interrompe il calcolo con un errore esplicito. Non vengono inventati prezzi.
+
+Il Listino conserva inoltre il proprio storico delle variazioni; l'integrazione futura con BOM/preventivo continuerà a congelare i costi quando la distinta viene confermata.
+
 ## Cosa non fare nella V2 iniziale
 
 - non introdurre subito CAD/CAM completo;
@@ -199,7 +220,7 @@ Implementare un motore puro e testabile che riceva una configurazione validata e
 
 ### Incremento C — catalogo amministrativo
 
-Permettere al titolare di creare/modificare/disattivare moduli, prezzi e regole senza modificare codice.
+Permettere al titolare di creare/modificare/disattivare moduli, prezzi e regole senza modificare codice. Il collegamento tecnico al Listino è ora predisposto; resta la UI dedicata per rendere le tariffe leggibili e gestibili in modo più semplice.
 
 ### Incremento D — nuova UI cliente
 
