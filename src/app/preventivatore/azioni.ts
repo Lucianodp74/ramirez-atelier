@@ -25,13 +25,14 @@ async function caricaTipoProgettoPreventivatore(tenantId: string) {
   return tipo;
 }
 
-/** Punto unico di calcolo: il browser invia solo la configurazione; listino e ricarico restano server-side. */
+/** DTO pubblico: il browser riceve solo la stima commerciale, mai costi, ore o ricarico interni. */
 export async function calcolaStimaPreventivatore(moduli: unknown) {
   validaInputModuli(moduli);
   const tenantId = await idTenantRamirezAtelier();
   const tariffe = await caricaTariffePreventivatore(tenantId);
   const preventivo = calcolaPreventivoModulare(moduli, tariffe);
-  return { successo: true as const, preventivo };
+  if (preventivo.errori.length) throw new Error(preventivo.errori.join(' '));
+  return { successo: true as const, prezzoIndicativo: preventivo.prezzoIndicativo };
 }
 
 export interface DatiRichiestaPreventivatore { nome: string; email: string; telefono?: string; messaggio?: string; }
