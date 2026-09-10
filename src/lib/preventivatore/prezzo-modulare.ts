@@ -46,6 +46,18 @@ export type RigaCostoModulo = {
   manodopera: number;
   costoProduzione: number;
   prezzoIndicativo: number;
+  distinta: {
+    fianchi: number;
+    base: number;
+    cielo: number;
+    schienale: number;
+    ripiani: number;
+    ante: number;
+    cassetti: number;
+    bordaturaMl: number;
+    ferramentaPz: number;
+    ore: number;
+  };
 };
 
 export type PreventivoModulare = {
@@ -81,7 +93,11 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
   const manodopera = ore * tariffe.costoOra;
   const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
-  return { id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione, prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)) };
+  return {
+    id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione,
+    prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
+    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore) },
+  };
 }
 
 export function calcolaPreventivoModulare(moduli: ModuloConfigurato[], tariffe: TariffePreventivatore = TARIFFE_DEMO): PreventivoModulare {
