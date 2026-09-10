@@ -82,28 +82,28 @@ export function costruisciTariffeDaListino(voci: VoceTariffa[]): TariffePreventi
 
 /** Carica dal Listino solo le voci tecniche richieste dal Preventivatore. */
 export async function caricaTariffePreventivatore(tenantId: string): Promise<TariffePreventivatore> {
-  const codici = Object.values(CODICI_TARIFFE_PREVENTIVATORE.materiali)
-    .concat(Object.values(CODICI_TARIFFE_PREVENTIVATORE.finiture))
-    .concat([
-      CODICI_TARIFFE_PREVENTIVATORE.bordo,
-      CODICI_TARIFFE_PREVENTIVATORE.retro,
-      CODICI_TARIFFE_PREVENTIVATORE.ferramentaPorta,
-      CODICI_TARIFFE_PREVENTIVATORE.ferramentaCassetto,
-      CODICI_TARIFFE_PREVENTIVATORE.oreBase,
-      CODICI_TARIFFE_PREVENTIVATORE.orePerM2,
-      CODICI_TARIFFE_PREVENTIVATORE.orePerPorta,
-      CODICI_TARIFFE_PREVENTIVATORE.orePerCassetto,
-      CODICI_TARIFFE_PREVENTIVATORE.orePerRipiano,
-      CODICI_TARIFFE_PREVENTIVATORE.costoOra,
-      CODICI_TARIFFE_PREVENTIVATORE.ricarico,
-    ]);
+  const codici = [
+    ...Object.values(CODICI_TARIFFE_PREVENTIVATORE.materiali),
+    ...Object.values(CODICI_TARIFFE_PREVENTIVATORE.finiture),
+    CODICI_TARIFFE_PREVENTIVATORE.bordo,
+    CODICI_TARIFFE_PREVENTIVATORE.retro,
+    CODICI_TARIFFE_PREVENTIVATORE.ferramentaPorta,
+    CODICI_TARIFFE_PREVENTIVATORE.ferramentaCassetto,
+    CODICI_TARIFFE_PREVENTIVATORE.oreBase,
+    CODICI_TARIFFE_PREVENTIVATORE.orePerM2,
+    CODICI_TARIFFE_PREVENTIVATORE.orePerPorta,
+    CODICI_TARIFFE_PREVENTIVATORE.orePerCassetto,
+    CODICI_TARIFFE_PREVENTIVATORE.orePerRipiano,
+    CODICI_TARIFFE_PREVENTIVATORE.costoOra,
+    CODICI_TARIFFE_PREVENTIVATORE.ricarico,
+  ] as string[];
 
   const voci = await db.$queryRaw<VoceTariffa[]>`
     SELECT "codice", "prezzo"::float8 AS "prezzo", "unita", "attivo"
     FROM "listino_prezzo"
     WHERE "tenantId" = ${tenantId}
       AND "attivo" = true
-      AND "codice" IN (${Prisma.join(codici)})
+      AND "codice" IN (${Prisma.join(codici.map((codice) => Prisma.sql`${codice}`), ',')})
   `;
 
   return costruisciTariffeDaListino(voci);
