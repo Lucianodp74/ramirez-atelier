@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import type { ConfigurazioneModulo, Finitura, Materiale, ModuloConfigurato, ModuloTipo } from '@/lib/preventivatore/moduli';
 import { CATALOGO_MODULI } from '@/lib/preventivatore/moduli';
 import { calcolaStimaPreventivatore } from '@/app/preventivatore/azioni';
@@ -11,8 +11,14 @@ const materialLabels: Record<Materiale, string> = { TRUCIOLARE: 'Truciolare', MD
 const finishLabels: Record<Finitura, string> = { MELAMINICO: 'Melaminico', LAMINATO: 'Laminato', LACCATO: 'Laccato' };
 const configLabels: Record<ConfigurazioneModulo, string> = { APERTO: 'Aperto', '1_PORTA': '1 porta', '2_PORTE': '2 porte', '3_CASSETTI': '3 cassetti', '4_CASSETTI': '4 cassetti', PORTE_CASSETTI: 'Porte + cassetti' };
 
+function catalogoPer(tipo: ModuloTipo) {
+  const catalogo = CATALOGO_MODULI.find((item) => item.codice === tipo);
+  if (!catalogo) throw new Error(`Modulo ${tipo} non presente nel catalogo.`);
+  return catalogo;
+}
+
 function nuovoModulo(tipo: ModuloTipo): ModuloConfigurato {
-  const c = CATALOGO_MODULI[tipo];
+  const c = catalogoPer(tipo);
   return { id: crypto.randomUUID(), tipo, larghezzaCm: c.min.larghezzaCm, altezzaCm: c.min.altezzaCm, profonditaCm: c.min.profonditaCm, materiale: c.materiali[0], finitura: c.finiture[0], configurazione: c.configurazioni[0], ripiani: 1 };
 }
 
@@ -23,9 +29,7 @@ export function PreventivatoreModulare() {
   const [messaggio, setMessaggio] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const modulo = moduli[indice];
-  const catalogo = CATALOGO_MODULI[modulo.tipo];
-
-  const totaleModuli = useMemo(() => moduli.length, [moduli.length]);
+  const catalogo = catalogoPer(modulo.tipo);
 
   function aggiorna(patch: Partial<ModuloConfigurato>) {
     setModuli((current) => current.map((m, i) => i === indice ? { ...m, ...patch } : m));
@@ -59,8 +63,8 @@ export function PreventivatoreModulare() {
     startTransition(async () => {
       try {
         const result = await calcolaStimaPreventivatore(moduli);
-        if (!result.successo || result.preventivo.errori.length) {
-          setMessaggio(result.preventivo.errori.join(' ') || 'Controlla le dimensioni inserite.');
+        if (result.preventivo.errori.length) {
+          setMessaggio(result.preventivo.errori.join(' '));
           setStima(null);
           return;
         }
@@ -84,32 +88,16 @@ export function PreventivatoreModulare() {
         <div className="grid gap-8 lg:grid-cols-[1.6fr_0.9fr]">
           <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-7">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Modulo {indice + 1} di {totaleModuli}</p>
-                <p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p>
-              </div>
-              <div className="flex gap-2">
-                <button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button>
-                <button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button>
-              </div>
+              <div><p className="text-sm font-medium">Modulo {indice + 1} di {moduli.length}</p><p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p></div>
+              <div className="flex gap-2"><button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button><button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button></div>
             </div>
 
             <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {(Object.keys(CATALOGO_MODULI) as ModuloTipo[]).map((tipo) => (
-                <button key={tipo} type="button" onClick={() => aggiorna({ ...nuovoModulo(tipo), id: modulo.id })} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>
-                  {labels[tipo]}
-                </button>
-              ))}
+              {CATALOGO_MODULI.map((item) => { const tipo = item.codice; return <button key={tipo} type="button" onClick={() => aggiorna({ ...nuovoModulo(tipo), id: modulo.id })} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>{labels[tipo]}</button>; })}
             </div>
 
             <div className="grid gap-6 sm:grid-cols-3">
-              {(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => (
-                <label key={campo} className="text-sm font-medium">
-                  {campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'} (cm)
-                  <input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" />
-                  <span className="mt-1 block text-xs font-normal text-muted-foreground">{catalogo.min[campo]}–{catalogo.max[campo]} cm</span>
-                </label>
-              ))}
+              {(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => <label key={campo} className="text-sm font-medium">{campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'} (cm)<input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /><span className="mt-1 block text-xs font-normal text-muted-foreground">{catalogo.min[campo]}–{catalogo.max[campo]} cm</span></label>)}
             </div>
 
             <div className="mt-7 grid gap-6 sm:grid-cols-3">
@@ -120,10 +108,7 @@ export function PreventivatoreModulare() {
 
             <label className="mt-7 block max-w-xs text-sm font-medium">Ripiani<input type="number" min="0" max="20" value={modulo.ripiani ?? 0} onChange={(e) => aggiorna({ ripiani: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /></label>
 
-            <div className="mt-8 border-t pt-6">
-              <p className="mb-3 text-sm font-medium">Aggiungi un altro modulo</p>
-              <div className="flex flex-wrap gap-2">{(Object.keys(CATALOGO_MODULI) as ModuloTipo[]).map((tipo) => <button key={tipo} type="button" onClick={() => aggiungi(tipo)} className="rounded-lg border px-3 py-2 text-sm">+ {labels[tipo]}</button>)}</div>
-            </div>
+            <div className="mt-8 border-t pt-6"><p className="mb-3 text-sm font-medium">Aggiungi un altro modulo</p><div className="flex flex-wrap gap-2">{CATALOGO_MODULI.map((item) => <button key={item.codice} type="button" onClick={() => aggiungi(item.codice)} className="rounded-lg border px-3 py-2 text-sm">+ {labels[item.codice]}</button>)}</div></div>
           </section>
 
           <aside className="h-fit rounded-2xl border bg-card p-6 shadow-sm lg:sticky lg:top-6">
