@@ -28,22 +28,22 @@ export function PreventivatoreModulare() {
   const [stima, setStima] = useState<number | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
   const [richiestaAperta, setRichiestaAperta] = useState(false);
-  const [inviata, setInviata] = useState(false);
+  const [inviata, setInviata] = useState<{ id: string; prezzo: number } | null>(null);
   const [isPending, startTransition] = useTransition();
   const modulo = moduli[indice];
   const catalogo = catalogoPer(modulo.tipo);
 
-  function aggiorna(patch: Partial<ModuloConfigurato>) { setModuli((current) => current.map((m, i) => i === indice ? { ...m, ...patch } : m)); setStima(null); setInviata(false); }
-  function aggiungi(tipo: ModuloTipo) { const nuovo = nuovoModulo(tipo); setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(false); }
-  function duplica() { const nuovo = { ...modulo, id: crypto.randomUUID() }; setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(false); }
-  function elimina() { if (moduli.length === 1) return; const next = moduli.filter((_, i) => i !== indice); setModuli(next); setIndice(Math.min(indice, next.length - 1)); setStima(null); setInviata(false); }
+  function aggiorna(patch: Partial<ModuloConfigurato>) { setModuli((current) => current.map((m, i) => i === indice ? { ...m, ...patch } : m)); setStima(null); setInviata(null); }
+  function aggiungi(tipo: ModuloTipo) { const nuovo = nuovoModulo(tipo); setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(null); }
+  function duplica() { const nuovo = { ...modulo, id: crypto.randomUUID() }; setModuli((current) => [...current, nuovo]); setIndice(moduli.length); setStima(null); setInviata(null); }
+  function elimina() { if (moduli.length === 1) return; const next = moduli.filter((_, i) => i !== indice); setModuli(next); setIndice(Math.min(indice, next.length - 1)); setStima(null); setInviata(null); }
+  function sposta(delta: number) { const target = indice + delta; if (target < 0 || target >= moduli.length) return; const next = [...moduli]; [next[indice], next[target]] = [next[target], next[indice]]; setModuli(next); setIndice(target); setStima(null); setInviata(null); }
   function calcola() {
     setMessaggio(null);
     startTransition(async () => {
       try {
         const result = await calcolaStimaPreventivatore(moduli);
-        if (result.preventivo.errori.length) { setMessaggio(result.preventivo.errori.join(' ')); setStima(null); return; }
-        setStima(result.preventivo.prezzoIndicativo);
+        setStima(result.prezzoIndicativo);
       } catch (error) { setMessaggio(error instanceof Error ? error.message : 'Impossibile calcolare la stima.'); setStima(null); }
     });
   }
@@ -51,13 +51,8 @@ export function PreventivatoreModulare() {
     setMessaggio(null);
     startTransition(async () => {
       try {
-        const result = await salvaRichiestaPreventivatore(moduli, {
-          nome: String(formData.get('nome') ?? ''),
-          email: String(formData.get('email') ?? ''),
-          telefono: String(formData.get('telefono') ?? ''),
-          messaggio: String(formData.get('messaggio') ?? ''),
-        });
-        if (result.successo) setInviata(true);
+        const result = await salvaRichiestaPreventivatore(moduli, { nome: String(formData.get('nome') ?? ''), email: String(formData.get('email') ?? ''), telefono: String(formData.get('telefono') ?? ''), messaggio: String(formData.get('messaggio') ?? '') });
+        if (result.successo) setInviata({ id: result.id, prezzo: result.prezzoIndicativo });
       } catch (error) { setMessaggio(error instanceof Error ? error.message : 'Impossibile inviare la richiesta.'); }
     });
   }
@@ -72,8 +67,8 @@ export function PreventivatoreModulare() {
         </div>
         <div className="grid gap-8 lg:grid-cols-[1.6fr_0.9fr]">
           <section className="rounded-2xl border bg-card p-5 shadow-sm sm:p-7">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium">Modulo {indice + 1} di {moduli.length}</p><p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p></div><div className="flex gap-2"><button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button><button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button></div></div>
-            <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-5">{CATALOGO_MODULI.map((item) => { const tipo = item.codice; return <button key={tipo} type="button" onClick={() => aggiorna({ ...nuovoModulo(tipo), id: modulo.id })} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>{labels[tipo]}</button>; })}</div>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium">Modulo {indice + 1} di {moduli.length}</p><p className="text-xs text-muted-foreground">{labels[modulo.tipo]}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => sposta(-1)} disabled={indice === 0} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40" aria-label="Sposta modulo su">↑</button><button type="button" onClick={() => sposta(1)} disabled={indice === moduli.length - 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40" aria-label="Sposta modulo giù">↓</button><button type="button" onClick={duplica} className="rounded-lg border px-3 py-2 text-sm">Duplica</button><button type="button" onClick={elimina} disabled={moduli.length === 1} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Rimuovi</button></div></div>
+            <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-5">{CATALOGO_MODULI.map((item) => { const tipo = item.codice; return <button key={tipo} type="button" onClick={() => { const base = nuovoModulo(tipo); aggiorna({ tipo: base.tipo, larghezzaCm: base.larghezzaCm, altezzaCm: base.altezzaCm, profonditaCm: base.profonditaCm, materiale: base.materiale, finitura: base.finitura, configurazione: base.configurazione, ripiani: base.ripiani }); }} className={`rounded-xl border px-3 py-3 text-sm ${modulo.tipo === tipo ? 'border-foreground bg-foreground text-background' : 'bg-background'}`}>{labels[tipo]}</button>; })}</div>
             <div className="grid gap-6 sm:grid-cols-3">{(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => <label key={campo} className="text-sm font-medium">{campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'} (cm)<input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /><span className="mt-1 block text-xs font-normal text-muted-foreground">{catalogo.min[campo]}–{catalogo.max[campo]} cm</span></label>)}</div>
             <div className="mt-7 grid gap-6 sm:grid-cols-3"><label className="text-sm font-medium">Materiale<select value={modulo.materiale} onChange={(e) => aggiorna({ materiale: e.target.value as Materiale })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.materiali.map((v) => <option key={v} value={v}>{materialLabels[v]}</option>)}</select></label><label className="text-sm font-medium">Finitura<select value={modulo.finitura} onChange={(e) => aggiorna({ finitura: e.target.value as Finitura })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.finiture.map((v) => <option key={v} value={v}>{finishLabels[v]}</option>)}</select></label><label className="text-sm font-medium">Configurazione<select value={modulo.configurazione} onChange={(e) => aggiorna({ configurazione: e.target.value as ConfigurazioneModulo })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3">{catalogo.configurazioni.map((v) => <option key={v} value={v}>{configLabels[v]}</option>)}</select></label></div>
             <label className="mt-7 block max-w-xs text-sm font-medium">Ripiani<input type="number" min="0" max="20" value={modulo.ripiani ?? 0} onChange={(e) => aggiorna({ ripiani: Number(e.target.value) })} className="mt-2 w-full rounded-xl border bg-background px-3 py-3" /></label>
@@ -84,7 +79,7 @@ export function PreventivatoreModulare() {
             <div className="mt-5 space-y-3">{moduli.map((m, i) => <button key={m.id} type="button" onClick={() => setIndice(i)} className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left ${i === indice ? 'border-foreground' : ''}`}><span><span className="block text-sm font-medium">{i + 1}. {labels[m.tipo]}</span><span className="text-xs text-muted-foreground">{m.larghezzaCm} × {m.altezzaCm} × {m.profonditaCm} cm</span></span><span className="text-xs">{materialLabels[m.materiale]}</span></button>)}</div>
             <button type="button" onClick={calcola} disabled={isPending} className="mt-6 w-full rounded-xl bg-foreground px-4 py-3 font-medium text-background disabled:opacity-50">{isPending ? 'Calcolo in corso…' : 'Calcola stima'}</button>
             {stima !== null && !inviata && <div className="mt-6 rounded-xl border p-4"><p className="text-xs uppercase tracking-wider text-muted-foreground">Stima indicativa</p><p className="mt-1 text-3xl font-semibold">{euro.format(stima)}</p><p className="mt-2 text-xs leading-5 text-muted-foreground">Valore indicativo basato sul listino attivo. Il preventivo definitivo viene verificato da Ramirez Atelier.</p><button type="button" onClick={() => setRichiestaAperta((v) => !v)} className="mt-4 w-full rounded-xl border px-4 py-3 text-sm font-medium">{richiestaAperta ? 'Chiudi' : 'Richiedi il preventivo definitivo'}</button>{richiestaAperta && <form action={inviaRichiesta} className="mt-4 space-y-3"><input name="nome" required minLength={2} placeholder="Nome e cognome" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><input name="telefono" placeholder="Telefono (facoltativo)" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><textarea name="messaggio" rows={3} placeholder="Note o esigenze particolari (facoltativo)" className="w-full rounded-xl border bg-background px-3 py-3 text-sm"/><button type="submit" disabled={isPending} className="w-full rounded-xl bg-foreground px-4 py-3 text-sm font-medium text-background disabled:opacity-50">{isPending ? 'Invio in corso…' : 'Invia richiesta'}</button></form>}</div>}
-            {inviata && <div className="mt-6 rounded-xl border p-4"><p className="text-sm font-semibold">Richiesta inviata.</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Abbiamo salvato la configurazione e la stima. Ramirez Atelier verificherà misure, materiali e lavorazioni prima del preventivo definitivo.</p></div>}
+            {inviata && <div className="mt-6 rounded-xl border p-4"><p className="text-sm font-semibold">Richiesta inviata.</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Configurazione salvata correttamente.</p><p className="mt-3 text-xs text-muted-foreground">Riferimento: <span className="font-mono font-medium text-foreground">{inviata.id.slice(0, 8).toUpperCase()}</span></p><p className="mt-1 text-sm font-medium">Stima indicativa: {euro.format(inviata.prezzo)}</p></div>}
             {messaggio && <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{messaggio}</p>}
           </aside>
         </div>
