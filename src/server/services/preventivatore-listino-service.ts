@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { db } from '@/server/db';
 import type { Finitura, Materiale } from '@/lib/preventivatore/moduli';
 import type { TariffePreventivatore } from '@/lib/preventivatore/prezzo-modulare';
@@ -102,7 +103,7 @@ export async function caricaTariffePreventivatore(tenantId: string): Promise<Tar
     FROM "listino_prezzo"
     WHERE "tenantId" = ${tenantId}
       AND "attivo" = true
-      AND "codice" IN (${codici.join(',')})
+      AND "codice" IN (${Prisma.join(codici)})
   `;
 
   return costruisciTariffeDaListino(voci);
