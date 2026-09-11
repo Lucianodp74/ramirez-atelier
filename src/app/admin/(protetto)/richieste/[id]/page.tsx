@@ -11,6 +11,8 @@ import { ConfermaBomRichiesta } from '@/components/admin/ConfermaBomRichiesta';
 import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
+import { PreventivatoreSnapshotCard } from '@/components/admin/PreventivatoreSnapshotCard';
+import { PreventivatoreBOMParametricaCard } from '@/components/admin/PreventivatoreBOMParametricaCard';
 import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
@@ -119,6 +121,9 @@ export default async function DettaglioRichiestaPage({
             </CardContent>
           </Card>
 
+          <PreventivatoreSnapshotCard datiEstensione={richiesta.datiEstensione} />
+          <PreventivatoreBOMParametricaCard datiEstensione={richiesta.datiEstensione} />
+
           <Card>
             <CardHeader>
               <CardTitle>Il progetto</CardTitle>
@@ -208,7 +213,7 @@ export default async function DettaglioRichiestaPage({
                 <p className="text-sm">
                   {richiesta.fasciaPrezzoMin !== null && richiesta.fasciaPrezzoMax !== null
                     ? `${Number(richiesta.fasciaPrezzoMin).toLocaleString('it-IT')} – ${Number(richiesta.fasciaPrezzoMax).toLocaleString('it-IT')} €`
-                    : 'Non ancora calcolata (motore di pricing non sviluppato, v. ADR-0003)'}
+                    : 'Non ancora calcolata'}
                 </p>
               </div>
               <div>
