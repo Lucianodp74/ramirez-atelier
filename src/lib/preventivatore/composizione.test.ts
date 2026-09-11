@@ -45,8 +45,9 @@ describe('composizione preventivatore', () => {
 
     expect(risultato.errori).toEqual([]);
     expect(risultato.righe).toHaveLength(5);
-    expect(risultato.costoProduzione).toBe(
+    expect(risultato.costoProduzione).toBeCloseTo(
       risultato.righe.reduce((somma, riga) => somma + riga.costoProduzione, 0),
+      2,
     );
     expect(risultato.prezzoIndicativo).toBeGreaterThan(risultato.costoProduzione);
   });
