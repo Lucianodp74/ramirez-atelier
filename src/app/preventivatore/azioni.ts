@@ -45,7 +45,7 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
   const telefono = dati.telefono?.trim() || null;
   const messaggio = dati.messaggio?.trim() || null;
   if (!nome || nome.length < 2) throw new Error('Inserisci nome e cognome.');
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Inserisci un indirizzo email valido.');
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw new Error('Inserisci un indirizzo email valido.');
 
   const tenantId = await idTenantRamirezAtelier();
   const tipoProgetto = await caricaTipoProgettoPreventivatore(tenantId);
@@ -77,13 +77,15 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
       const areaTotale = areaFianchi + areaBaseCielo + areaFronte + areaRipiani;
       const quota = (area: number) => riga.materiale * (area / Math.max(areaTotale, 0.0001));
       const descrizione = `${modulo.tipo} ${modulo.larghezzaCm}×${modulo.altezzaCm}×${modulo.profonditaCm} cm · ${modulo.materiale} · ${modulo.finitura}`;
+      const componentiFrontali = riga.distinta.componenti.filter((item) => item.categoria === 'FRONTALE');
+      const quantitaFrontali = componentiFrontali.reduce((somma, item) => somma + item.quantita, 0);
 
       const righe = riga.distinta.componenti.map((item) => {
         let costo = 0;
         if (item.codice === 'PANNELLO-FIANCO') costo = quota(areaFianchi);
         else if (item.codice === 'PANNELLO-BASE' || item.codice === 'PANNELLO-CIELO') costo = quota(w * d);
         else if (item.codice === 'RIPIANO') costo = quota(areaRipiani);
-        else if (item.codice === 'ANTA' || item.codice === 'FRONTALE-CASSETTO') costo = quota(areaFronte);
+        else if (item.categoria === 'FRONTALE') costo = quota(areaFronte * (item.quantita / Math.max(quantitaFrontali, 1)));
         else if (item.codice === 'SCHIENALE') costo = riga.retro;
         else if (item.codice === 'BORDO-ML') costo = riga.bordo;
         else if (item.codice === 'FER-HARDWARE') costo = riga.ferramenta;
