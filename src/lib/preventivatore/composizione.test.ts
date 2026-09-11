@@ -57,4 +57,35 @@ describe('composizione preventivatore', () => {
 
     expect(due.prezzoIndicativo).toBeCloseTo(uno.prezzoIndicativo * 2, 2);
   });
+
+  it('genera dimensioni parametriche coerenti per pannelli e frontali', () => {
+    const risultato = calcolaPreventivoModulare([base('base-1')], TARIFFE_DEMO);
+    const componenti = risultato.righe[0].distinta.componenti;
+
+    expect(componenti.find((item) => item.codice === 'PANNELLO-FIANCO')).toMatchObject({
+      quantita: 2,
+      larghezzaCm: 60,
+      altezzaCm: 90,
+    });
+    expect(componenti.find((item) => item.codice === 'PANNELLO-BASE')).toMatchObject({
+      quantita: 1,
+      larghezzaCm: 80,
+      altezzaCm: 60,
+    });
+    expect(componenti.find((item) => item.codice === 'ANTA')).toMatchObject({
+      quantita: 2,
+      larghezzaCm: 40,
+      altezzaCm: 90,
+    });
+  });
+
+  it('mantiene separate ante e frontali cassetti nelle configurazioni miste', () => {
+    const modulo: ModuloConfigurato = { ...base('misto'), configurazione: 'PORTE_CASSETTI' };
+    const risultato = calcolaPreventivoModulare([modulo], TARIFFE_DEMO);
+    const componenti = risultato.righe[0].distinta.componenti;
+
+    expect(componenti.filter((item) => item.categoria === 'FRONTALE').map((item) => item.codice)).toEqual(['ANTA', 'FRONTALE-CASSETTO']);
+    expect(componenti.find((item) => item.codice === 'ANTA')?.quantita).toBe(2);
+    expect(componenti.find((item) => item.codice === 'FRONTALE-CASSETTO')?.quantita).toBe(2);
+  });
 });
