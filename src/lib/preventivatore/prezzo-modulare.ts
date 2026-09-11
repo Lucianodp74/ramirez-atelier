@@ -34,6 +34,18 @@ export const TARIFFE_DEMO: TariffePreventivatore = {
   ricaricoPercentuale: 35,
 };
 
+export type ComponenteDistinta = {
+  codice: string;
+  voce: string;
+  categoria: 'STRUTTURA' | 'FRONTALE' | 'BORDO' | 'FERRAMENTA' | 'MANODOPERA';
+  unita: 'PZ' | 'M2' | 'ML' | 'H';
+  quantita: number;
+  larghezzaCm?: number;
+  altezzaCm?: number;
+  profonditaCm?: number;
+  note?: string;
+};
+
 export type RigaCostoModulo = {
   id: string;
   tipo: ModuloConfigurato['tipo'];
@@ -57,6 +69,7 @@ export type RigaCostoModulo = {
     bordaturaMl: number;
     ferramentaPz: number;
     ore: number;
+    componenti: ComponenteDistinta[];
   };
 };
 
@@ -77,6 +90,18 @@ function quantitaConfigurazione(config: ConfigurazioneModulo) {
   };
 }
 
+function componentePannello(
+  codice: string,
+  voce: string,
+  quantita: number,
+  larghezzaCm: number,
+  altezzaCm: number,
+  profonditaCm: number,
+  note?: string,
+): ComponenteDistinta {
+  return { codice, voce, categoria: 'STRUTTURA', unita: 'PZ', quantita, larghezzaCm: euro(larghezzaCm), altezzaCm: euro(altezzaCm), profonditaCm: euro(profonditaCm), note };
+}
+
 export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePreventivatore = TARIFFE_DEMO): RigaCostoModulo {
   const errori = validaModulo(modulo);
   if (errori.length) throw new Error(errori.join(' '));
@@ -93,10 +118,26 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
   const manodopera = ore * tariffe.costoOra;
   const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
+
+  const componenti: ComponenteDistinta[] = [
+    componentePannello('PANNELLO-FIANCO', 'Fianco struttura', 2, modulo.profonditaCm, modulo.altezzaCm, 0, 'Dimensione parametrica: spessore pannello non ancora modellato.'),
+    componentePannello('PANNELLO-BASE', 'Base', 1, modulo.larghezzaCm, modulo.profonditaCm, 0),
+    componentePannello('PANNELLO-CIELO', 'Cielo', 1, modulo.larghezzaCm, modulo.profonditaCm, 0),
+    componentePannello('SCHIENALE', 'Schienale', 1, modulo.larghezzaCm, modulo.altezzaCm, 0),
+  ];
+  if (ripiani > 0) componenti.push(componentePannello('RIPIANO', 'Ripiano', ripiani, modulo.larghezzaCm, modulo.profonditaCm, 0));
+  if (porte > 0) componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro(modulo.larghezzaCm / porte), altezzaCm: modulo.altezzaCm, profonditaCm: 0, note: 'Larghezza ripartita uniformemente; giochi, cerniere e battute da definire in fase esecutiva.' });
+  if (cassetti > 0) componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro(modulo.altezzaCm / cassetti), profonditaCm: 0, note: 'Dimensione solo indicativa; guide, giochi e suddivisione esecutiva da definire.' });
+  componenti.push(
+    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo perimetrale parametrico.' },
+    { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: porte + cassetti },
+    { codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', categoria: 'MANODOPERA', unita: 'H', quantita: euro(ore) },
+  );
+
   return {
     id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione,
     prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
-    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore) },
+    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore), componenti },
   };
 }
 
