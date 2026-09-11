@@ -73,24 +73,41 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
       const areaFianchi = 2 * h * d;
       const areaBaseCielo = 2 * w * d;
       const areaFronte = w * h;
-      const areaRipiani = (riga.distinta.ripiani * w * d);
+      const areaRipiani = riga.distinta.ripiani * w * d;
       const areaTotale = areaFianchi + areaBaseCielo + areaFronte + areaRipiani;
       const quota = (area: number) => riga.materiale * (area / Math.max(areaTotale, 0.0001));
       const descrizione = `${modulo.tipo} ${modulo.larghezzaCm}×${modulo.altezzaCm}×${modulo.profonditaCm} cm · ${modulo.materiale} · ${modulo.finitura}`;
-      const righe = [
-        { categoria: 'STRUTTURA', codice: 'PANNELLO-FIANCO', voce: 'Fianchi struttura', unita: 'PZ', quantita: 2, costo: quota(areaFianchi) },
-        { categoria: 'STRUTTURA', codice: 'PANNELLO-BASE', voce: 'Base', unita: 'PZ', quantita: 1, costo: quota(w * d) },
-        { categoria: 'STRUTTURA', codice: 'PANNELLO-CIELO', voce: 'Cielo', unita: 'PZ', quantita: 1, costo: quota(w * d) },
-        { categoria: 'STRUTTURA', codice: 'RIPIANO', voce: 'Ripiani', unita: 'PZ', quantita: riga.distinta.ripiani, costo: quota(areaRipiani) },
-        { categoria: 'FRONTALE', codice: 'ANTA', voce: 'Ante / frontale', unita: 'PZ', quantita: Math.max(riga.distinta.ante, 1), costo: quota(areaFronte) },
-        { categoria: 'STRUTTURA', codice: 'SCHIENALE', voce: 'Schienale', unita: 'M2', quantita: 1, costo: riga.retro },
-        { categoria: 'BORDO', codice: 'BORDO-ML', voce: 'Bordatura', unita: 'ML', quantita: riga.distinta.bordaturaMl, costo: riga.bordo },
-        { categoria: 'FERRAMENTA', codice: 'FER-HARDWARE', voce: 'Ferramenta', unita: 'PZ', quantita: riga.distinta.ferramentaPz, costo: riga.ferramenta },
-        { categoria: 'MANODOPERA', codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', unita: 'H', quantita: riga.distinta.ore, costo: riga.manodopera },
-      ];
+
+      const righe = riga.distinta.componenti.map((item) => {
+        let costo = 0;
+        if (item.codice === 'PANNELLO-FIANCO') costo = quota(areaFianchi);
+        else if (item.codice === 'PANNELLO-BASE' || item.codice === 'PANNELLO-CIELO') costo = quota(w * d);
+        else if (item.codice === 'RIPIANO') costo = quota(areaRipiani);
+        else if (item.codice === 'ANTA' || item.codice === 'FRONTALE-CASSETTO') costo = quota(areaFronte);
+        else if (item.codice === 'SCHIENALE') costo = riga.retro;
+        else if (item.codice === 'BORDO-ML') costo = riga.bordo;
+        else if (item.codice === 'FER-HARDWARE') costo = riga.ferramenta;
+        else if (item.codice === 'MAN-ORE') costo = riga.manodopera;
+
+        const dimensioni = item.larghezzaCm !== undefined && item.altezzaCm !== undefined
+          ? ` · ${item.larghezzaCm}×${item.altezzaCm}${item.profonditaCm ? `×${item.profonditaCm}` : ''} cm`
+          : '';
+        const note = item.note ? `${item.note} ` : '';
+        return {
+          categoria: item.categoria,
+          codice: item.codice,
+          voce: item.voce,
+          unita: item.unita,
+          quantita: item.quantita,
+          costo,
+          descrizione: `${item.voce}${dimensioni} · ${descrizione}`,
+          note: `${note}Snapshot parametrico: verificare dimensioni esecutive prima della produzione`.trim(),
+        };
+      });
+
       for (const [posizione, item] of righe.entries()) {
         if (item.quantita <= 0 || item.costo <= 0) continue;
-        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + posizione}, ${item.categoria}, ${item.codice}, ${`${item.voce} · ${descrizione}`}, ${item.unita}, ${item.quantita}, ${modulo.materiale}, ${modulo.finitura}, ${item.costo / item.quantita}, 'Snapshot parametrico: verificare dimensioni esecutive prima della produzione', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + posizione}, ${item.categoria}, ${item.codice}, ${item.descrizione}, ${item.unita}, ${item.quantita}, ${modulo.materiale}, ${modulo.finitura}, ${item.costo / item.quantita}, ${item.note}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
       }
     }
 
