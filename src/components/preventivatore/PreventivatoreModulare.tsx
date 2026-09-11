@@ -8,7 +8,7 @@ import { CATALOGO_MODULI } from '@/lib/preventivatore/moduli';
 import { calcolaStimaPreventivatore, salvaRichiestaPreventivatore } from '@/app/preventivatore/azioni';
 
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-const labels: Record<ModuloTipo, string> = { BASE: 'Base', PENSILE: 'Pensile', COLONNA: 'Colonna', CASSETTIERIA: 'Cassettiera', LIBRERIA: 'Libreria / contenitore' };
+const labels: Record<string, string> = { BASE: 'Base', PENSILE: 'Pensile', COLONNA: 'Colonna', CASSETTIERIA: 'Cassettiera', LIBRERIA: 'Libreria / contenitore' };
 const materialLabels: Record<Materiale, string> = { TRUCIOLARE: 'Truciolare', MDF: 'MDF', MULTISTRATO: 'Multistrato' };
 const finishLabels: Record<Finitura, string> = { MELAMINICO: 'Melaminico', LAMINATO: 'Laminato', LACCATO: 'Laccato' };
 const configLabels: Record<ConfigurazioneModulo, string> = { APERTO: 'Aperto', '1_PORTA': '1 porta', '2_PORTE': '2 porte', '3_CASSETTI': '3 cassetti', '4_CASSETTI': '4 cassetti', PORTE_CASSETTI: 'Porte + cassetti' };
