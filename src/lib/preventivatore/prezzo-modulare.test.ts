@@ -17,6 +17,15 @@ describe('preventivatore modulare', () => {
     expect(riga.costoProduzione).toBeGreaterThan(riga.materiale);
   });
 
+  it('non aggiunge superficie frontale a un modulo aperto', () => {
+    const aperto = calcolaCostoModulo({ ...base, id: 'base-open', configurazione: 'APERTO', ripiani: 0 });
+    const struttura = calcolaCostoModulo({ ...base, id: 'base-structure', configurazione: 'APERTO', ripiani: 0, finitura: 'MELAMINICO' });
+    expect(aperto.distinta.ante).toBe(0);
+    expect(aperto.distinta.cassetti).toBe(0);
+    expect(aperto.superficieM2).toBe(struttura.superficieM2);
+    expect(aperto.finitura).toBe(0);
+  });
+
   it('include i ripiani nella superficie parametrica e nella bordatura', () => {
     const senzaRipiani = calcolaCostoModulo({ ...base, id: 'base-0', ripiani: 0 });
     const conRipiani = calcolaCostoModulo({ ...base, id: 'base-4', ripiani: 4 });
