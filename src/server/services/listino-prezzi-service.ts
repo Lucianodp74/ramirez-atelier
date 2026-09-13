@@ -1,4 +1,5 @@
 import { db } from '@/server/db';
+import { DEFINIZIONI_TARIFFE_PREVENTIVATORE } from '@/lib/preventivatore/tariffe';
 
 export type TipoListino = 'MATERIALE' | 'COMPONENTE' | 'COMPOSIZIONE';
 
@@ -138,9 +139,27 @@ export async function aggiornaPrezzoListino(tenantId: string, id: string, dati: 
 }
 
 export async function impostaAttivoPrezzoListino(tenantId: string, id: string, attivo: boolean) {
-  const result = await db.$executeRaw`
+  const voce = await db.$queryRaw<Array<{ codice: string; unita: string; prezzo: number }>>`
+    SELECT "codice", "unita", "prezzo"::float8 AS "prezzo"
+    FROM "listino_prezzo"
+    WHERE "tenantId" = ${tenantId} AND "id" = ${id}
+  `;
+  if (voce.length === 0) throw new Error('Voce di listino non trovata.');
+
+  if (attivo) {
+    const definizione = DEFINIZIONI_TARIFFE_PREVENTIVATORE.find((item) => item.codice === voce[0].codice);
+    if (definizione) {
+      if (voce[0].unita !== definizione.unita) {
+        throw new Error(`La voce ${voce[0].codice} non può essere attivata: unità richiesta ${definizione.unita}, trovata ${voce[0].unita}.`);
+      }
+      if (!Number.isFinite(voce[0].prezzo) || voce[0].prezzo <= 0) {
+        throw new Error(`La voce ${voce[0].codice} non può essere attivata senza un valore Ramirez maggiore di zero.`);
+      }
+    }
+  }
+
+  await db.$executeRaw`
     UPDATE "listino_prezzo" SET "attivo" = ${attivo}, "updatedAt" = CURRENT_TIMESTAMP
     WHERE "tenantId" = ${tenantId} AND "id" = ${id}
   `;
-  if (result === 0) throw new Error('Voce di listino non trovata.');
 }
