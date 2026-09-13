@@ -85,14 +85,19 @@ export async function creaPrezzoListino(tenantId: string, dati: {
   descrizione?: string | null;
   unita: string;
   prezzo: number;
+  attivo?: boolean;
   materiale?: string | null;
   larghezzaCm?: number | null;
   altezzaCm?: number | null;
   profonditaCm?: number | null;
 }) {
+  if (!Number.isFinite(dati.prezzo) || dati.prezzo < 0) throw new Error('Il prezzo deve essere un numero finito maggiore o uguale a zero.');
+  if (!dati.codice.trim()) throw new Error('Il codice è obbligatorio.');
+  if (!dati.unita.trim()) throw new Error("L'unità di misura è obbligatoria.");
+
   return db.$queryRaw<VoceListino[]>`
-    INSERT INTO "listino_prezzo" ("id", "tenantId", "tipo", "categoria", "codice", "nome", "descrizione", "unita", "prezzo", "materiale", "larghezzaCm", "altezzaCm", "profonditaCm")
-    VALUES (${crypto.randomUUID()}, ${tenantId}, ${dati.tipo ?? 'COMPONENTE'}, ${dati.categoria}, ${dati.codice}, ${dati.nome}, ${dati.descrizione ?? null}, ${dati.unita}, ${dati.prezzo}, ${dati.materiale ?? null}, ${dati.larghezzaCm ?? null}, ${dati.altezzaCm ?? null}, ${dati.profonditaCm ?? null})
+    INSERT INTO "listino_prezzo" ("id", "tenantId", "tipo", "categoria", "codice", "nome", "descrizione", "unita", "prezzo", "attivo", "materiale", "larghezzaCm", "altezzaCm", "profonditaCm")
+    VALUES (${crypto.randomUUID()}, ${tenantId}, ${dati.tipo ?? 'COMPONENTE'}, ${dati.categoria}, ${dati.codice}, ${dati.nome}, ${dati.descrizione ?? null}, ${dati.unita}, ${dati.prezzo}, ${dati.attivo ?? true}, ${dati.materiale ?? null}, ${dati.larghezzaCm ?? null}, ${dati.altezzaCm ?? null}, ${dati.profonditaCm ?? null})
     RETURNING "id", "tipo", "categoria", "codice", "nome", "descrizione", "unita", "prezzo"::float8 AS "prezzo", "attivo", "materiale", "larghezzaCm"::float8 AS "larghezzaCm", "altezzaCm"::float8 AS "altezzaCm", "profonditaCm"::float8 AS "profonditaCm", "createdAt", "updatedAt"
   `;
 }
