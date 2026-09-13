@@ -45,7 +45,13 @@ function numeroPositivo(voce: VoceTariffa, atteso: string): number {
 }
 
 export function costruisciTariffeDaListino(voci: VoceTariffa[]): TariffePreventivatore {
-  const perCodice = new Map(voci.map((voce) => [voce.codice, voce]));
+  const perCodice = new Map<string, VoceTariffa>();
+  for (const voce of voci) {
+    if (perCodice.has(voce.codice)) {
+      throw new Error(`Codice Listino duplicato per il Preventivatore: ${voce.codice}.`);
+    }
+    perCodice.set(voce.codice, voce);
+  }
   const trova = (codice: string): VoceTariffa => {
     const voce = perCodice.get(codice);
     if (!voce) throw new Error(`Manca nel Listino la tariffa ${codice}.`);
