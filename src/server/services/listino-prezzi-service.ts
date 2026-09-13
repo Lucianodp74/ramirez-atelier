@@ -103,6 +103,9 @@ export async function aggiornaPrezzoListino(tenantId: string, id: string, dati: 
   `;
   if (esistente.length === 0) throw new Error('Voce di listino non trovata.');
   const nuovoPrezzo = dati.prezzo ?? esistente[0].prezzo;
+  if (!Number.isFinite(nuovoPrezzo) || nuovoPrezzo < 0) throw new Error('Il prezzo deve essere un numero finito maggiore o uguale a zero.');
+  if (dati.unita !== undefined && !dati.unita.trim()) throw new Error("L'unità di misura è obbligatoria.");
+  if (dati.codice !== undefined && !dati.codice.trim()) throw new Error('Il codice è obbligatorio.');
 
   await db.$transaction(async (tx) => {
     await tx.$executeRaw`
