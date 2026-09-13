@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcolaCostoModulo, calcolaPreventivoModulare } from './prezzo-modulare';
+import { calcolaCostoModulo, calcolaPreventivoModulare, TARIFFE_DEMO } from './prezzo-modulare';
 import type { ModuloConfigurato } from './moduli';
 
 const base: ModuloConfigurato = {
@@ -23,6 +23,13 @@ describe('preventivatore modulare', () => {
     expect(conRipiani.superficieM2).toBeGreaterThan(senzaRipiani.superficieM2);
     expect(conRipiani.distinta.bordaturaMl).toBeGreaterThan(senzaRipiani.distinta.bordaturaMl);
     expect(conRipiani.distinta.ripiani).toBe(4);
+  });
+
+  it('applica lo sfrido solo quando configurato', () => {
+    const senzaSfrido = calcolaCostoModulo(base, { ...TARIFFE_DEMO, sfridoPercentuale: 0 });
+    const conSfrido = calcolaCostoModulo(base, { ...TARIFFE_DEMO, sfridoPercentuale: 10 });
+    expect(conSfrido.superficieM2).toBeCloseTo(senzaSfrido.superficieM2 * 1.1, 2);
+    expect(conSfrido.materiale).toBeGreaterThan(senzaSfrido.materiale);
   });
 
   it('produce la distinta tecnica parametrica coerente con la configurazione', () => {
