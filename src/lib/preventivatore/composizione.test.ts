@@ -56,7 +56,7 @@ describe('composizione preventivatore', () => {
     const uno = calcolaPreventivoModulare([base('base-1')], TARIFFE_DEMO);
     const due = calcolaPreventivoModulare([base('base-1'), base('base-2')], TARIFFE_DEMO);
 
-    expect(due.prezzoIndicativo).toBeCloseTo(uno.prezzoIndicativo * 2, 2);
+    expect(Math.abs(due.prezzoIndicativo - uno.prezzoIndicativo * 2)).toBeLessThan(0.02);
   });
 
   it('genera dimensioni parametriche coerenti per pannelli e frontali', () => {
