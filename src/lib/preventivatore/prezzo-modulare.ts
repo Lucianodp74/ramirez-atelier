@@ -15,9 +15,7 @@ export type TariffePreventivatore = {
   orePerRipiano: number;
   costoOra: number;
   ricaricoPercentuale: number;
-  /** Parametro tecnico opzionale: spessore del pannello usato solo nella distinta. */
   spessorePannelloMm?: number;
-  /** Parametro tecnico opzionale, espresso in percentuale. 0 = nessuno sfrido. */
   sfridoPercentuale?: number;
 };
 
@@ -97,16 +95,7 @@ function quantitaConfigurazione(config: ConfigurazioneModulo) {
   };
 }
 
-function componentePannello(
-  codice: string,
-  voce: string,
-  quantita: number,
-  larghezzaCm: number,
-  altezzaCm: number,
-  profonditaCm: number,
-  spessoreMm: number,
-  note?: string,
-): ComponenteDistinta {
+function componentePannello(codice: string, voce: string, quantita: number, larghezzaCm: number, altezzaCm: number, profonditaCm: number, spessoreMm: number, note?: string): ComponenteDistinta {
   return { codice, voce, categoria: 'STRUTTURA', unita: 'PZ', quantita, larghezzaCm: euro(larghezzaCm), altezzaCm: euro(altezzaCm), profonditaCm: euro(profonditaCm), note: `${note ? `${note} ` : ''}Spessore tecnico ${spessoreMm} mm.` };
 }
 
@@ -119,8 +108,6 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione);
   const ripiani = modulo.ripiani ?? (modulo.configurazione === 'APERTO' ? 2 : 1);
 
-  // La superficie di acquisto comprende struttura, schienale, ripiani e frontali.
-  // È una stima parametrica: non è ancora un nesting/cut-list esecutivo.
   const fianchiM2 = m2(2 * modulo.profonditaCm * modulo.altezzaCm);
   const baseCieloM2 = m2(2 * modulo.larghezzaCm * modulo.profonditaCm);
   const ripianiM2 = m2(ripiani * modulo.larghezzaCm * modulo.profonditaCm);
@@ -128,7 +115,8 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const frontaliM2 = m2(modulo.larghezzaCm * modulo.altezzaCm);
   const superficie = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2 + frontaliM2) * (1 + sfrido);
   const retro = schienaleM2;
-  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm / 100) / 100;
+  // Coste principali: perimetro di fianchi/base/cielo + due coste lunghe per ogni ripiano.
+  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
 
   const materiale = superficie * tariffe.materialeEuroM2[modulo.materiale];
   const finitura = (frontaliM2 + fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[modulo.finitura];
@@ -147,12 +135,8 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   ];
   if (ripiani > 0) componenti.push(componentePannello('RIPIANO', 'Ripiano', ripiani, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm));
 
-  if (porte > 0 && cassetti === 0) {
-    componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro(modulo.larghezzaCm / porte), altezzaCm: modulo.altezzaCm, profonditaCm: 0, note: 'Larghezza ripartita uniformemente; giochi, cerniere e battute da definire in fase esecutiva.' });
-  }
-  if (cassetti > 0 && porte === 0) {
-    componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro(modulo.altezzaCm / cassetti), profonditaCm: 0, note: 'Dimensione solo indicativa; guide, giochi e suddivisione esecutiva da definire.' });
-  }
+  if (porte > 0 && cassetti === 0) componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro(modulo.larghezzaCm / porte), altezzaCm: modulo.altezzaCm, profonditaCm: 0, note: 'Larghezza ripartita uniformemente; giochi, cerniere e battute da definire in fase esecutiva.' });
+  if (cassetti > 0 && porte === 0) componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro(modulo.altezzaCm / cassetti), profonditaCm: 0, note: 'Dimensione solo indicativa; guide, giochi e suddivisione esecutiva da definire.' });
   if (porte > 0 && cassetti > 0) {
     componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro((modulo.larghezzaCm * 0.6) / porte), altezzaCm: euro(modulo.altezzaCm * 0.6), profonditaCm: 0, note: 'Ripartizione preliminare del fronte per configurazione mista; da verificare in fase esecutiva.' });
     componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro((modulo.altezzaCm * 0.4) / cassetti), profonditaCm: 0, note: 'Ripartizione preliminare del fronte per configurazione mista; da verificare in fase esecutiva.' });
@@ -165,16 +149,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   );
 
   return {
-    id: modulo.id,
-    tipo: modulo.tipo,
-    superficieM2: euro(superficie),
-    materiale: euro(materiale),
-    finitura: euro(finitura),
-    bordo: euro(costoBordo),
-    retro: euro(costoRetro),
-    ferramenta: euro(ferramenta),
-    manodopera: euro(manodopera),
-    costoProduzione,
+    id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione,
     prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
     distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore), componenti },
   };
