@@ -98,19 +98,24 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
       const areaBaseCielo = 2 * w * d;
       const areaFronte = w * h;
       const areaRipiani = riga.distinta.ripiani * w * d;
-      const areaTotale = areaFianchi + areaBaseCielo + areaFronte + areaRipiani;
-      const quota = (area: number) => riga.materiale * (area / Math.max(areaTotale, 0.0001));
+      const areaRetro = w * h;
+      const areaMateriale = areaFianchi + areaBaseCielo + areaFronte + areaRipiani + areaRetro;
+      const areaFinitura = areaFianchi + areaBaseCielo + areaFronte + areaRipiani;
+      const quotaMateriale = (area: number) => riga.materiale * (area / Math.max(areaMateriale, 0.0001));
+      const quotaFinitura = (area: number) => riga.finitura * (area / Math.max(areaFinitura, 0.0001));
       const descrizione = `${modulo.tipo} ${modulo.larghezzaCm}×${modulo.altezzaCm}×${modulo.profonditaCm} cm · ${modulo.materiale} · ${modulo.finitura}`;
       const componentiFrontali = riga.distinta.componenti.filter((item) => item.categoria === 'FRONTALE');
       const quantitaFrontali = componentiFrontali.reduce((somma, item) => somma + item.quantita, 0);
 
       const righe = riga.distinta.componenti.map((item) => {
         let costo = 0;
-        if (item.codice === 'PANNELLO-FIANCO') costo = quota(areaFianchi);
-        else if (item.codice === 'PANNELLO-BASE' || item.codice === 'PANNELLO-CIELO') costo = quota(w * d);
-        else if (item.codice === 'RIPIANO') costo = quota(areaRipiani);
-        else if (item.categoria === 'FRONTALE') costo = quota(areaFronte * (item.quantita / Math.max(quantitaFrontali, 1)));
-        else if (item.codice === 'SCHIENALE') costo = riga.retro;
+        if (item.codice === 'PANNELLO-FIANCO') costo = quotaMateriale(areaFianchi) + quotaFinitura(areaFianchi);
+        else if (item.codice === 'PANNELLO-BASE' || item.codice === 'PANNELLO-CIELO') costo = quotaMateriale(w * d) + quotaFinitura(w * d);
+        else if (item.codice === 'RIPIANO') costo = quotaMateriale(areaRipiani) + quotaFinitura(areaRipiani);
+        else if (item.categoria === 'FRONTALE') {
+          const areaQuota = areaFronte * (item.quantita / Math.max(quantitaFrontali, 1));
+          costo = quotaMateriale(areaQuota) + quotaFinitura(areaQuota);
+        } else if (item.codice === 'SCHIENALE') costo = quotaMateriale(areaRetro);
         else if (item.codice === 'BORDO-ML') costo = riga.bordo;
         else if (item.codice === 'FER-HARDWARE') costo = riga.ferramenta;
         else if (item.codice === 'MAN-ORE') costo = riga.manodopera;
