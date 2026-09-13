@@ -10,7 +10,13 @@ export default function SetupListinoPreventivatore() {
   const prepara = () => startTransition(async () => {
     try {
       const risultato = await preparaVociTecnichePreventivatore();
-      setMessaggio(risultato.create === 0 ? 'Le voci tecniche esistono già. Ora inserisci e attiva i valori Ramirez.' : `Predisposte ${risultato.create} voci tecniche nel Listino. Sono state create a valore 0: inserisci i valori Ramirez e attivale prima dell’uso.`);
+      const base = risultato.create === 0
+        ? 'Le voci tecniche esistono già.'
+        : `Predisposte ${risultato.create} voci tecniche nel Listino.`;
+      const problemi = risultato.errori.length
+        ? ` Correggere prima dell’uso: ${risultato.errori.join(' ')}`
+        : ' Inserisci i valori Ramirez e attiva le voci prima dell’uso.';
+      setMessaggio(base + problemi);
       window.location.reload();
     } catch (e) {
       setMessaggio(e instanceof Error ? e.message : 'Preparazione non riuscita.');
