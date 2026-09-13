@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { costruisciTariffeDaListino, CODICI_TARIFFE_PREVENTIVATORE } from './preventivatore-listino-service';
 
-const voce = (codice: string, prezzo: number, unita: string) => ({ codice, prezzo, unita, attivo: true });
+const voce = (codice: string, prezzo: number, unita: string, attivo = true) => ({ codice, prezzo, unita, attivo });
 
 function listinoCompleto() {
   return [
@@ -32,6 +32,16 @@ describe('adapter Listino -> Preventivatore', () => {
     expect(tariffe.finituraEuroM2.LACCATO).toBe(3);
     expect(tariffe.costoOra).toBe(40);
     expect(tariffe.ricaricoPercentuale).toBe(35);
+  });
+
+  it('riflette una modifica al prezzo senza modificare il contratto del motore', () => {
+    const voci = listinoCompleto().map((x) => x.codice === CODICI_TARIFFE_PREVENTIVATORE.materiali.TRUCIOLARE ? { ...x, prezzo: 36 } : x);
+    expect(costruisciTariffeDaListino(voci).materialeEuroM2.TRUCIOLARE).toBe(36);
+  });
+
+  it('ignora una voce inattiva a monte del contratto', () => {
+    const voci = listinoCompleto().map((x) => x.codice === CODICI_TARIFFE_PREVENTIVATORE.materiali.MDF ? { ...x, attivo: false } : x);
+    expect(() => costruisciTariffeDaListino(voci)).toThrow('Tariffa MAT-MDF non valida nel Listino.');
   });
 
   it('fallisce in modo esplicito se manca una tariffa obbligatoria', () => {
