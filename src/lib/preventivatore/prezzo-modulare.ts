@@ -107,15 +107,15 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const sfrido = positivo(tariffe.sfridoPercentuale, 0) / 100;
   const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione);
   const ripiani = modulo.ripiani ?? (modulo.configurazione === 'APERTO' ? 2 : 1);
+  const haFrontale = porte > 0 || cassetti > 0;
 
   const fianchiM2 = m2(2 * modulo.profonditaCm * modulo.altezzaCm);
   const baseCieloM2 = m2(2 * modulo.larghezzaCm * modulo.profonditaCm);
   const ripianiM2 = m2(ripiani * modulo.larghezzaCm * modulo.profonditaCm);
   const schienaleM2 = m2(modulo.larghezzaCm * modulo.altezzaCm);
-  const frontaliM2 = m2(modulo.larghezzaCm * modulo.altezzaCm);
+  const frontaliM2 = haFrontale ? m2(modulo.larghezzaCm * modulo.altezzaCm) : 0;
   const superficie = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2 + frontaliM2) * (1 + sfrido);
   const retro = schienaleM2;
-  // Coste principali: perimetro di fianchi/base/cielo + due coste lunghe per ogni ripiano.
   const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
 
   const materiale = superficie * tariffe.materialeEuroM2[modulo.materiale];
