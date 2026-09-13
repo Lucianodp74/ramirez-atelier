@@ -17,6 +17,14 @@ describe('preventivatore modulare', () => {
     expect(riga.costoProduzione).toBeGreaterThan(riga.materiale);
   });
 
+  it('include i ripiani nella superficie parametrica e nella bordatura', () => {
+    const senzaRipiani = calcolaCostoModulo({ ...base, id: 'base-0', ripiani: 0 });
+    const conRipiani = calcolaCostoModulo({ ...base, id: 'base-4', ripiani: 4 });
+    expect(conRipiani.superficieM2).toBeGreaterThan(senzaRipiani.superficieM2);
+    expect(conRipiani.distinta.bordaturaMl).toBeGreaterThan(senzaRipiani.distinta.bordaturaMl);
+    expect(conRipiani.distinta.ripiani).toBe(4);
+  });
+
   it('produce la distinta tecnica parametrica coerente con la configurazione', () => {
     const riga = calcolaCostoModulo(base);
     expect(riga.distinta.fianchi).toBe(2);
@@ -29,6 +37,14 @@ describe('preventivatore modulare', () => {
     expect(riga.distinta.ferramentaPz).toBe(2);
     expect(riga.distinta.bordaturaMl).toBeGreaterThan(0);
     expect(riga.distinta.ore).toBeGreaterThan(0);
+  });
+
+  it('rappresenta porte e cassetti separatamente nella configurazione mista', () => {
+    const riga = calcolaCostoModulo({ ...base, id: 'mix-1', configurazione: 'PORTE_CASSETTI' });
+    expect(riga.distinta.ante).toBe(2);
+    expect(riga.distinta.cassetti).toBe(2);
+    expect(riga.distinta.componenti.filter(c => c.codice === 'ANTA')).toHaveLength(1);
+    expect(riga.distinta.componenti.filter(c => c.codice === 'FRONTALE-CASSETTO')).toHaveLength(1);
   });
 
   it('somma più moduli e applica il ricarico una sola volta', () => {
