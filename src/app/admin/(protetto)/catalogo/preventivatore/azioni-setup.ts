@@ -39,6 +39,7 @@ export async function preparaVociTecnichePreventivatore() {
       descrizione: 'Voce tecnica predisposta per il Preventivatore Modulare V2. Inserire il valore Ramirez prima dell’attivazione.',
       unita,
       prezzo: 0,
+      attivo: false,
     });
     create += 1;
   }
