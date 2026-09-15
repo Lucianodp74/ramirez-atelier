@@ -1,4 +1,5 @@
 import { PreventivatoreModulare } from '@/components/preventivatore/PreventivatoreModulare';
+import { PreventivatoreInspiration } from '@/components/preventivatore/PreventivatoreInspiration';
 
 export const metadata = {
   title: 'Preventivatore | Ramirez Atelier',
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function PreventivatorePage() {
-  return <PreventivatoreModulare />;
+  return (
+    <>
+      <PreventivatoreInspiration />
+      <PreventivatoreModulare />
+    </>
+  );
 }
