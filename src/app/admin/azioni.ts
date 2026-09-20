@@ -54,6 +54,13 @@ import {
   type DatiVariantePreimpostata,
 } from '@/server/services/variante-preimpostata-service';
 import {
+  creaProgettoPreimpostato,
+  aggiornaProgettoPreimpostato,
+  impostaPubblicazioneProgettoPreimpostato,
+  eliminaProgettoPreimpostato,
+  type DatiProgettoPreimpostato,
+} from '@/server/services/progetto-preimpostato-service';
+import {
   aggiornaNoteCliente,
   aggiornaCliente,
   type DatiModificaCliente,
@@ -281,6 +288,42 @@ export async function eliminaAccessorioAzione(
   try {
     await eliminaAccessorio(contesto.tenantId, id);
     revalidatePath('/admin/catalogo/accessori');
+    return { successo: true };
+  } catch (e) {
+    return { successo: false, errore: e instanceof Error ? e.message : 'Errore sconosciuto.' };
+  }
+}
+
+export async function creaProgettoPreimpostatoAzione(dati: DatiProgettoPreimpostato) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const progetto = await creaProgettoPreimpostato(contesto.tenantId, dati);
+  revalidatePath('/admin/catalogo/progetti-preimpostati');
+  return progetto;
+}
+
+export async function aggiornaProgettoPreimpostatoAzione(
+  id: string,
+  dati: Partial<DatiProgettoPreimpostato>,
+) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  const progetto = await aggiornaProgettoPreimpostato(contesto.tenantId, id, dati);
+  revalidatePath('/admin/catalogo/progetti-preimpostati');
+  return progetto;
+}
+
+export async function impostaPubblicazioneProgettoPreimpostatoAzione(id: string, pubblicata: boolean) {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  await impostaPubblicazioneProgettoPreimpostato(contesto.tenantId, id, pubblicata);
+  revalidatePath('/admin/catalogo/progetti-preimpostati');
+}
+
+export async function eliminaProgettoPreimpostatoAzione(
+  id: string,
+): Promise<{ successo: boolean; errore?: string }> {
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
+  try {
+    await eliminaProgettoPreimpostato(contesto.tenantId, id);
+    revalidatePath('/admin/catalogo/progetti-preimpostati');
     return { successo: true };
   } catch (e) {
     return { successo: false, errore: e instanceof Error ? e.message : 'Errore sconosciuto.' };

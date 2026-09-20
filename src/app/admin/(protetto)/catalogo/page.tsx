@@ -5,6 +5,7 @@ import { db } from '@/server/db';
 import { elencoFiniture } from '@/server/services/catalogo-service';
 import { elencoFerramenta } from '@/server/services/ferramenta-service';
 import { elencoAccessori } from '@/server/services/accessorio-service';
+import { elencoProgettiPreimpostati } from '@/server/services/progetto-preimpostato-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
@@ -16,17 +17,21 @@ const SEZIONI_CATALOGO = [
   { chiave: 'varianti', nome: 'Stili di partenza', href: '/admin/catalogo/varianti' },
 ];
 
+const HREF_PROGETTI_PREIMPOSTATI = '/admin/catalogo/progetti-preimpostati';
+
 export default async function CatalogoPage() {
   const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'leggi' });
 
   if (SEZIONI_CATALOGO.length === 1) redirect(SEZIONI_CATALOGO[0].href);
 
-  const [finiture, ferramenta, accessori, varianti] = await Promise.all([
+  const [finiture, ferramenta, accessori, varianti, progettiPreimpostati] = await Promise.all([
     elencoFiniture(contesto.tenantId),
     elencoFerramenta(contesto.tenantId),
     elencoAccessori(contesto.tenantId),
     db.variantePreimpostata.findMany({ where: { tenantId: contesto.tenantId } }),
+    elencoProgettiPreimpostati(contesto.tenantId),
   ]);
+  const progettiPubblicati = progettiPreimpostati.filter((p) => p.pubblicata).length;
 
   const sezioni = [
     { ...SEZIONI_CATALOGO[0], righe: finiture },
@@ -44,6 +49,12 @@ export default async function CatalogoPage() {
           <Card className="h-full border-primary/30 transition-colors hover:border-primary">
             <CardHeader><CardTitle>Controllo Preventivatore</CardTitle></CardHeader>
             <CardContent><p className="text-sm text-muted-foreground">Verifica che tutte le tariffe tecniche richieste dal motore siano presenti, attive e con l&apos;unità corretta.</p></CardContent>
+          </Card>
+        </Link>
+        <Link href={HREF_PROGETTI_PREIMPOSTATI}>
+          <Card className="h-full border-primary/30 transition-colors hover:border-primary">
+            <CardHeader><CardTitle>Progetti preimpostati</CardTitle></CardHeader>
+            <CardContent><p className="text-sm text-muted-foreground">{progettiPubblicati} pubblicat{progettiPubblicati === 1 ? 'o' : 'i'} su {progettiPreimpostati.length} total{progettiPreimpostati.length === 1 ? 'e' : 'i'} — punti di partenza pronti per il Preventivatore.</p></CardContent>
           </Card>
         </Link>
       </div>

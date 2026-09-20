@@ -44,8 +44,20 @@ function nuovoModulo(tipo: ModuloTipo): ModuloConfigurato {
   return { id: crypto.randomUUID(), tipo, larghezzaCm: Math.max(c.min.larghezzaCm, Math.min(80, c.max.larghezzaCm)), altezzaCm: Math.max(c.min.altezzaCm, Math.min(100, c.max.altezzaCm)), profonditaCm: Math.max(c.min.profonditaCm, Math.min(40, c.max.profonditaCm)), materiale: c.materiali[0], finitura: c.finiture[0], configurazione: c.configurazioni[0], ripiani: 1 };
 }
 
-export function PreventivatoreModulare() {
-  const [moduli, setModuli] = useState<ModuloConfigurato[]>([nuovoModulo('BASE')]);
+interface Props {
+  /**
+   * COMPOSIZIONI / CATALOGO V1: quando presente, i moduli iniziali del
+   * wizard sono questi (copiati per valore nello state locale, il cliente
+   * può poi modificarli liberamente) invece del modulo BASE di default.
+   * Quando assente, il comportamento è identico a prima di questa modifica.
+   */
+  moduliIniziali?: ModuloConfigurato[];
+}
+
+export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
+  const [moduli, setModuli] = useState<ModuloConfigurato[]>(() =>
+    moduliIniziali && moduliIniziali.length > 0 ? moduliIniziali : [nuovoModulo('BASE')],
+  );
   const [indice, setIndice] = useState(0);
   const [step, setStep] = useState(1);
   const [projectType, setProjectType] = useState('ALTRO');

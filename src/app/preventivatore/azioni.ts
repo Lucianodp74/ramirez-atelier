@@ -4,38 +4,9 @@ import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { db } from '@/server/db';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
-import { validaModulo, type ModuloConfigurato } from '@/lib/preventivatore/moduli';
+import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
 
 const CHIAVI_TIPO_PROGETTO_PREVENTIVATORE = ['falegnameria', 'falegnameria-su-misura', 'living', 'zona-giorno'] as const;
-const MAX_MODULI = 30;
-const MAX_INPUT_BYTES = 50_000;
-const MAX_ID_LENGTH = 80;
-
-function isModuloConfigurato(value: unknown): value is ModuloConfigurato {
-  if (!value || typeof value !== 'object') return false;
-  const m = value as Record<string, unknown>;
-  return typeof m.id === 'string' && m.id.length > 0 && m.id.length <= MAX_ID_LENGTH
-    && typeof m.tipo === 'string'
-    && typeof m.larghezzaCm === 'number' && Number.isFinite(m.larghezzaCm)
-    && typeof m.altezzaCm === 'number' && Number.isFinite(m.altezzaCm)
-    && typeof m.profonditaCm === 'number' && Number.isFinite(m.profonditaCm)
-    && typeof m.materiale === 'string'
-    && typeof m.finitura === 'string'
-    && typeof m.configurazione === 'string'
-    && (m.ripiani === undefined || (typeof m.ripiani === 'number' && Number.isInteger(m.ripiani)));
-}
-
-function validaInputModuli(input: unknown): asserts input is ModuloConfigurato[] {
-  if (!Array.isArray(input) || input.length === 0) throw new Error('Aggiungi almeno un modulo.');
-  if (input.length > MAX_MODULI) throw new Error(`Il preventivo può contenere al massimo ${MAX_MODULI} moduli.`);
-  const serialized = JSON.stringify(input);
-  if (serialized.length > MAX_INPUT_BYTES) throw new Error('Configurazione troppo grande. Riduci il numero di moduli o le opzioni.');
-  for (const [index, value] of input.entries()) {
-    if (!isModuloConfigurato(value)) throw new Error(`Modulo ${index + 1} non valido.`);
-    const errors = validaModulo(value);
-    if (errors.length) throw new Error(`Modulo ${index + 1}: ${errors.join(' ')}`);
-  }
-}
 
 async function caricaTipoProgettoPreventivatore(tenantId: string) {
   const tipi = await db.tipoProgetto.findMany({
