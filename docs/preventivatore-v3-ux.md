@@ -34,6 +34,8 @@ Le card devono privilegiare fotografie/campioni reali quando disponibili. Nel re
 
 Per le card senza fotografia specifica usare inizialmente una composizione grafica neutra, evitando immagini generate o stock finché non viene definita la libreria fotografica ufficiale.
 
+**Implementato:** le card dello step 1 ("Cosa vuoi realizzare?") e le card materiale/finitura dello step 3 sono collegate a `IMMAGINI_PREVENTIVATORE` / `DESCRIZIONI_IMMAGINI_PREVENTIVATORE` (`src/components/preventivatore/immagini.ts`), tramite `next/image`. Quando una card non ha una chiave immagine o descrizione corrispondente, viene mantenuto il fallback grafico neutro originale (icone/decorazioni) o il testo statico esistente. Le immagini e le descrizioni sono puramente di presentazione: non entrano nello stato `moduli`, non vengono passate a `aggiorna()` e non fanno parte del payload inviato a `calcolaStimaPreventivatore` / `salvaRichiestaPreventivatore` in `azioni.ts`.
+
 ## Stato tecnico
 Questa specifica non modifica il motore V2, il Listino, la BOM, gli snapshot storici o la Home. L'implementazione UI può procedere per piccoli commit verificabili sulla PR #57.
 

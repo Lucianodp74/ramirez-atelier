@@ -42,7 +42,7 @@ async function caricaTipoProgettoPreventivatore(tenantId: string) {
     where: { tenantId, attivo: true, chiave: { in: [...CHIAVI_TIPO_PROGETTO_PREVENTIVATORE] } },
     orderBy: { ordinamento: 'asc' },
   });
-  const tipo = CHIAVI_TIPO_PROGETTO_PREVENTIVATORE.map((chiave) => tipi.find((item) => item.chiave === chiave)).find(Boolean);
+  const tipo = CHIAVI_TIPO_PROGETTO_PREVENTIVATORE.map((chiave) => tipi.find((item: { chiave: string }) => item.chiave === chiave)).find(Boolean);
   if (!tipo) throw new Error('Il tipo di progetto del preventivatore non è ancora configurato.');
   return tipo;
 }
@@ -77,7 +77,7 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
   const preventivo = calcolaPreventivoModulare(moduli, tariffe);
   if (preventivo.errori.length) throw new Error(preventivo.errori.join(' '));
 
-  const nuova = await db.$transaction(async (tx) => {
+  const nuova = await db.$transaction(async (tx: typeof db) => {
     const richiesta = await tx.richiestaProgetto.create({ data: {
       tenantId, tipoProgettoId: tipoProgetto.id, clienteNome: nome, clienteEmail: email, clienteTelefono: telefono, messaggioLibero: messaggio,
       datiFormJson: { origine: 'preventivatore-modulare-v2' },

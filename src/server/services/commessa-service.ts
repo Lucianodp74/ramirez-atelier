@@ -256,23 +256,40 @@ export async function cambiaStatoCommessa(
     throw new Error(`Transizione commessa non consentita: ${commessa[0].stato} → ${nuovoStato}.`);
   }
 
+  const timestamp = new Date();
+
   if (nuovoStato === 'PRONTA') {
-    const incomplete = await db.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(*)::bigint AS count
-      FROM "commessa_riga_produzione"
-      WHERE "tenantId" = ${tenantId}
-        AND "commessaId" = ${id}
-        AND "statoLavorazione" <> 'COMPLETATA'
+    // Atomico per costruzione: il controllo "nessuna riga incompleta" e il
+    // cambio di stato sono un'unica UPDATE, valutata da Postgres in un solo
+    // statement. A differenza di un SELECT applicativo seguito da una UPDATE
+    // separata, qui non esiste una finestra fra le due query in cui una riga
+    // di produzione concorrente possa essere riaperta senza che il gate se ne
+    // accorga: la transizione si applica solo se, nello stesso momento in cui
+    // Postgres esegue la scrittura, non esiste alcuna riga non completata.
+    const aggiornate = await db.$queryRaw<Array<{ id: string }>>`
+      UPDATE "commessa"
+      SET "stato" = 'PRONTA',
+          "prontaIl" = COALESCE("prontaIl", ${timestamp}),
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${id}
+        AND "tenantId" = ${tenantId}
+        AND "stato" = 'IN_PRODUZIONE'
+        AND NOT EXISTS (
+          SELECT 1 FROM "commessa_riga_produzione" cr
+          WHERE cr."tenantId" = ${tenantId}
+            AND cr."commessaId" = ${id}
+            AND cr."statoLavorazione" <> 'COMPLETATA'
+        )
+      RETURNING "id"
     `;
-    if (Number(incomplete[0]?.count ?? 0) > 0) {
+    if (aggiornate.length === 0) {
       throw new Error('La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.');
     }
+    return dettaglioCommessa(tenantId, id);
   }
 
-  const timestamp = new Date();
   const data = {
     avviataIl: nuovoStato === 'IN_PRODUZIONE' ? timestamp : null,
-    prontaIl: nuovoStato === 'PRONTA' ? timestamp : null,
     consegnataIl: nuovoStato === 'CONSEGNATA' ? timestamp : null,
     chiusaIl: nuovoStato === 'CHIUSA' ? timestamp : null,
   };
@@ -281,7 +298,6 @@ export async function cambiaStatoCommessa(
     UPDATE "commessa"
     SET "stato" = ${nuovoStato},
         "avviataIl" = COALESCE("avviataIl", ${data.avviataIl}),
-        "prontaIl" = COALESCE("prontaIl", ${data.prontaIl}),
         "consegnataIl" = COALESCE("consegnataIl", ${data.consegnataIl}),
         "chiusaIl" = COALESCE("chiusaIl", ${data.chiusaIl}),
         "updatedAt" = CURRENT_TIMESTAMP
