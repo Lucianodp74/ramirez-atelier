@@ -48,7 +48,7 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
   const preventivo = calcolaPreventivoModulare(moduli, tariffe);
   if (preventivo.errori.length) throw new Error(preventivo.errori.join(' '));
 
-  const nuova = await db.$transaction(async (tx: typeof db) => {
+  const nuova = await db.$transaction(async (tx) => {
     const richiesta = await tx.richiestaProgetto.create({ data: {
       tenantId, tipoProgettoId: tipoProgetto.id, clienteNome: nome, clienteEmail: email, clienteTelefono: telefono, messaggioLibero: messaggio,
       datiFormJson: { origine: 'preventivatore-modulare-v2' },
