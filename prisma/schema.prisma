@@ -465,6 +465,44 @@ model VariantePreimpostata {
   @@map("variante_preimpostata")
 }
 
+/// COMPOSIZIONI / CATALOGO V1 - catalogo di progetti preimpostati che
+/// alimentano il Preventivatore Modulare V2/V3 già esistente. Nessuna
+/// relazione con TipoProgetto (il Preventivatore V2 non lo usa) e nessuna
+/// FK verso Tenant (stesso pattern di Finitura/VariantePreimpostata: solo
+/// tenantId indicizzato). Nome deliberatamente diverso da "Composizione":
+/// quel termine è già usato da listino_prezzo (tipo='COMPOSIZIONE') per un
+/// concetto non correlato (distinta interna di un articolo di Listino).
+model ProgettoPreimpostato {
+  id          String   @id @default(cuid())
+  tenantId    String
+
+  nome        String // es. "Cabina armadio 3 metri"
+  categoria   String // libera, stesso principio di Finitura.categoria (dato, non enum)
+  descrizione String?
+
+  /// Path statico esistente (stesso pattern di IMMAGINI_PREVENTIVATORE in
+  /// src/components/preventivatore/immagini.ts) - nessun upload/storage in V1.
+  immagine    String?
+
+  /// Un ModuloConfigurato[] valido, stesso identico formato già accettato da
+  /// calcolaStimaPreventivatore/salvaRichiestaPreventivatore - copiato per
+  /// valore nel Preventivatore alla selezione, mai referenziato per id nel
+  /// calcolo (stesso principio già usato da VariantePreimpostata.scelte e
+  /// dal freeze della richiesta). Nessun nuovo formato, nessun secondo
+  /// motore prezzi: il prezzo non è mai persistito qui.
+  moduli      Json
+
+  pubblicata  Boolean  @default(false)
+  ordinamento Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, pubblicata, ordinamento])
+  @@index([tenantId, categoria])
+  @@map("progetto_preimpostato")
+}
+
 /// Stato operativo di una regola - separato da "validità temporale" (validoDa/validoA):
 /// una regola può essere ATTIVA ma non ancora in vigore, o in vigore ma disattivata
 /// manualmente. Le due dimensioni sono indipendenti di proposito.

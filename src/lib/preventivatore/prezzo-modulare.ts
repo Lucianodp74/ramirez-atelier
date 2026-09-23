@@ -1,0 +1,167 @@
+import type { ConfigurazioneModulo, Finitura, Materiale, ModuloConfigurato } from './moduli';
+import { validaModulo } from './moduli';
+
+export type TariffePreventivatore = {
+  materialeEuroM2: Record<Materiale, number>;
+  finituraEuroM2: Record<Finitura, number>;
+  bordoEuroMl: number;
+  retroEuroM2: number;
+  ferramentaPerPorta: number;
+  ferramentaPerCassetto: number;
+  oreBase: number;
+  orePerM2: number;
+  orePerPorta: number;
+  orePerCassetto: number;
+  orePerRipiano: number;
+  costoOra: number;
+  ricaricoPercentuale: number;
+  spessorePannelloMm?: number;
+  sfridoPercentuale?: number;
+};
+
+/** Valori dimostrativi: servono ai test e alla struttura del motore, non sono prezzi Ramirez. */
+export const TARIFFE_DEMO: TariffePreventivatore = {
+  materialeEuroM2: { TRUCIOLARE: 30, MDF: 38, MULTISTRATO: 55 },
+  finituraEuroM2: { MELAMINICO: 0, LAMINATO: 18, LACCATO: 45 },
+  bordoEuroMl: 2.5,
+  retroEuroM2: 12,
+  ferramentaPerPorta: 18,
+  ferramentaPerCassetto: 28,
+  oreBase: 0.8,
+  orePerM2: 0.9,
+  orePerPorta: 0.35,
+  orePerCassetto: 0.5,
+  orePerRipiano: 0.12,
+  costoOra: 38,
+  ricaricoPercentuale: 35,
+  spessorePannelloMm: 18,
+  sfridoPercentuale: 0,
+};
+
+export type ComponenteDistinta = {
+  codice: string;
+  voce: string;
+  categoria: 'STRUTTURA' | 'FRONTALE' | 'BORDO' | 'FERRAMENTA' | 'MANODOPERA';
+  unita: 'PZ' | 'M2' | 'ML' | 'H';
+  quantita: number;
+  larghezzaCm?: number;
+  altezzaCm?: number;
+  profonditaCm?: number;
+  note?: string;
+};
+
+export type RigaCostoModulo = {
+  id: string;
+  tipo: ModuloConfigurato['tipo'];
+  superficieM2: number;
+  materiale: number;
+  finitura: number;
+  bordo: number;
+  retro: number;
+  ferramenta: number;
+  manodopera: number;
+  costoProduzione: number;
+  prezzoIndicativo: number;
+  distinta: {
+    fianchi: number;
+    base: number;
+    cielo: number;
+    schienale: number;
+    ripiani: number;
+    ante: number;
+    cassetti: number;
+    bordaturaMl: number;
+    ferramentaPz: number;
+    ore: number;
+    componenti: ComponenteDistinta[];
+  };
+};
+
+export type PreventivoModulare = {
+  righe: RigaCostoModulo[];
+  costoProduzione: number;
+  prezzoIndicativo: number;
+  errori: string[];
+};
+
+const euro = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
+const m2 = (cm2: number) => cm2 / 10000;
+const positivo = (v: number | undefined, fallback: number) => Number.isFinite(v) && (v as number) >= 0 ? v as number : fallback;
+
+function quantitaConfigurazione(config: ConfigurazioneModulo) {
+  return {
+    porte: config === '1_PORTA' ? 1 : config === '2_PORTE' ? 2 : config === 'PORTE_CASSETTI' ? 2 : 0,
+    cassetti: config === '3_CASSETTI' ? 3 : config === '4_CASSETTI' ? 4 : config === 'PORTE_CASSETTI' ? 2 : 0,
+  };
+}
+
+function componentePannello(codice: string, voce: string, quantita: number, larghezzaCm: number, altezzaCm: number, profonditaCm: number, spessoreMm: number, note?: string): ComponenteDistinta {
+  return { codice, voce, categoria: 'STRUTTURA', unita: 'PZ', quantita, larghezzaCm: euro(larghezzaCm), altezzaCm: euro(altezzaCm), profonditaCm: euro(profonditaCm), note: `${note ? `${note} ` : ''}Spessore tecnico ${spessoreMm} mm.` };
+}
+
+export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePreventivatore = TARIFFE_DEMO): RigaCostoModulo {
+  const errori = validaModulo(modulo);
+  if (errori.length) throw new Error(errori.join(' '));
+
+  const spessoreMm = positivo(tariffe.spessorePannelloMm, 18);
+  const sfrido = positivo(tariffe.sfridoPercentuale, 0) / 100;
+  const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione);
+  const ripiani = modulo.ripiani ?? (modulo.configurazione === 'APERTO' ? 2 : 1);
+  const haFrontale = porte > 0 || cassetti > 0;
+
+  const fianchiM2 = m2(2 * modulo.profonditaCm * modulo.altezzaCm);
+  const baseCieloM2 = m2(2 * modulo.larghezzaCm * modulo.profonditaCm);
+  const ripianiM2 = m2(ripiani * modulo.larghezzaCm * modulo.profonditaCm);
+  const schienaleM2 = m2(modulo.larghezzaCm * modulo.altezzaCm);
+  const frontaliM2 = haFrontale ? m2(modulo.larghezzaCm * modulo.altezzaCm) : 0;
+  const superficie = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2 + frontaliM2) * (1 + sfrido);
+  const retro = schienaleM2;
+  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
+
+  const materiale = superficie * tariffe.materialeEuroM2[modulo.materiale];
+  const finitura = (frontaliM2 + fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[modulo.finitura];
+  const costoBordo = bordoMl * tariffe.bordoEuroMl;
+  const costoRetro = retro * tariffe.retroEuroM2;
+  const ferramenta = porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
+  const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
+  const manodopera = ore * tariffe.costoOra;
+  const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
+
+  const componenti: ComponenteDistinta[] = [
+    componentePannello('PANNELLO-FIANCO', 'Fianco struttura', 2, modulo.profonditaCm, modulo.altezzaCm, 0, spessoreMm),
+    componentePannello('PANNELLO-BASE', 'Base', 1, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm),
+    componentePannello('PANNELLO-CIELO', 'Cielo', 1, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm),
+    componentePannello('SCHIENALE', 'Schienale', 1, modulo.larghezzaCm, modulo.altezzaCm, 0, spessoreMm),
+  ];
+  if (ripiani > 0) componenti.push(componentePannello('RIPIANO', 'Ripiano', ripiani, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm));
+
+  if (porte > 0 && cassetti === 0) componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro(modulo.larghezzaCm / porte), altezzaCm: modulo.altezzaCm, profonditaCm: 0, note: 'Larghezza ripartita uniformemente; giochi, cerniere e battute da definire in fase esecutiva.' });
+  if (cassetti > 0 && porte === 0) componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro(modulo.altezzaCm / cassetti), profonditaCm: 0, note: 'Dimensione solo indicativa; guide, giochi e suddivisione esecutiva da definire.' });
+  if (porte > 0 && cassetti > 0) {
+    componenti.push({ codice: 'ANTA', voce: 'Anta', categoria: 'FRONTALE', unita: 'PZ', quantita: porte, larghezzaCm: euro((modulo.larghezzaCm * 0.6) / porte), altezzaCm: euro(modulo.altezzaCm * 0.6), profonditaCm: 0, note: 'Ripartizione preliminare del fronte per configurazione mista; da verificare in fase esecutiva.' });
+    componenti.push({ codice: 'FRONTALE-CASSETTO', voce: 'Frontale cassetto', categoria: 'FRONTALE', unita: 'PZ', quantita: cassetti, larghezzaCm: modulo.larghezzaCm, altezzaCm: euro((modulo.altezzaCm * 0.4) / cassetti), profonditaCm: 0, note: 'Ripartizione preliminare del fronte per configurazione mista; da verificare in fase esecutiva.' });
+  }
+
+  componenti.push(
+    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali; non sostituisce il calcolo esecutivo delle coste a vista.' },
+    { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: porte + cassetti },
+    { codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', categoria: 'MANODOPERA', unita: 'H', quantita: euro(ore) },
+  );
+
+  return {
+    id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione,
+    prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
+    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore), componenti },
+  };
+}
+
+export function calcolaPreventivoModulare(moduli: ModuloConfigurato[], tariffe: TariffePreventivatore = TARIFFE_DEMO): PreventivoModulare {
+  const errori: string[] = [];
+  const righe: RigaCostoModulo[] = [];
+  for (const modulo of moduli) {
+    try { righe.push(calcolaCostoModulo(modulo, tariffe)); }
+    catch (error) { errori.push(`${modulo.id}: ${error instanceof Error ? error.message : 'modulo non valido'}`); }
+  }
+  const costoProduzione = euro(righe.reduce((s, r) => s + r.costoProduzione, 0));
+  return { righe, costoProduzione, prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)), errori };
+}
