@@ -5,7 +5,7 @@ import { creaPrezzoListino, elencoPrezziListino } from '@/server/services/listin
 import { DEFINIZIONI_TARIFFE_PREVENTIVATORE } from '@/lib/preventivatore/tariffe';
 
 export async function preparaVociTecnichePreventivatore() {
-  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'scrivi' });
+  const contesto = await richiediContesto({ modulo: 'catalogo', azione: 'gestisci' });
   const esistenti = await elencoPrezziListino(contesto.tenantId);
   const codici = new Set(esistenti.map((voce) => voce.codice));
   const unitaPerCodice = new Map(esistenti.map((voce) => [voce.codice, voce.unita]));
