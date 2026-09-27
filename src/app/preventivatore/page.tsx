@@ -33,7 +33,7 @@ export default async function PreventivatorePage({
     <>
       <PreventivatoreInspiration />
       <GalleriaProgettiPreimpostati />
-      <PreventivatoreModulare moduliIniziali={moduliIniziali} />
+      <PreventivatoreModulare key={preset ?? 'default'} moduliIniziali={moduliIniziali} />
     </>
   );
 }
