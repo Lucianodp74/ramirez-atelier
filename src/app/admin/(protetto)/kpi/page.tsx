@@ -136,6 +136,39 @@ export default async function KpiPage({ searchParams }: { searchParams: Promise<
         </Card>
       </div>
 
+      <div className="mb-10">
+        <h2 className="mb-4 text-lg font-semibold">Produzione e controllo economico</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Commesse aperte</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-semibold">{kpi.produzione.commesseAperte}</p><p className="text-xs text-muted-foreground">{kpi.produzione.commesseTotali} commesse nel periodo</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Costo produzione totale</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.costoProduzioneTotale)}</p><p className="text-xs text-muted-foreground">snapshot delle commesse con costi disponibili</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Tempo medio produzione</CardTitle></CardHeader>
+            <CardContent>{kpi.produzione.tempoMedioProduzioneGiorni.disponibile ? <><p className="text-2xl font-semibold">{kpi.produzione.tempoMedioProduzioneGiorni.valore} giorni</p><p className="text-xs text-muted-foreground">su {kpi.produzione.tempoMedioProduzioneGiorni.campione} commesse avviate e pronte</p></> : <p className="text-sm text-muted-foreground">Dati non ancora sufficienti.</p>}</CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Puntualità consegne</CardTitle></CardHeader>
+            <CardContent>{kpi.produzione.puntualitaConsegne.campione > 0 ? <><p className="text-2xl font-semibold">{kpi.produzione.puntualitaConsegne.percentuale}%</p><p className="text-xs text-muted-foreground">{kpi.produzione.puntualitaConsegne.puntuali} puntuali su {kpi.produzione.puntualitaConsegne.campione} con data prevista</p></> : <p className="text-sm text-muted-foreground">Nessuna consegna con data prevista.</p>}</CardContent>
+          </Card>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Commesse chiuse</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-semibold">{kpi.produzione.commesseChiuse}</p><p className="text-xs text-muted-foreground">chiuse nel periodo selezionato</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Margine lordo su imponibile</CardTitle></CardHeader>
+            <CardContent>{kpi.produzione.margineLordo.disponibile ? <><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.margineLordo.totale)}</p><p className="text-xs text-muted-foreground">media {formattaEuro(kpi.produzione.margineLordo.medio)} · {kpi.produzione.margineLordo.campione} commesse con preventivo commerciale salvato</p></> : <p className="text-sm text-muted-foreground">Disponibile quando esiste un preventivo commerciale salvato sulla BOM.</p>}</CardContent>
+          </Card>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">I costi provengono dalla distinta operativa congelata nella commessa. Il margine usa l&apos;imponibile del preventivo commerciale salvato e non la stima indicativa del Preventivatore né l&apos;IVA.</p>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
