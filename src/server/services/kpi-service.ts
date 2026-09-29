@@ -19,6 +19,16 @@ export interface RiepilogoKpi {
     valoreTotale: number;
   }>;
   distribuzionePerFasciaBudget: Array<{ nome: string; conteggio: number }>;
+  produzione: {
+    commesseTotali: number;
+    commesseAperte: number;
+    commesseChiuse: number;
+    costoProduzioneTotale: number;
+    costoProduzioneMedio: number;
+    tempoMedioProduzioneGiorni: { valore: number; disponibile: boolean; campione: number };
+    puntualitaConsegne: { percentuale: number; puntuali: number; campione: number };
+    margineLordo: { totale: number; medio: number; disponibile: boolean; campione: number };
+  };
 }
 
 const STATI_APERTI = ['NUOVA', 'IN_REVISIONE', 'PREVENTIVO_INVIATO'] as const;
@@ -180,6 +190,91 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     .filter((nome) => mappaFasce.has(nome))
     .map((nome) => ({ nome, conteggio: mappaFasce.get(nome)! }));
 
+  // --- Produzione ed economia delle commesse ---
+  // La commessa conserva lo snapshot della BOM: il costo non viene ricalcolato
+  // con il Listino corrente. Il margine usa esclusivamente un preventivo
+  // commerciale realmente salvato sulla richiesta/BOM e l'imponibile, quindi
+  // esclude l'IVA. La stima indicativa del Preventivatore non viene trattata
+  // come prezzo di vendita definitivo.
+  const commesse = await db.$queryRaw<Array<{
+    id: string;
+    stato: string;
+    avviataIl: Date | null;
+    prontaIl: Date | null;
+    consegnataIl: Date | null;
+    dataPrevistaConsegna: Date | null;
+    datiEstensione: unknown;
+  }>>`
+    SELECT c."id", c."stato", c."avviataIl", c."prontaIl", c."consegnataIl",
+           c."dataPrevistaConsegna", r."datiEstensione"
+    FROM "commessa" c
+    JOIN "richiesta_progetto" r ON r."id" = c."richiestaId"
+    WHERE c."tenantId" = ${tenantId}
+      AND (${filtri.dataDa ? new Date(filtri.dataDa) : null}::timestamp IS NULL OR c."createdAt" >= ${filtri.dataDa ? new Date(filtri.dataDa) : null})
+      AND (${filtri.dataA ? new Date(filtri.dataA) : null}::timestamp IS NULL OR c."createdAt" <= ${filtri.dataA ? new Date(filtri.dataA) : null})
+  `;
+
+  const righeCommessa = await db.$queryRaw<Array<{ commessaId: string; quantita: number; costoUnitario: number | null }>>`
+    SELECT cr."commessaId", cr."quantita"::float8 AS "quantita", cr."costoUnitario"::float8 AS "costoUnitario"
+    FROM "commessa_riga_produzione" cr
+    JOIN "commessa" c ON c."id" = cr."commessaId"
+    WHERE cr."tenantId" = ${tenantId}
+      AND (${filtri.dataDa ? new Date(filtri.dataDa) : null}::timestamp IS NULL OR c."createdAt" >= ${filtri.dataDa ? new Date(filtri.dataDa) : null})
+      AND (${filtri.dataA ? new Date(filtri.dataA) : null}::timestamp IS NULL OR c."createdAt" <= ${filtri.dataA ? new Date(filtri.dataA) : null})
+  `;
+  const costiPerCommessa = new Map<string, number>();
+  for (const riga of righeCommessa) {
+    if (riga.costoUnitario != null && Number.isFinite(Number(riga.costoUnitario))) {
+      costiPerCommessa.set(riga.commessaId, (costiPerCommessa.get(riga.commessaId) ?? 0) + Number(riga.quantita) * Number(riga.costoUnitario));
+    }
+  }
+
+  const costoProduzioneTotale = commesse.reduce((totale, c) => totale + (costiPerCommessa.get(c.id) ?? 0), 0);
+  const commesseConCosto = commesse.filter((c) => costiPerCommessa.has(c.id));
+  const tempoProduzione = commesse
+    .filter((c) => c.avviataIl && c.prontaIl)
+    .map((c) => (new Date(c.prontaIl!).getTime() - new Date(c.avviataIl!).getTime()) / 86400000)
+    .filter((giorni) => giorni >= 0);
+  const consegneConData = commesse.filter((c) => c.consegnataIl && c.dataPrevistaConsegna);
+  const puntuali = consegneConData.filter((c) => new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime()).length;
+
+  const margini: number[] = [];
+  for (const commessa of commesse) {
+    if (!costiPerCommessa.has(commessa.id) || !commessa.datiEstensione || typeof commessa.datiEstensione !== 'object' || Array.isArray(commessa.datiEstensione)) continue;
+    const estensione = commessa.datiEstensione as Record<string, unknown>;
+    const preventivo = estensione.preventivo;
+    if (!preventivo || typeof preventivo !== 'object' || Array.isArray(preventivo)) continue;
+    const prezzo = (preventivo as Record<string, unknown>).prezzo;
+    if (!prezzo || typeof prezzo !== 'object' || Array.isArray(prezzo)) continue;
+    const imponibile = (prezzo as Record<string, unknown>).imponibile;
+    if (typeof imponibile !== 'number' || !Number.isFinite(imponibile)) continue;
+    margini.push(imponibile - (costiPerCommessa.get(commessa.id) ?? 0));
+  }
+
+  const produzione = {
+    commesseTotali: commesse.length,
+    commesseAperte: commesse.filter((c) => ['DA_AVVIARE', 'IN_PRODUZIONE', 'PRONTA'].includes(c.stato)).length,
+    commesseChiuse: commesse.filter((c) => c.stato === 'CHIUSA').length,
+    costoProduzioneTotale,
+    costoProduzioneMedio: commesseConCosto.length > 0 ? costoProduzioneTotale / commesseConCosto.length : 0,
+    tempoMedioProduzioneGiorni: {
+      valore: tempoProduzione.length > 0 ? Math.round((tempoProduzione.reduce((a, b) => a + b, 0) / tempoProduzione.length) * 10) / 10 : 0,
+      disponibile: tempoProduzione.length > 0,
+      campione: tempoProduzione.length,
+    },
+    puntualitaConsegne: {
+      percentuale: consegneConData.length > 0 ? Math.round((puntuali / consegneConData.length) * 1000) / 10 : 0,
+      puntuali,
+      campione: consegneConData.length,
+    },
+    margineLordo: {
+      totale: margini.reduce((a, b) => a + b, 0),
+      medio: margini.length > 0 ? margini.reduce((a, b) => a + b, 0) / margini.length : 0,
+      disponibile: margini.length > 0,
+      campione: margini.length,
+    },
+  };
+
   return {
     valoreOpportunitaAperte: {
       valore: valoreOpportunitaAperte,
@@ -199,5 +294,6 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     richiestePerTipologia,
     richiestePerArchitetto,
     distribuzionePerFasciaBudget,
+    produzione,
   };
 }
