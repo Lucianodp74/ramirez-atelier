@@ -6,8 +6,19 @@ interface Props {
   noteProduzione: string | null;
 }
 
+const FORMATTA_QUANTITA = new Intl.NumberFormat('it-IT', {
+  maximumFractionDigits: 2,
+});
+
 export function RiepilogoOfficinaCommessa({ righe, stato, noteProduzione }: Props) {
-  const quantitaTotale = righe.reduce((totale, riga) => totale + riga.quantita, 0);
+  const quantitaPerUnita = righe.reduce<Record<string, number>>((totale, riga) => {
+    totale[riga.unita] = (totale[riga.unita] ?? 0) + riga.quantita;
+    return totale;
+  }, {});
+  const riepilogoQuantita = Object.entries(quantitaPerUnita)
+    .sort(([unitaA], [unitaB]) => unitaA.localeCompare(unitaB))
+    .map(([unita, quantita]) => `${FORMATTA_QUANTITA.format(quantita)} ${unita}`)
+    .join(' · ');
   const categorie = new Set(righe.map((riga) => riga.categoria)).size;
   const righeConNote = righe.filter((riga) => riga.note?.trim()).length;
   const completate = righe.filter((riga) => riga.statoLavorazione === 'COMPLETATA').length;
@@ -30,8 +41,8 @@ export function RiepilogoOfficinaCommessa({ righe, stato, noteProduzione }: Prop
           <p className="mt-1 text-xl font-semibold">{righe.length}</p>
         </div>
         <div className="rounded-md border p-3">
-          <p className="text-xs text-muted-foreground">Quantità complessiva</p>
-          <p className="mt-1 text-xl font-semibold">{quantitaTotale}</p>
+          <p className="text-xs text-muted-foreground">Quantità per unità</p>
+          <p className="mt-1 text-base font-semibold leading-6">{riepilogoQuantita || '—'}</p>
         </div>
         <div className="rounded-md border p-3">
           <p className="text-xs text-muted-foreground">Categorie</p>
