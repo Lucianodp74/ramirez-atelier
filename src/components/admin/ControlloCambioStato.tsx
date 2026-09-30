@@ -44,10 +44,8 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
           setErrore(esito.errore);
           return;
         }
-        setSuccesso('Commessa creata.');
-        // La mutation è conclusa; navighiamo con una navigazione browser completa
-        // per evitare un secondo render RSC della pagina richiesta.
-        window.location.assign('/admin/commesse');
+        setSuccesso('Commessa operativa pronta.');
+        window.location.assign(`/admin/commesse/${esito.id}`);
       } catch (error) {
         setErrore(error instanceof Error ? error.message : 'Impossibile creare la commessa.');
       }
@@ -82,7 +80,7 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
         <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
           <p className="text-sm font-medium">Preventivo accettato: crea la commessa operativa.</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Se esiste una BOM, deve essere già confermata. Le righe vengono copiate come snapshot di produzione.
+            La commessa viene creata solo da questa azione. Se esiste già per questa richiesta, il sistema riapre quella esistente senza crearne una seconda. Se esiste una BOM, deve essere già confermata; le righe vengono copiate come snapshot di produzione.
           </p>
           <Button
             type="button"
@@ -92,7 +90,7 @@ export function ControlloCambioStato({ richiestaId, statoCorrente }: Props) {
             disabled={inCorso || Boolean(successo)}
             onClick={creaCommessa}
           >
-            {successo ? 'Commessa creata' : 'Crea commessa'}
+            {successo ? 'Apri commessa' : 'Crea / apri commessa'}
           </Button>
         </div>
       )}
