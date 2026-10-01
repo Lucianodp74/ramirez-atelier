@@ -169,8 +169,10 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const updateCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('UPDATE "commessa"'));
     expect(updateCommessa).toBeDefined();
-    expect(updateCommessa![3]).toBe('bom-1');
-    expect(updateCommessa![4]).toBe(3);
+    // UPDATE ha quattro interpolazioni dopo la query: fonteBomId, versione,
+    // noteProduzione, commessaId. Il tenantId è la quinta interpolazione.
+    expect(updateCommessa![1]).toBe('bom-1');
+    expect(updateCommessa![2]).toBe(3);
 
     const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
     expect(insertRighe).toHaveLength(RIGHE_BOM.length);
