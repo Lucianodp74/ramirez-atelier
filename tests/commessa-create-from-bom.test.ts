@@ -75,22 +75,21 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
   it('crea la commessa quando la richiesta è CONVERTITA e la BOM è CONFERMATA, copiando fonteBomId/fonteBomVersione', async () => {
     queryRaw
-      .mockResolvedValueOnce(RICHIESTA_CONVERTITA) // SELECT richiesta
-      .mockResolvedValueOnce([]) // nessuna commessa esistente
-      .mockResolvedValueOnce(bomConfermata()) // SELECT bom
-      .mockResolvedValueOnce(RIGHE_BOM); // SELECT righe bom
+      .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(bomConfermata())
+      .mockResolvedValueOnce(RIGHE_BOM);
 
     const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
     expect(typeof id).toBe('string');
 
     const insertCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('INSERT INTO "commessa"'));
     expect(insertCommessa).toBeDefined();
-    // [strings, id, tenantId, richiestaId, numero, noteProduzione, fonteBomId, fonteBomVersione]
     expect(insertCommessa![2]).toBe(TENANT_ID);
     expect(insertCommessa![3]).toBe(RICHIESTA_ID);
-    expect(insertCommessa![5]).toBe('Attenzione alle finiture'); // noteProduzione copiata dalla BOM
-    expect(insertCommessa![6]).toBe('bom-1'); // fonteBomId
-    expect(insertCommessa![7]).toBe(3); // fonteBomVersione
+    expect(insertCommessa![5]).toBe('Attenzione alle finiture');
+    expect(insertCommessa![6]).toBe('bom-1');
+    expect(insertCommessa![7]).toBe(3);
   });
 
   it('copia integralmente ogni riga BOM nella Commessa: quantità, costoUnitario, materiale, lavorazione, note', async () => {
@@ -105,7 +104,6 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
     const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
     expect(insertRighe).toHaveLength(RIGHE_BOM.length);
 
-    // call = [strings, id, tenantId, commessaId, ordinamento, categoria, codice, descrizione, unita, quantita, materiale, lavorazione, costoUnitario, note]
     const riga1 = insertRighe[0];
     expect(riga1[2]).toBe(TENANT_ID);
     expect(riga1[4]).toBe(RIGHE_BOM[0].ordinamento);
@@ -121,10 +119,10 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const riga2 = insertRighe[1];
     expect(riga2[9]).toBe(RIGHE_BOM[1].quantita);
-    expect(riga2[10]).toBeNull(); // materiale nullo copiato correttamente
-    expect(riga2[11]).toBeNull(); // lavorazione nulla copiata correttamente
+    expect(riga2[10]).toBeNull();
+    expect(riga2[11]).toBeNull();
     expect(riga2[12]).toBe(RIGHE_BOM[1].costoUnitario);
-    expect(riga2[13]).toBeNull(); // note nulle copiate correttamente
+    expect(riga2[13]).toBeNull();
   });
 
   it('rifiuta la creazione se la richiesta non è CONVERTITA, senza eseguire alcun INSERT', async () => {
@@ -171,8 +169,8 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const updateCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('UPDATE "commessa"'));
     expect(updateCommessa).toBeDefined();
-    expect(updateCommessa![2]).toBe('bom-1');
-    expect(updateCommessa![3]).toBe(3);
+    expect(updateCommessa![3]).toBe('bom-1');
+    expect(updateCommessa![4]).toBe(3);
 
     const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
     expect(insertRighe).toHaveLength(RIGHE_BOM.length);
@@ -193,14 +191,14 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
     queryRaw
       .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]); // nessuna BOM trovata
+      .mockResolvedValueOnce([]);
 
     const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
     expect(typeof id).toBe('string');
 
     const insertCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('INSERT INTO "commessa"'));
-    expect(insertCommessa![6]).toBeNull(); // fonteBomId nullo
-    expect(insertCommessa![7]).toBeNull(); // fonteBomVersione nullo
+    expect(insertCommessa![6]).toBeNull();
+    expect(insertCommessa![7]).toBeNull();
     expect(executeRaw.mock.calls.some((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'))).toBe(false);
   });
 
@@ -226,9 +224,9 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
 
-    expect(queryRaw.mock.calls[0]).toContain(TENANT_ID); // SELECT richiesta
-    expect(queryRaw.mock.calls[1]).toContain(TENANT_ID); // SELECT commessa esistente
-    expect(queryRaw.mock.calls[2]).toContain(TENANT_ID); // SELECT BOM
+    expect(queryRaw.mock.calls[0]).toContain(TENANT_ID);
+    expect(queryRaw.mock.calls[1]).toContain(TENANT_ID);
+    expect(queryRaw.mock.calls[2]).toContain(TENANT_ID);
   });
 
   it('LIMITE AMBIENTALE — propaga l\'errore se un INSERT di riga fallisce, senza inghiottirlo (precondizione per il rollback di Prisma; il rollback fisico su Postgres non è verificabile in questo ambiente)', async () => {
@@ -239,10 +237,10 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
       .mockResolvedValueOnce(RIGHE_BOM);
 
     executeRaw
-      .mockResolvedValueOnce(undefined) // INSERT commessa: ok
-      .mockResolvedValueOnce(undefined) // UPDATE commessa: ok
-      .mockResolvedValueOnce(undefined) // INSERT riga 1: ok
-      .mockRejectedValueOnce(new Error('violazione vincolo simulata su commessa_riga_produzione')); // INSERT riga 2: fallisce
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('violazione vincolo simulata su commessa_riga_produzione'));
 
     await expect(creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID)).rejects.toThrow(
       'violazione vincolo simulata su commessa_riga_produzione',
