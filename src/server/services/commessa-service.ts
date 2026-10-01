@@ -166,14 +166,24 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
       throw new Error('La commessa può essere creata solo da una richiesta CONVERTITA.');
     }
 
-    const esistenti = await tx.$queryRaw<Array<{ id: string }>>`
-      SELECT "id" FROM "commessa"
-      WHERE "tenantId" = ${tenantId} AND "richiestaId" = ${richiestaId}
+    // Una commessa vuota può essere stata creata prima della conferma della BOM.
+    // In quel caso non dobbiamo restituirla alla cieca: se oggi esiste una BOM
+    // confermata, la commessa va completata con lo snapshot operativo congelato.
+    const esistenti = await tx.$queryRaw<Array<{ id: string; righeCount: number }>>`
+      SELECT c."id", COUNT(cr."id")::int AS "righeCount"
+      FROM "commessa" c
+      LEFT JOIN "commessa_riga_produzione" cr ON cr."commessaId" = c."id"
+      WHERE c."tenantId" = ${tenantId} AND c."richiestaId" = ${richiestaId}
+      GROUP BY c."id"
       LIMIT 1
     `;
-    if (esistenti[0]) return esistenti[0].id;
 
-    const bom = await tx.$queryRaw<Array<{ id: string; versione: number; stato: string; noteProduzione: string | null }>>`
+    const bom = await tx.$queryRaw<Array<{
+      id: string;
+      versione: number;
+      stato: string;
+      noteProduzione: string | null;
+    }>>`
       SELECT "id", "versione", "stato", "noteProduzione"
       FROM "bom"
       WHERE "tenantId" = ${tenantId} AND "richiestaId" = ${richiestaId}
@@ -185,21 +195,18 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
       throw new Error('La BOM esiste ma non è confermata. Conferma la BOM prima di avviare la commessa.');
     }
 
-    const id = crypto.randomUUID();
-    const numero = `COM-${new Date().getFullYear()}-${id.slice(0, 8).toUpperCase()}`;
+    const copiaSnapshotBom = async (commessaId: string) => {
+      if (!fonteBom) return;
 
-    await tx.$executeRaw`
-      INSERT INTO "commessa" (
-        "id", "tenantId", "richiestaId", "numero", "stato", "noteProduzione",
-        "fonteBomId", "fonteBomVersione", "createdAt", "updatedAt"
-      ) VALUES (
-        ${id}, ${tenantId}, ${richiestaId}, ${numero}, 'DA_AVVIARE',
-        ${fonteBom?.noteProduzione ?? null}, ${fonteBom?.id ?? null},
-        ${fonteBom?.versione ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-      )
-    `;
+      await tx.$executeRaw`
+        UPDATE "commessa"
+        SET "fonteBomId" = ${fonteBom.id},
+            "fonteBomVersione" = ${fonteBom.versione},
+            "noteProduzione" = COALESCE("noteProduzione", ${fonteBom.noteProduzione}),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "id" = ${commessaId} AND "tenantId" = ${tenantId}
+      `;
 
-    if (fonteBom) {
       const righeBom = await tx.$queryRaw<Array<{
         ordinamento: number;
         categoria: string;
@@ -228,14 +235,41 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
             "descrizione", "unita", "quantita", "materiale", "lavorazione",
             "costoUnitario", "note", "createdAt", "updatedAt"
           ) VALUES (
-            ${crypto.randomUUID()}, ${tenantId}, ${id}, ${riga.ordinamento}, ${riga.categoria},
+            ${crypto.randomUUID()}, ${tenantId}, ${commessaId}, ${riga.ordinamento}, ${riga.categoria},
             ${riga.codice}, ${riga.descrizione}, ${riga.unita}, ${riga.quantita},
             ${riga.materiale}, ${riga.lavorazione}, ${riga.costoUnitario}, ${riga.note},
             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           )
         `;
       }
+    };
+
+    if (esistenti[0]) {
+      // Se lo snapshot esiste già, la commessa è realmente idempotente: non
+      // tocchiamo mai una produzione già congelata.
+      if (esistenti[0].righeCount > 0) return esistenti[0].id;
+
+      // Commessa già creata ma vuota: completa lo snapshot solo ora che la BOM
+      // confermata è disponibile. Se non c'è BOM, lasciamo la commessa vuota.
+      if (fonteBom) await copiaSnapshotBom(esistenti[0].id);
+      return esistenti[0].id;
     }
+
+    const id = crypto.randomUUID();
+    const numero = `COM-${new Date().getFullYear()}-${id.slice(0, 8).toUpperCase()}`;
+
+    await tx.$executeRaw`
+      INSERT INTO "commessa" (
+        "id", "tenantId", "richiestaId", "numero", "stato", "noteProduzione",
+        "fonteBomId", "fonteBomVersione", "createdAt", "updatedAt"
+      ) VALUES (
+        ${id}, ${tenantId}, ${richiestaId}, ${numero}, 'DA_AVVIARE',
+        ${fonteBom?.noteProduzione ?? null}, ${fonteBom?.id ?? null},
+        ${fonteBom?.versione ?? null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+    `;
+
+    if (fonteBom) await copiaSnapshotBom(id);
 
     return id;
   });
