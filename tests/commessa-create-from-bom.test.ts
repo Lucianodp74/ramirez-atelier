@@ -13,18 +13,16 @@
  * rete della sessione — vedi audit precedenti), quindi non è disponibile un
  * client Prisma reale né un Postgres realmente raggiungibile da qui per un
  * test di integrazione vero. Di conseguenza:
- *  - i primi 8 test verificano il comportamento REALE della funzione
- *    (query eseguite, valori copiati, gate di stato, idempotenza) con `db`
- *    mockato: è una verifica reale del codice applicativo, non della sua
- *    interazione con un vero motore transazionale Postgres;
+ *  - i test verificano il comportamento REALE della funzione
+ *    (query eseguite, valori copiati, gate di stato, idempotenza e recupero
+ *    di una commessa vuota) con `db` mockato: è una verifica reale del codice
+ *    applicativo, non della sua interazione con un vero motore transazionale Postgres;
  *  - l'ultimo test ("rollback") verifica SOLO che un errore durante
  *    l'inserimento delle righe si propaghi fuori da `creaCommessaDaRichiesta`
  *    senza essere inghiottito (precondizione necessaria perché il
  *    `db.$transaction` reale di Prisma possa fare rollback) — NON dimostra
  *    che Postgres esegua realmente un rollback fisico, cosa non verificabile
- *    senza un database reale in questo ambiente. Il commento nel test lo
- *    ripete esplicitamente per evitare di far credere che sia stato
- *    verificato più di quanto lo sia stato.
+ *    senza un database reale in questo ambiente.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -150,15 +148,45 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
     expect(executeRaw).not.toHaveBeenCalled();
   });
 
-  it('è idempotente: se una commessa per la richiesta esiste già, la restituisce senza inserire nulla', async () => {
+  it('è idempotente: se una commessa con snapshot esiste già, la restituisce senza modificare nulla', async () => {
     queryRaw
       .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
-      .mockResolvedValueOnce([{ id: 'commessa-esistente' }]); // trovata subito, nessun'altra query eseguita
+      .mockResolvedValueOnce([{ id: 'commessa-esistente', righeCount: 7 }]);
 
     const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
     expect(id).toBe('commessa-esistente');
     expect(executeRaw).not.toHaveBeenCalled();
-    expect(queryRaw).toHaveBeenCalledTimes(2); // richiesta + esistenti: mai interrogata la BOM
+    expect(queryRaw).toHaveBeenCalledTimes(2);
+  });
+
+  it('ripara una commessa già esistente ma vuota quando la BOM viene poi confermata, copiando lo snapshot', async () => {
+    queryRaw
+      .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
+      .mockResolvedValueOnce([{ id: 'commessa-vuota', righeCount: 0 }])
+      .mockResolvedValueOnce(bomConfermata())
+      .mockResolvedValueOnce(RIGHE_BOM);
+
+    const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
+    expect(id).toBe('commessa-vuota');
+
+    const updateCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('UPDATE "commessa"'));
+    expect(updateCommessa).toBeDefined();
+    expect(updateCommessa![2]).toBe('bom-1');
+    expect(updateCommessa![3]).toBe(3);
+
+    const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
+    expect(insertRighe).toHaveLength(RIGHE_BOM.length);
+  });
+
+  it('lascia vuota una commessa esistente se la richiesta CONVERTITA non ha ancora una BOM', async () => {
+    queryRaw
+      .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
+      .mockResolvedValueOnce([{ id: 'commessa-vuota', righeCount: 0 }])
+      .mockResolvedValueOnce([]);
+
+    const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
+    expect(id).toBe('commessa-vuota');
+    expect(executeRaw).not.toHaveBeenCalled();
   });
 
   it('crea comunque la commessa (senza righe) se la richiesta CONVERTITA non ha ancora una BOM', async () => {
@@ -198,10 +226,9 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
 
-    // Ogni SELECT che precede l'INSERT passa esplicitamente tenantId come parametro.
     expect(queryRaw.mock.calls[0]).toContain(TENANT_ID); // SELECT richiesta
-    expect(queryRaw.mock.calls[1]).toContain(TENANT_ID); // SELECT esistenti
-    expect(queryRaw.mock.calls[2]).toContain(TENANT_ID); // SELECT bom
+    expect(queryRaw.mock.calls[1]).toContain(TENANT_ID); // SELECT commessa esistente
+    expect(queryRaw.mock.calls[2]).toContain(TENANT_ID); // SELECT BOM
   });
 
   it('LIMITE AMBIENTALE — propaga l\'errore se un INSERT di riga fallisce, senza inghiottirlo (precondizione per il rollback di Prisma; il rollback fisico su Postgres non è verificabile in questo ambiente)', async () => {
@@ -213,17 +240,12 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     executeRaw
       .mockResolvedValueOnce(undefined) // INSERT commessa: ok
+      .mockResolvedValueOnce(undefined) // UPDATE commessa: ok
       .mockResolvedValueOnce(undefined) // INSERT riga 1: ok
       .mockRejectedValueOnce(new Error('violazione vincolo simulata su commessa_riga_produzione')); // INSERT riga 2: fallisce
 
     await expect(creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID)).rejects.toThrow(
       'violazione vincolo simulata su commessa_riga_produzione',
     );
-    // NB: con `db.$transaction` mockato non è possibile osservare un vero
-    // rollback Postgres (non esiste un database dietro questo test). Quello
-    // che questo test dimostra è che `creaCommessaDaRichiesta` non cattura né
-    // maschera l'errore: lo lascia risalire al chiamante di `db.$transaction`,
-    // che è esattamente il comportamento richiesto perché il client Prisma
-    // reale, in produzione, esegua il ROLLBACK automatico della transazione.
   });
 });
