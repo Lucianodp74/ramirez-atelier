@@ -166,9 +166,9 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
       throw new Error('La commessa può essere creata solo da una richiesta CONVERTITA.');
     }
 
-    // Una commessa vuota può essere stata creata prima della conferma della BOM.
-    // In quel caso non dobbiamo restituirla alla cieca: se oggi esiste una BOM
-    // confermata, la commessa va completata con lo snapshot operativo congelato.
+    // Prima verifichiamo la commessa esistente. Se contiene già righe di
+    // produzione, quello snapshot è la verità operativa e va lasciato intatto,
+    // senza dipendere dallo stato attuale della BOM.
     const esistenti = await tx.$queryRaw<Array<{ id: string; righeCount: number }>>`
       SELECT c."id", COUNT(cr."id")::int AS "righeCount"
       FROM "commessa" c
@@ -177,6 +177,8 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
       GROUP BY c."id"
       LIMIT 1
     `;
+
+    if (esistenti[0]?.righeCount > 0) return esistenti[0].id;
 
     const bom = await tx.$queryRaw<Array<{
       id: string;
@@ -245,10 +247,6 @@ export async function creaCommessaDaRichiesta(tenantId: string, richiestaId: str
     };
 
     if (esistenti[0]) {
-      // Se lo snapshot esiste già, la commessa è realmente idempotente: non
-      // tocchiamo mai una produzione già congelata.
-      if (esistenti[0].righeCount > 0) return esistenti[0].id;
-
       // Commessa già creata ma vuota: completa lo snapshot solo ora che la BOM
       // confermata è disponibile. Se non c'è BOM, lasciamo la commessa vuota.
       if (fonteBom) await copiaSnapshotBom(esistenti[0].id);
