@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { db } from '@/server/db';
 
 export type StatoBom = 'BOZZA' | 'CONFERMATA' | 'CHIUSA';
@@ -190,7 +191,7 @@ export async function generaPropostaBom(tenantId: string, richiestaId: string): 
   const listino = await db.$queryRaw<Array<{ codice: string; nome: string; tipo: string; unita: string; prezzo: number; materiale: string | null }>>`
     SELECT "codice", "nome", "tipo", "unita", "prezzo"::float8 AS "prezzo", "materiale"
     FROM "listino_prezzo"
-    WHERE "tenantId" = ${tenantId} AND "attivo" = true AND "codice" IN (${db.join(codici)})
+    WHERE "tenantId" = ${tenantId} AND "attivo" = true AND "codice" IN (${Prisma.join(codici)})
   `;
   const byCode = new Map(listino.map((item) => [item.codice, item]));
 
