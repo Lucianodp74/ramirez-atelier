@@ -62,3 +62,23 @@ body {
 * {
   border-color: var(--border);
 }
+
+/* Home preview: header piu leggero e gerarchia piu pulita. */
+main > header img {
+  width: 88px !important;
+}
+
+/* L'area falegname non deve competere con il percorso cliente nella testata. */
+main > header a[href="/admin/login"] {
+  display: none !important;
+}
+
+/* L'accesso professionale resta disponibile in fondo alla Home, nel footer. */
+main > section:nth-of-type(2) a[href="/admin/login"] {
+  display: none !important;
+}
+
+/* La sezione di accesso al configuratore torna essenziale e non affollata. */
+main > section:nth-of-type(2) > div > div {
+  grid-template-columns: 1fr !important;
+}
