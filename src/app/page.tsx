@@ -6,7 +6,7 @@ import { StellaHero3D } from '@/components/StellaHero3D';
 
 const fasi = [
   { numero: '01', titolo: 'Racconta lo spazio', descrizione: 'Misure, esigenze e ispirazioni. Anche se il progetto è ancora solo un’idea.' },
-  { numero: '02', titolo: 'Componi e stima', descrizione: 'Usa il preventivatore per costruire una prima configurazione e orientarti sul budget.' },
+  { numero: '02', titolo: 'Configura e stima', descrizione: 'Usa il preventivatore per costruire una prima configurazione e orientarti sul budget.' },
   { numero: '03', titolo: 'Definiamo il progetto', descrizione: 'Sopralluogo, materiali, dettagli e produzione: tutto viene definito insieme.' },
 ];
 
@@ -27,15 +27,15 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-md">
-        <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-10">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-10">
           <Link href="/" aria-label="Ramirez Atelier" className="block shrink-0">
-            <Image src="/logo-completo.png" alt="Ramirez Atelier — Arredi su misura" width={320} height={178} priority className="h-auto w-[92px] sm:w-[108px]" />
+            <Image src="/logo-completo.png" alt="Ramirez Atelier — Arredi su misura" width={320} height={178} priority className="h-auto w-[78px] sm:w-[88px]" />
           </Link>
-          <nav className="hidden items-center gap-7 text-[10px] uppercase tracking-[0.19em] text-muted-foreground md:flex" aria-label="Navigazione principale">
+          <nav className="hidden items-center gap-8 text-[10px] uppercase tracking-[0.19em] text-muted-foreground md:flex" aria-label="Navigazione principale">
             <Link href="/progetti" className="transition-colors hover:text-foreground">Progetti</Link>
             <a href="#metodo" className="transition-colors hover:text-foreground">Metodo</a>
             <a href="#atelier" className="transition-colors hover:text-foreground">Atelier</a>
-            <Link href="/preventivatore" className="transition-colors hover:text-foreground">Preventivatore</Link>
+            <Link href="/preventivatore" className="transition-colors hover:text-foreground">Configuratore</Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/progetti" className="hidden text-[10px] uppercase tracking-[0.17em] text-muted-foreground sm:inline">Esplora →</Link>
@@ -55,12 +55,12 @@ export default function HomePage() {
               <br />
               <span className="italic text-[#A6532B]">costruita per durare.</span>
             </h1>
-            <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Arredi su misura pensati intorno al tuo spazio. Progetto, materiali e lavorazione artigianale in un unico percorso.</p>
+            <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Arredi su misura pensati intorno al tuo spazio. Progetto, configurazione, materiali e lavorazione artigianale in un unico percorso.</p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Button size="lg" variant="accent" className="border-[#A6532B] bg-[#A6532B] px-7 text-white shadow-[0_12px_32px_rgba(166,83,43,0.20)] hover:bg-[#8F4525]" asChild>
                 <Link href="/richiesta">Raccontaci il tuo progetto</Link>
               </Button>
-              <Link href="/preventivatore" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.17em] text-[#8F4525] transition-opacity hover:opacity-60">Apri il preventivatore <ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href="/preventivatore" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.17em] text-[#8F4525] transition-opacity hover:opacity-60">Apri il configuratore <ArrowRight className="h-3.5 w-3.5" /></Link>
             </div>
             <div className="mt-10 grid max-w-xl grid-cols-3 border-t border-border/70 pt-5 text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
               <span>Su misura</span><span className="text-center">Artigianale</span><span className="text-right">Dalla misura alla posa</span>
@@ -87,8 +87,8 @@ export default function HomePage() {
           <Link href="/preventivatore" className="group border-b border-border py-9 sm:border-b-0 sm:border-r sm:px-8">
             <p className="text-[9px] uppercase tracking-[0.25em] text-[#A6532B]">02 · Configurazione</p>
             <h2 className="mt-3 font-serif text-2xl font-light">Costruisci una prima stima</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Componi dimensioni e moduli nel preventivatore e parti da una base concreta.</p>
-            <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[#8F4525]">Apri il preventivatore <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Componi dimensioni e moduli nel configuratore e parti da una base concreta.</p>
+            <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[#8F4525]">Apri il configuratore <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
           </Link>
           <Link href="/richiesta" className="group py-9 sm:pl-8">
             <p className="text-[9px] uppercase tracking-[0.25em] text-[#A6532B]">03 · Progetto</p>
@@ -96,6 +96,29 @@ export default function HomePage() {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Quando vuoi fare sul serio, raccontaci cosa vuoi realizzare e partiamo insieme.</p>
             <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[#8F4525]">Inizia la richiesta <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
           </Link>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-background py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid items-stretch gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+            <Link href="/preventivatore" className="group relative overflow-hidden border border-border bg-card p-8 sm:p-10">
+              <div className="absolute right-8 top-8 rounded-full border border-[#A6532B]/30 p-2 text-[#A6532B]"><Ruler className="h-4 w-4" strokeWidth={1.4} /></div>
+              <p className="text-[9px] uppercase tracking-[0.27em] text-[#A6532B]">Configuratore Ramirez</p>
+              <h2 className="mt-5 max-w-lg font-serif text-3xl font-light sm:text-4xl">Parti dalle misure.<br />Arriva a un progetto.</h2>
+              <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground">Definisci una composizione, esplora le possibilità e costruisci una prima stima. Quando il progetto è pronto, lo portiamo nel percorso tecnico dell’Atelier.</p>
+              <span className="mt-8 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.17em] text-[#8F4525]">Inizia la configurazione <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+            <div className="border border-border/70 bg-[#F7F3ED] p-8 sm:p-10">
+              <p className="text-[9px] uppercase tracking-[0.27em] text-[#A6532B]">Dal digitale all’artigianato</p>
+              <p className="mt-5 font-serif text-2xl font-light leading-tight">La configurazione non sostituisce il progetto: lo prepara.</p>
+              <div className="mt-7 space-y-4 border-t border-[#A6532B]/20 pt-6 text-sm text-muted-foreground">
+                <div className="flex gap-3"><span className="font-serif text-[#A6532B]">01</span><span>Prima stima e composizione</span></div>
+                <div className="flex gap-3"><span className="font-serif text-[#A6532B]">02</span><span>Verifica tecnica e materiali</span></div>
+                <div className="flex gap-3"><span className="font-serif text-[#A6532B]">03</span><span>Produzione e posa su misura</span></div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -140,9 +163,9 @@ export default function HomePage() {
           <div>
             <div className="mb-4 flex items-center gap-3 text-[#A6532B]"><Sparkles className="h-4 w-4" strokeWidth={1.5} /><p className="text-[9px] uppercase tracking-[0.25em]">Su misura, davvero</p></div>
             <h2 className="max-w-3xl font-serif text-4xl font-light tracking-tight sm:text-5xl">Hai già un&apos;idea? Dalle una misura.</h2>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">Puoi iniziare dal preventivatore oppure raccontarci direttamente il progetto. La parte tecnica viene dopo: prima capiamo cosa deve funzionare nella tua casa.</p>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">Puoi iniziare dal configuratore oppure raccontarci direttamente il progetto. La parte tecnica viene dopo: prima capiamo cosa deve funzionare nella tua casa.</p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/preventivatore" className="inline-flex items-center gap-2 bg-[#A6532B] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#8F4525]">Apri il preventivatore <Ruler className="h-4 w-4" /></Link>
+              <Link href="/preventivatore" className="inline-flex items-center gap-2 bg-[#A6532B] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#8F4525]">Apri il configuratore <Ruler className="h-4 w-4" /></Link>
               <Link href="/richiesta" className="inline-flex items-center gap-2 border border-border px-6 py-3 text-sm font-medium transition-colors hover:border-[#A6532B] hover:text-[#8F4525]">Parliamo del progetto <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </div>
@@ -162,9 +185,12 @@ export default function HomePage() {
               <a href="mailto:info@ramirezatelier.it" className="mt-2 inline-block text-sm text-[#8F4525] underline-offset-4 hover:underline">info@ramirezatelier.it</a>
             </div>
           </div>
-          <LegalLinks />
-          <div className="mt-5 flex justify-end text-[9px] uppercase tracking-[0.15em]">
-            <Link href="/admin/login" className="text-muted-foreground transition-colors hover:text-[#8F4525]">Area riservata falegname</Link>
+          <div className="mt-8 flex flex-col gap-4 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <LegalLinks />
+            <div className="text-center sm:text-right">
+              <p className="text-[8px] uppercase tracking-[0.18em] text-muted-foreground">Accesso professionale</p>
+              <p className="mt-1 text-[9px] text-muted-foreground">Area riservata falegname · Preventivatore</p>
+            </div>
           </div>
         </div>
       </footer>
