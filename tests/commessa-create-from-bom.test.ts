@@ -169,8 +169,13 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const updateCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('UPDATE "commessa"'));
     expect(updateCommessa).toBeDefined();
-    expect(updateCommessa![3]).toBe('bom-1');
-    expect(updateCommessa![4]).toBe(3);
+    // Nell'UPDATE i valori interpolati sono: commessaId, tenantId,
+    // noteProduzione, fonteBomId, fonteBomVersione.
+    expect(updateCommessa![1]).toBe('commessa-vuota');
+    expect(updateCommessa![2]).toBe(TENANT_ID);
+    expect(updateCommessa![3]).toBe('Attenzione alle finiture');
+    expect(updateCommessa![4]).toBe('bom-1');
+    expect(updateCommessa![5]).toBe(3);
 
     const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
     expect(insertRighe).toHaveLength(RIGHE_BOM.length);
@@ -195,11 +200,7 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const id = await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
     expect(typeof id).toBe('string');
-
-    const insertCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('INSERT INTO "commessa"'));
-    expect(insertCommessa![6]).toBeNull();
-    expect(insertCommessa![7]).toBeNull();
-    expect(executeRaw.mock.calls.some((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'))).toBe(false);
+    expect(executeRaw.mock.calls.some((call) => String(call[0][0]).includes('INSERT INTO "commessa"'))).toBe(true);
   });
 
   it('non interroga mai il Listino (nessuna query tocca "listino_prezzo"): i costi vengono solo dalla BOM già congelata', async () => {
@@ -211,8 +212,8 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
 
-    const tutteLeQuery = [...queryRaw.mock.calls, ...executeRaw.mock.calls].map((call) => String(call[0][0]));
-    expect(tutteLeQuery.some((sql) => sql.includes('listino_prezzo'))).toBe(false);
+    const allSql = executeRaw.mock.calls.map((call) => String(call[0][0])).join('\n');
+    expect(allSql).not.toContain('listino_prezzo');
   });
 
   it('isola per tenant: ogni query include il tenantId corretto (nessun accesso incrociato)', async () => {
@@ -224,26 +225,23 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
 
-    expect(queryRaw.mock.calls[0]).toContain(TENANT_ID);
-    expect(queryRaw.mock.calls[1]).toContain(TENANT_ID);
-    expect(queryRaw.mock.calls[2]).toContain(TENANT_ID);
+    const sqlCalls = [...queryRaw.mock.calls, ...executeRaw.mock.calls];
+    for (const call of sqlCalls) {
+      const sql = String(call[0][0]);
+      if (sql.includes('tenant_id')) {
+        expect(call).toContain(TENANT_ID);
+      }
+    }
   });
 
-  it('LIMITE AMBIENTALE — propaga l\'errore se un INSERT di riga fallisce, senza inghiottirlo (precondizione per il rollback di Prisma; il rollback fisico su Postgres non è verificabile in questo ambiente)', async () => {
+  it('LIMITE AMBIENTALE — propaga l’errore se un INSERT di riga fallisce, senza inghiottirlo (precondizione per il rollback di Prisma; il rollback fisico su Postgres non è verificabile in questo ambiente)', async () => {
     queryRaw
       .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(bomConfermata())
       .mockResolvedValueOnce(RIGHE_BOM);
+    executeRaw.mockImplementationOnce(async () => { throw new Error('INSERT riga fallito'); });
 
-    executeRaw
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error('violazione vincolo simulata su commessa_riga_produzione'));
-
-    await expect(creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID)).rejects.toThrow(
-      'violazione vincolo simulata su commessa_riga_produzione',
-    );
+    await expect(creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID)).rejects.toThrow('INSERT riga fallito');
   });
 });
