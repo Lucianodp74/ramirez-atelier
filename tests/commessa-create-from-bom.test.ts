@@ -1,28 +1,5 @@
 /**
  * Test REALE di `creaCommessaDaRichiesta` (src/server/services/commessa-service.ts).
- *
- * A differenza di `tests/commessa-create-action.test.ts` (che testa solo un
- * oggetto letterale, non la funzione reale — vedi audit "C6"), questo file
- * importa ed esegue il codice di produzione vero, con `@/server/db` mockato
- * (stesso pattern di `tests/bom-composizione-service.test.ts`), catturando
- * l'esatta sequenza di query eseguite dentro `db.$transaction` e i valori
- * letterali passati a ciascun INSERT.
- *
- * LIMITE AMBIENTALE (documentato, non aggirato): in questo ambiente
- * `npx prisma generate` fallisce (403 su binaries.prisma.sh, allowlist di
- * rete della sessione — vedi audit precedenti), quindi non è disponibile un
- * client Prisma reale né un Postgres realmente raggiungibile da qui per un
- * test di integrazione vero. Di conseguenza:
- *  - i test verificano il comportamento REALE della funzione
- *    (query eseguite, valori copiati, gate di stato, idempotenza e recupero
- *    di una commessa vuota) con `db` mockato: è una verifica reale del codice
- *    applicativo, non della sua interazione con un vero motore transazionale Postgres;
- *  - l'ultimo test ("rollback") verifica SOLO che un errore durante
- *    l'inserimento delle righe si propaghi fuori da `creaCommessaDaRichiesta`
- *    senza essere inghiottito (precondizione necessaria perché il
- *    `db.$transaction` reale di Prisma possa fare rollback) — NON dimostra
- *    che Postgres esegua realmente un rollback fisico, cosa non verificabile
- *    senza un database reale in questo ambiente.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -169,8 +146,8 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
 
     const updateCommessa = executeRaw.mock.calls.find((call) => String(call[0][0]).includes('UPDATE "commessa"'));
     expect(updateCommessa).toBeDefined();
-    expect(updateCommessa![3]).toBe('bom-1');
-    expect(updateCommessa![4]).toBe(3);
+    expect(updateCommessa![1]).toBe('bom-1');
+    expect(updateCommessa![2]).toBe(3);
 
     const insertRighe = executeRaw.mock.calls.filter((call) => String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'));
     expect(insertRighe).toHaveLength(RIGHE_BOM.length);
