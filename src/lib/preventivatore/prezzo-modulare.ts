@@ -88,9 +88,10 @@ const euro = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 const m2 = (cm2: number) => cm2 / 10000;
 const positivo = (v: number | undefined, fallback: number) => Number.isFinite(v) && (v as number) >= 0 ? v as number : fallback;
 
-function quantitaConfigurazione(config: ConfigurazioneModulo) {
+function quantitaConfigurazione(config: ConfigurazioneModulo, larghezzaCm?: number) {
+  const porteBattenti = (larghezzaCm ?? 0) <= 60 ? 1 : 2;
   return {
-    porte: config === '1_PORTA' ? 1 : config === '2_PORTE' ? 2 : config === 'PORTE_CASSETTI' ? 2 : 0,
+    porte: config === '1_PORTA' ? 1 : config === '2_PORTE' ? 2 : config === 'ANTE_BATTENTI' ? porteBattenti : config === 'ANTE_SCORREVOLI' ? 2 : config === 'PORTE_CASSETTI' ? 2 : 0,
     cassetti: config === '3_CASSETTI' ? 3 : config === '4_CASSETTI' ? 4 : config === 'PORTE_CASSETTI' ? 2 : 0,
   };
 }
@@ -105,7 +106,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
 
   const spessoreMm = positivo(tariffe.spessorePannelloMm, 18);
   const sfrido = positivo(tariffe.sfridoPercentuale, 0) / 100;
-  const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione);
+  const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione, modulo.larghezzaCm);
   const ripiani = modulo.ripiani ?? (modulo.configurazione === 'APERTO' ? 2 : 1);
   const haFrontale = porte > 0 || cassetti > 0;
 
