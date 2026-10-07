@@ -1,7 +1,7 @@
 export type ModuloTipo = 'BASE' | 'PENSILE' | 'COLONNA' | 'CASSETTIERA' | 'LIBRERIA';
 export type Materiale = 'TRUCIOLARE' | 'MDF' | 'MULTISTRATO';
 export type Finitura = 'MELAMINICO' | 'LAMINATO' | 'LACCATO';
-export type ConfigurazioneModulo = 'APERTO' | '1_PORTA' | '2_PORTE' | '3_CASSETTI' | '4_CASSETTI' | 'PORTE_CASSETTI';
+export type ConfigurazioneModulo = 'APERTO' | '1_PORTA' | '2_PORTE' | '3_CASSETTI' | '4_CASSETTI' | 'PORTE_CASSETTI' | 'ANTE_BATTENTI' | 'ANTE_SCORREVOLI';
 
 export type ModuloCatalogo = {
   codice: ModuloTipo;
@@ -16,7 +16,7 @@ export type ModuloCatalogo = {
 export const CATALOGO_MODULI: readonly ModuloCatalogo[] = [
   { codice: 'BASE', nome: 'Base', min: { larghezzaCm: 30, altezzaCm: 60, profonditaCm: 30 }, max: { larghezzaCm: 180, altezzaCm: 120, profonditaCm: 70 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['APERTO','1_PORTA','2_PORTE','3_CASSETTI','4_CASSETTI','PORTE_CASSETTI'] },
   { codice: 'PENSILE', nome: 'Pensile', min: { larghezzaCm: 30, altezzaCm: 30, profonditaCm: 20 }, max: { larghezzaCm: 180, altezzaCm: 120, profonditaCm: 45 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['APERTO','1_PORTA','2_PORTE'] },
-  { codice: 'COLONNA', nome: 'Colonna', min: { larghezzaCm: 30, altezzaCm: 120, profonditaCm: 30 }, max: { larghezzaCm: 120, altezzaCm: 280, profonditaCm: 70 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['APERTO','1_PORTA','2_PORTE','PORTE_CASSETTI'] },
+  { codice: 'COLONNA', nome: 'Colonna', min: { larghezzaCm: 30, altezzaCm: 120, profonditaCm: 30 }, max: { larghezzaCm: 120, altezzaCm: 280, profonditaCm: 70 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['ANTE_BATTENTI','ANTE_SCORREVOLI'] },
   { codice: 'CASSETTIERA', nome: 'Cassettiera', min: { larghezzaCm: 30, altezzaCm: 30, profonditaCm: 30 }, max: { larghezzaCm: 140, altezzaCm: 140, profonditaCm: 70 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['3_CASSETTI','4_CASSETTI'] },
   { codice: 'LIBRERIA', nome: 'Libreria / contenitore', min: { larghezzaCm: 40, altezzaCm: 60, profonditaCm: 20 }, max: { larghezzaCm: 300, altezzaCm: 280, profonditaCm: 60 }, materiali: ['TRUCIOLARE','MDF','MULTISTRATO'], finiture: ['MELAMINICO','LAMINATO','LACCATO'], configurazioni: ['APERTO','1_PORTA','2_PORTE'] },
 ];
