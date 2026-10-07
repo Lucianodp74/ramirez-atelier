@@ -29,6 +29,9 @@ export type ModuloConfigurato = {
   profonditaCm: number;
   materiale: Materiale;
   finitura: Finitura;
+  materialeAnte?: Materiale;
+  finituraStruttura?: Finitura;
+  finituraAnte?: Finitura;
   configurazione: ConfigurazioneModulo;
   ripiani?: number;
 };
@@ -45,6 +48,9 @@ export function validaModulo(m: ModuloConfigurato): string[] {
   for (const [nome, value, min, max] of dims) if (!Number.isFinite(value) || value < min || value > max) errors.push(`${nome} fuori limite (${min}-${max} cm).`);
   if (!catalogo.materiali.includes(m.materiale)) errors.push('Materiale non disponibile per il modulo.');
   if (!catalogo.finiture.includes(m.finitura)) errors.push('Finitura non disponibile per il modulo.');
+  if (m.materialeAnte && !catalogo.materiali.includes(m.materialeAnte)) errors.push('Materiale ante non disponibile per il modulo.');
+  if (m.finituraStruttura && !catalogo.finiture.includes(m.finituraStruttura)) errors.push('Finitura struttura non disponibile per il modulo.');
+  if (m.finituraAnte && !catalogo.finiture.includes(m.finituraAnte)) errors.push('Finitura ante non disponibile per il modulo.');
   if (!catalogo.configurazioni.includes(m.configurazione)) errors.push('Configurazione non disponibile per il modulo.');
   if (m.ripiani !== undefined && (!Number.isInteger(m.ripiani) || m.ripiani < 0 || m.ripiani > 20)) errors.push('Numero ripiani non valido.');
   return errors;
