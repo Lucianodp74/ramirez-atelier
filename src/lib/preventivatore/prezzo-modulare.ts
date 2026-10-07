@@ -7,6 +7,7 @@ export type TariffePreventivatore = {
   bordoEuroMl: number;
   retroEuroM2: number;
   ferramentaPerPorta: number;
+  ferramentaPerScorrevole?: number;
   ferramentaPerCassetto: number;
   oreBase: number;
   orePerM2: number;
@@ -117,7 +118,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const frontaliM2 = haFrontale ? m2(modulo.larghezzaCm * modulo.altezzaCm) : 0;
   const superficie = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2 + frontaliM2) * (1 + sfrido);
   const retro = schienaleM2;
-  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
+  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + ripiani * modulo.larghezzaCm) / 100;
 
   const materialeAnte = modulo.materialeAnte ?? modulo.materiale;
   const finituraStruttura = modulo.finituraStruttura ?? modulo.finitura;
@@ -127,7 +128,8 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const finitura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[finituraStruttura] + frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
   const costoRetro = retro * tariffe.retroEuroM2;
-  const ferramenta = porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
+  if (modulo.configurazione === 'ANTE_SCORREVOLI' && !Number.isFinite(tariffe.ferramentaPerScorrevole)) throw new Error('Tariffa ferramenta ante scorrevoli non configurata nel Listino.');
+  const ferramenta = modulo.configurazione === 'ANTE_SCORREVOLI' ? porte * (tariffe.ferramentaPerScorrevole as number) + cassetti * tariffe.ferramentaPerCassetto : porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
   const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
   const manodopera = ore * tariffe.costoOra;
   const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
@@ -148,7 +150,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   }
 
   componenti.push(
-    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali; non sostituisce il calcolo esecutivo delle coste a vista.' },
+    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali e dei fronti dei ripiani; non sostituisce il calcolo esecutivo delle coste a vista.' },
     { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: porte + cassetti },
     { codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', categoria: 'MANODOPERA', unita: 'H', quantita: euro(ore) },
   );
