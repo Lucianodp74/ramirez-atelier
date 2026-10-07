@@ -7,7 +7,7 @@ export type TariffePreventivatore = {
   bordoEuroMl: number;
   retroEuroM2: number;
   ferramentaPerPorta: number;
-  ferramentaPerScorrevole?: number;
+  ferramentaSistemaScorrevole?: number;
   ferramentaPerCassetto: number;
   oreBase: number;
   orePerM2: number;
@@ -128,8 +128,8 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const finitura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[finituraStruttura] + frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
   const costoRetro = retro * tariffe.retroEuroM2;
-  if (modulo.configurazione === 'ANTE_SCORREVOLI' && !Number.isFinite(tariffe.ferramentaPerScorrevole)) throw new Error('Tariffa ferramenta ante scorrevoli non configurata nel Listino.');
-  const ferramenta = modulo.configurazione === 'ANTE_SCORREVOLI' ? porte * (tariffe.ferramentaPerScorrevole as number) + cassetti * tariffe.ferramentaPerCassetto : porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
+  if (modulo.configurazione === 'ANTE_SCORREVOLI' && !Number.isFinite(tariffe.ferramentaSistemaScorrevole)) throw new Error('Tariffa sistema ante scorrevoli non configurata nel Listino.');
+  const ferramenta = modulo.configurazione === 'ANTE_SCORREVOLI' ? (tariffe.ferramentaSistemaScorrevole as number) : porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
   const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
   const manodopera = ore * tariffe.costoOra;
   const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
