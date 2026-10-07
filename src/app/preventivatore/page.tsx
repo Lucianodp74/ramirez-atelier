@@ -1,6 +1,4 @@
 import { PreventivatoreModulare } from '@/components/preventivatore/PreventivatoreModulare';
-import { PreventivatoreInspiration } from '@/components/preventivatore/PreventivatoreInspiration';
-import { GalleriaProgettiPreimpostati } from '@/components/preventivatore/GalleriaProgettiPreimpostati';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { recuperaProgettoPreimpostatoPubblicato } from '@/server/services/progetto-preimpostato-service';
 
@@ -30,10 +28,6 @@ export default async function PreventivatorePage({
   }
 
   return (
-    <>
-      <PreventivatoreInspiration />
-      <GalleriaProgettiPreimpostati />
-      <PreventivatoreModulare key={preset ?? 'default'} moduliIniziali={moduliIniziali} />
-    </>
+    <PreventivatoreModulare key={preset ?? 'default'} moduliIniziali={moduliIniziali} />
   );
 }

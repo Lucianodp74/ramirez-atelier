@@ -7,6 +7,7 @@ export type TariffePreventivatore = {
   bordoEuroMl: number;
   retroEuroM2: number;
   ferramentaPerPorta: number;
+  ferramentaPerScorrevole?: number;
   ferramentaPerCassetto: number;
   oreBase: number;
   orePerM2: number;
@@ -88,9 +89,10 @@ const euro = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 const m2 = (cm2: number) => cm2 / 10000;
 const positivo = (v: number | undefined, fallback: number) => Number.isFinite(v) && (v as number) >= 0 ? v as number : fallback;
 
-function quantitaConfigurazione(config: ConfigurazioneModulo) {
+function quantitaConfigurazione(config: ConfigurazioneModulo, larghezzaCm?: number) {
+  const porteBattenti = (larghezzaCm ?? 0) <= 60 ? 1 : 2;
   return {
-    porte: config === '1_PORTA' ? 1 : config === '2_PORTE' ? 2 : config === 'PORTE_CASSETTI' ? 2 : 0,
+    porte: config === '1_PORTA' ? 1 : config === '2_PORTE' ? 2 : config === 'ANTE_BATTENTI' ? porteBattenti : config === 'ANTE_SCORREVOLI' ? 2 : config === 'PORTE_CASSETTI' ? 2 : 0,
     cassetti: config === '3_CASSETTI' ? 3 : config === '4_CASSETTI' ? 4 : config === 'PORTE_CASSETTI' ? 2 : 0,
   };
 }
@@ -105,7 +107,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
 
   const spessoreMm = positivo(tariffe.spessorePannelloMm, 18);
   const sfrido = positivo(tariffe.sfridoPercentuale, 0) / 100;
-  const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione);
+  const { porte, cassetti } = quantitaConfigurazione(modulo.configurazione, modulo.larghezzaCm);
   const ripiani = modulo.ripiani ?? (modulo.configurazione === 'APERTO' ? 2 : 1);
   const haFrontale = porte > 0 || cassetti > 0;
 
@@ -116,13 +118,18 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const frontaliM2 = haFrontale ? m2(modulo.larghezzaCm * modulo.altezzaCm) : 0;
   const superficie = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2 + frontaliM2) * (1 + sfrido);
   const retro = schienaleM2;
-  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
+  const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + ripiani * modulo.larghezzaCm) / 100;
 
-  const materiale = superficie * tariffe.materialeEuroM2[modulo.materiale];
-  const finitura = (frontaliM2 + fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[modulo.finitura];
+  const materialeAnte = modulo.materialeAnte ?? modulo.materiale;
+  const finituraStruttura = modulo.finituraStruttura ?? modulo.finitura;
+  const finituraAnte = modulo.finituraAnte ?? modulo.finitura;
+  const superficieStruttura = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2) * (1 + sfrido);
+  const materiale = superficieStruttura * tariffe.materialeEuroM2[modulo.materiale] + frontaliM2 * (1 + sfrido) * tariffe.materialeEuroM2[materialeAnte];
+  const finitura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[finituraStruttura] + frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
   const costoRetro = retro * tariffe.retroEuroM2;
-  const ferramenta = porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
+  if (modulo.configurazione === 'ANTE_SCORREVOLI' && !Number.isFinite(tariffe.ferramentaPerScorrevole)) throw new Error('Tariffa sistema ante scorrevoli non configurata nel Listino.');
+  const ferramenta = modulo.configurazione === 'ANTE_SCORREVOLI' ? (tariffe.ferramentaPerScorrevole as number) : porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
   const ore = tariffe.oreBase + superficie * tariffe.orePerM2 + porte * tariffe.orePerPorta + cassetti * tariffe.orePerCassetto + ripiani * tariffe.orePerRipiano;
   const manodopera = ore * tariffe.costoOra;
   const costoProduzione = euro(materiale + finitura + costoBordo + costoRetro + ferramenta + manodopera);
@@ -143,7 +150,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   }
 
   componenti.push(
-    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali; non sostituisce il calcolo esecutivo delle coste a vista.' },
+    { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali e dei fronti dei ripiani; non sostituisce il calcolo esecutivo delle coste a vista.' },
     { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: porte + cassetti },
     { codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', categoria: 'MANODOPERA', unita: 'H', quantita: euro(ore) },
   );
