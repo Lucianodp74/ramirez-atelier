@@ -37,6 +37,46 @@ function catalogoPer(tipo: ModuloTipo) {
   return catalogo;
 }
 
+
+function costruisciColonneArmadio(larghezzaTotale: number, altezzaCm: number, profonditaCm: number): ModuloConfigurato[] {
+  const standard = [120, 90, 60, 45];
+  const totale = Math.round(larghezzaTotale);
+  if (!Number.isFinite(totale) || totale < 30 || totale > 600) return [];
+
+  // Privilegiamo le larghezze standard. Se il residuo non è producibile come
+  // modulo standard, lo trasformiamo in un solo elemento fuori misura.
+  let migliore: { standard: number[]; residuo: number } | null = null;
+  for (let a = 0; a <= Math.floor(totale / 120); a++) {
+    for (let b = 0; b <= Math.floor(totale / 90); b++) {
+      for (let c = 0; c <= Math.floor(totale / 60); c++) {
+        for (let d = 0; d <= Math.floor(totale / 45); d++) {
+          const pezzi = [...Array(a).fill(120), ...Array(b).fill(90), ...Array(c).fill(60), ...Array(d).fill(45)];
+          const somma = pezzi.reduce((s, n) => s + n, 0);
+          const residuo = totale - somma;
+          if (residuo < 0 || (residuo > 0 && (residuo < 30 || residuo > 120))) continue;
+          if (!migliore || residuo < migliore.residuo || (residuo === migliore.residuo && pezzi.length < migliore.standard.length)) {
+            migliore = { standard: pezzi, residuo };
+          }
+        }
+      }
+    }
+  }
+
+  const larghezze = migliore ? [...migliore.standard, ...(migliore.residuo > 0 ? [migliore.residuo] : [])] : [totale];
+  return larghezze.map((larghezza) => {
+    const base = nuovoModulo('COLONNA');
+    const anta = larghezza <= 60 ? '1_PORTA' : '2_PORTE';
+    return {
+      ...base,
+      larghezzaCm: larghezza,
+      altezzaCm,
+      profonditaCm,
+      configurazione: anta,
+      ripiani: 4,
+    };
+  });
+}
+
 function nuovoModulo(tipo: ModuloTipo): ModuloConfigurato {
   const c = catalogoPer(tipo);
   return { id: crypto.randomUUID(), tipo, larghezzaCm: Math.max(c.min.larghezzaCm, Math.min(80, c.max.larghezzaCm)), altezzaCm: Math.max(c.min.altezzaCm, Math.min(100, c.max.altezzaCm)), profonditaCm: Math.max(c.min.profonditaCm, Math.min(40, c.max.profonditaCm)), materiale: c.materiali[0], finitura: c.finiture[0], configurazione: c.configurazioni[0], ripiani: 1 };
@@ -60,6 +100,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   const [step, setStep] = useState(1);
   const [projectType, setProjectType] = useState('ALTRO');
   const [layout, setLayout] = useState('LINEARE');
+  const [larghezzaTotaleArmadio, setLarghezzaTotaleArmadio] = useState(250);
   const [stima, setStima] = useState<number | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
   const [richiestaAperta, setRichiestaAperta] = useState(false);
@@ -81,14 +122,22 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   }
 
   function preparaArmadio() {
-    const moduliArmadio = Array.from({ length: 3 }, () => {
-      const base = nuovoModulo('COLONNA');
-      return { ...base, larghezzaCm: 80, altezzaCm: 260, profonditaCm: 60, materiale: 'TRUCIOLARE' as const, finitura: 'MELAMINICO' as const, configurazione: '2_PORTE' as const, ripiani: 4 };
-    });
+    setLarghezzaTotaleArmadio(250);
+    const moduliArmadio = costruisciColonneArmadio(250, 260, 60);
     setModuli(moduliArmadio);
     setIndice(0);
     setLayout('COMPOSIZIONE');
     resetRisultato();
+  }
+
+  function aggiornaLarghezzaTotaleArmadio(valore: number) {
+    setLarghezzaTotaleArmadio(valore);
+    const colonne = costruisciColonneArmadio(valore, modulo?.altezzaCm ?? 260, modulo?.profonditaCm ?? 60);
+    if (colonne.length) {
+      setModuli(colonne);
+      setIndice(0);
+      resetRisultato();
+    }
   }
   function aggiungi(tipo: ModuloTipo) {
     if (moduli.length >= 30) return;
@@ -107,8 +156,17 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   }
   function vaiAvanti() {
     if (step === 2) {
-      const invalid = modulo.larghezzaCm < catalogo.min.larghezzaCm || modulo.larghezzaCm > catalogo.max.larghezzaCm || modulo.altezzaCm < catalogo.min.altezzaCm || modulo.altezzaCm > catalogo.max.altezzaCm || modulo.profonditaCm < catalogo.min.profonditaCm || modulo.profonditaCm > catalogo.max.profonditaCm;
-      if (invalid) { setMessaggio('Controlla le misure: devono rientrare nei limiti indicati.'); return; }
+      if (projectType === 'ARMADIO') {
+        if (!Number.isFinite(larghezzaTotaleArmadio) || larghezzaTotaleArmadio < 30 || larghezzaTotaleArmadio > 600) {
+          setMessaggio('Inserisci una larghezza totale tra 30 e 600 cm.');
+          return;
+        }
+        const invalid = moduli.some((m) => m.altezzaCm < catalogo.min.altezzaCm || m.altezzaCm > catalogo.max.altezzaCm || m.profonditaCm < catalogo.min.profonditaCm || m.profonditaCm > catalogo.max.profonditaCm);
+        if (invalid) { setMessaggio('Controlla altezza e profondità: devono rientrare nei limiti indicati.'); return; }
+      } else {
+        const invalid = modulo.larghezzaCm < catalogo.min.larghezzaCm || modulo.larghezzaCm > catalogo.max.larghezzaCm || modulo.altezzaCm < catalogo.min.altezzaCm || modulo.altezzaCm > catalogo.max.altezzaCm || modulo.profonditaCm < catalogo.min.profonditaCm || modulo.profonditaCm > catalogo.max.profonditaCm;
+        if (invalid) { setMessaggio('Controlla le misure: devono rientrare nei limiti indicati.'); return; }
+      }
     }
     setMessaggio(null); setStep((current) => Math.min(5, current + 1));
   }
@@ -158,15 +216,62 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
             {projectType === 'ARMADIO' ? (
               <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4">
                 <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Armadio su misura</p>
-                <div className="mt-2 flex items-end justify-between gap-4">
-                  <div><p className="font-serif text-3xl font-light">{moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} <span className="font-sans text-sm text-muted-foreground">cm</span></p><p className="text-xs text-muted-foreground">larghezza totale</p></div>
-                  <p className="text-right text-sm font-medium">Modulo {indice + 1} di {moduli.length}<br /><span className="font-normal text-muted-foreground">{modulo.larghezzaCm} cm di larghezza</span></p>
+                <div className="mt-3">
+                  <label className="block text-sm font-medium">Larghezza totale desiderata <span className="font-normal text-muted-foreground">(cm)</span>
+                    <input
+                      type="number"
+                      min="30"
+                      max="600"
+                      step="1"
+                      value={larghezzaTotaleArmadio}
+                      onChange={(e) => aggiornaLarghezzaTotaleArmadio(Number(e.target.value))}
+                      className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-2xl font-light outline-none focus:border-foreground"
+                    />
+                  </label>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">Le colonne vengono create automaticamente con larghezze standard da 45, 60, 90 o 120 cm. Se il totale non è divisibile, aggiungiamo un modulo fuori misura.</p>
+                </div>
+                <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                  {moduli.map((item, i) => (
+                    <div key={item.id} className="rounded-xl border border-border bg-background px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium">Colonna {i + 1}</span>
+                        <span className="text-sm">{item.larghezzaCm} cm</span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{item.larghezzaCm <= 60 ? '1 anta' : '2 ante'}{!([45, 60, 90, 120].includes(item.larghezzaCm)) ? ' · fuori misura' : ''}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (
               <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4 text-sm"><span className="font-medium">{selectedProject?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{selectedLayout?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{labels[modulo.tipo]}</span>{moduli.length > 1 && <><span className="mx-2 text-muted-foreground">·</span><span>Modulo {indice + 1} di {moduli.length} · Totale {moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} cm</span></>}</div>
             )}
-            <div className="grid gap-5 sm:grid-cols-3">{(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => { const label = campo === 'larghezzaCm' ? (projectType === 'ARMADIO' ? 'Larghezza modulo' : 'Larghezza') : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'; return <label key={campo} className="text-sm font-medium">{label} <span className="font-normal text-muted-foreground">(cm)</span><input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" /><span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min[campo]} a {catalogo.max[campo]} cm</span></label>; })}</div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {projectType === 'ARMADIO' ? (
+                <>
+                  <label className="text-sm font-medium">Altezza <span className="font-normal text-muted-foreground">(cm)</span>
+                    <input type="number" min={catalogo.min.altezzaCm} max={catalogo.max.altezzaCm} value={modulo.altezzaCm} onChange={(e) => {
+                      const altezza = Number(e.target.value);
+                      setModuli((current) => current.map((m) => ({ ...m, altezzaCm: altezza })));
+                      resetRisultato();
+                    }} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" />
+                    <span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min.altezzaCm} a {catalogo.max.altezzaCm} cm · uguale per tutte le colonne</span>
+                  </label>
+                  <label className="text-sm font-medium">Profondità <span className="font-normal text-muted-foreground">(cm)</span>
+                    <input type="number" min={catalogo.min.profonditaCm} max={catalogo.max.profonditaCm} value={modulo.profonditaCm} onChange={(e) => {
+                      const profondita = Number(e.target.value);
+                      setModuli((current) => current.map((m) => ({ ...m, profonditaCm: profondita })));
+                      resetRisultato();
+                    }} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" />
+                    <span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min.profonditaCm} a {catalogo.max.profonditaCm} cm · uguale per tutte le colonne</span>
+                  </label>
+                </>
+              ) : (
+                (['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => {
+                  const label = campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità';
+                  return <label key={campo} className="text-sm font-medium">{label} <span className="font-normal text-muted-foreground">(cm)</span><input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" /><span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min[campo]} a {catalogo.max[campo]} cm</span></label>;
+                })
+              )}
+            </div>
           </div>}
           {step === 3 && <div>
             <div className="mb-5 text-center"><p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">03 · Materiali</p><h2 className="mt-1 font-serif text-2xl font-light sm:text-3xl">Materiale e finitura</h2></div>
