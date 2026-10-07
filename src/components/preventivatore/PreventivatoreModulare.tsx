@@ -85,7 +85,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   function preparaArmadio() {
     const moduliArmadio = Array.from({ length: 3 }, () => {
       const base = nuovoModulo('COLONNA');
-      return { ...base, larghezzaCm: 80, altezzaCm: 260, profonditaCm: 60, materiale: 'TRUCIOLARE', finitura: 'MELAMINICO', configurazione: '2_PORTE' as const, ripiani: 4 };
+      return { ...base, larghezzaCm: 80, altezzaCm: 260, profonditaCm: 60, materiale: 'TRUCIOLARE' as const, finitura: 'MELAMINICO' as const, configurazione: '2_PORTE' as const, ripiani: 4 };
     });
     setModuli(moduliArmadio);
     setIndice(0);
