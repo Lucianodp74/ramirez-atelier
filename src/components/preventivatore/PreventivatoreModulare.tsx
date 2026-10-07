@@ -85,7 +85,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   function preparaArmadio() {
     const moduliArmadio = Array.from({ length: 3 }, () => {
       const base = nuovoModulo('COLONNA');
-      return { ...base, larghezzaCm: 80, altezzaCm: 260, profonditaCm: 60, configurazione: '2_PORTE' as const, ripiani: 4 };
+      return { ...base, larghezzaCm: 80, altezzaCm: 260, profonditaCm: 60, materiale: 'TRUCIOLARE', finitura: 'MELAMINICO', configurazione: '2_PORTE' as const, ripiani: 4 };
     });
     setModuli(moduliArmadio);
     setIndice(0);
@@ -156,7 +156,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
           </div>}
           {step === 2 && <div>
             <div className="mb-7 text-center"><p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">02 · Misure</p><h2 className="mt-2 font-serif text-3xl font-light sm:text-4xl">Quanto spazio abbiamo?</h2><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Inserisci misure indicative. Prima della produzione Ramirez verificherà sempre le dimensioni definitive.</p></div>
-            <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4 text-sm"><span className="font-medium">{selectedProject?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{selectedLayout?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{labels[modulo.tipo]}</span></div>
+            <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4 text-sm"><span className="font-medium">{selectedProject?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{selectedLayout?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{labels[modulo.tipo]}</span>{moduli.length > 1 && <><span className="mx-2 text-muted-foreground">·</span><span>Modulo {indice + 1} di {moduli.length} · Totale {moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} cm</span></>}</div>
             <div className="grid gap-5 sm:grid-cols-3">{(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => { const label = campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'; return <label key={campo} className="text-sm font-medium">{label} <span className="font-normal text-muted-foreground">(cm)</span><input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" /><span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min[campo]} a {catalogo.max[campo]} cm</span></label>; })}</div>
           </div>}
           {step === 3 && <div>
