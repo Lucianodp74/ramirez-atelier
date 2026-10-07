@@ -100,7 +100,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   const [step, setStep] = useState(1);
   const [projectType, setProjectType] = useState('ALTRO');
   const [layout, setLayout] = useState('LINEARE');
-  const [larghezzaTotaleArmadio, setLarghezzaTotaleArmadio] = useState(250);
+  const [larghezzaTotaleArmadio, setLarghezzaTotaleArmadio] = useState<number | ''>(250);
   const [stima, setStima] = useState<number | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
   const [richiestaAperta, setRichiestaAperta] = useState(false);
@@ -130,9 +130,14 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
     resetRisultato();
   }
 
-  function aggiornaLarghezzaTotaleArmadio(valore: number) {
-    setLarghezzaTotaleArmadio(valore);
-    const colonne = costruisciColonneArmadio(valore, modulo?.altezzaCm ?? 260, modulo?.profonditaCm ?? 60);
+  function aggiornaLarghezzaTotaleArmadio(valore: string) {
+    if (valore === '') {
+      setLarghezzaTotaleArmadio('');
+      return;
+    }
+    const numero = Number(valore);
+    setLarghezzaTotaleArmadio(numero);
+    const colonne = costruisciColonneArmadio(numero, modulo?.altezzaCm ?? 260, modulo?.profonditaCm ?? 60);
     if (colonne.length) {
       setModuli(colonne);
       setIndice(0);
@@ -157,7 +162,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
   function vaiAvanti() {
     if (step === 2) {
       if (projectType === 'ARMADIO') {
-        if (!Number.isFinite(larghezzaTotaleArmadio) || larghezzaTotaleArmadio < 30 || larghezzaTotaleArmadio > 600) {
+        if (larghezzaTotaleArmadio === '' || !Number.isFinite(larghezzaTotaleArmadio) || larghezzaTotaleArmadio < 30 || larghezzaTotaleArmadio > 600) {
           setMessaggio('Inserisci una larghezza totale tra 30 e 600 cm.');
           return;
         }
@@ -224,7 +229,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
                       max="600"
                       step="1"
                       value={larghezzaTotaleArmadio}
-                      onChange={(e) => aggiornaLarghezzaTotaleArmadio(Number(e.target.value))}
+                      onChange={(e) => aggiornaLarghezzaTotaleArmadio(e.target.value)}
                       className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-2xl font-light outline-none focus:border-foreground"
                     />
                   </label>
