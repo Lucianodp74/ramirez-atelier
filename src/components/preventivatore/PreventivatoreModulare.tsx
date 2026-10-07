@@ -156,8 +156,18 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
             {projectType !== 'ARMADIO' && <div className="mt-8 border-t border-border pt-7"><p className="mb-4 text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">Come deve essere?</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{layouts.map((item) => { const selected = layout === item.id; return <button key={item.id} type="button" onClick={() => setLayout(item.id)} className={`${cardClass} ${selected ? 'border-foreground bg-muted/60' : 'border-border bg-background'}`}><div className="mb-5 flex h-14 items-center justify-center"><Layers3 className="h-10 w-10" strokeWidth={1} /></div><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{item.title}</span>{selected && <Check className="h-4 w-4" />}</div><span className="mt-1 block text-xs text-muted-foreground">{item.text}</span></button>; })}</div></div>}
           </div>}
           {step === 2 && <div>
-            <div className="mb-7 text-center"><p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">02 · Misure</p><h2 className="mt-2 font-serif text-3xl font-light sm:text-4xl">Quanto spazio abbiamo?</h2><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">Inserisci misure indicative. Prima della produzione Ramirez verificherà sempre le dimensioni definitive.</p></div>
-            <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4 text-sm"><span className="font-medium">{selectedProject?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{selectedLayout?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{labels[modulo.tipo]}</span>{moduli.length > 1 && <><span className="mx-2 text-muted-foreground">·</span><span>Modulo {indice + 1} di {moduli.length} · Totale {moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} cm</span></>}</div>
+            <div className="mb-7 text-center"><p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">02 · Misure</p><h2 className="mt-2 font-serif text-3xl font-light sm:text-4xl">{projectType === 'ARMADIO' ? 'Misure del modulo' : 'Quanto spazio abbiamo?'}</h2><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{projectType === 'ARMADIO' ? 'La composizione è già impostata. Ora definiamo una colonna alla volta.' : 'Inserisci misure indicative. Prima della produzione Ramirez verificherà sempre le dimensioni definitive.'}</p></div>
+            {projectType === 'ARMADIO' ? (
+              <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Armadio su misura</p>
+                <div className="mt-2 flex items-end justify-between gap-4">
+                  <div><p className="font-serif text-3xl font-light">{moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} <span className="font-sans text-sm text-muted-foreground">cm</span></p><p className="text-xs text-muted-foreground">larghezza totale</p></div>
+                  <p className="text-right text-sm font-medium">Modulo {indice + 1} di {moduli.length}<br /><span className="font-normal text-muted-foreground">{modulo.larghezzaCm} cm di larghezza</span></p>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4 text-sm"><span className="font-medium">{selectedProject?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{selectedLayout?.title}</span><span className="mx-2 text-muted-foreground">·</span><span>{labels[modulo.tipo]}</span>{moduli.length > 1 && <><span className="mx-2 text-muted-foreground">·</span><span>Modulo {indice + 1} di {moduli.length} · Totale {moduli.reduce((totale, item) => totale + item.larghezzaCm, 0)} cm</span></>}</div>
+            )}
             <div className="grid gap-5 sm:grid-cols-3">{(['larghezzaCm', 'altezzaCm', 'profonditaCm'] as const).map((campo) => { const label = campo === 'larghezzaCm' ? 'Larghezza' : campo === 'altezzaCm' ? 'Altezza' : 'Profondità'; return <label key={campo} className="text-sm font-medium">{label} <span className="font-normal text-muted-foreground">(cm)</span><input type="number" min={catalogo.min[campo]} max={catalogo.max[campo]} value={modulo[campo]} onChange={(e) => aggiorna({ [campo]: Number(e.target.value) })} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-4 text-lg outline-none focus:border-foreground" /><span className="mt-1.5 block text-xs font-normal text-muted-foreground">da {catalogo.min[campo]} a {catalogo.max[campo]} cm</span></label>; })}</div>
           </div>}
           {step === 3 && <div>
@@ -181,7 +191,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
           {messaggio && <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{messaggio}</p>}
           {step < 5 && <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5"><button type="button" onClick={vaiIndietro} disabled={step === 1} className="inline-flex items-center gap-2 rounded-xl px-3 py-3 text-sm text-muted-foreground disabled:invisible"><ChevronLeft className="h-4 w-4" /> Indietro</button><button type="button" onClick={vaiAvanti} className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-3 text-sm font-medium text-background">Continua <ChevronRight className="h-4 w-4" /></button></div>}
         </section>
-        <p className="mx-auto mt-5 max-w-2xl text-center text-[11px] leading-5 text-muted-foreground">Le misure inserite nel configuratore sono preliminari. Prima della produzione verificheremo rilievo, dettagli costruttivi, materiali e lavorazioni con te.</p>
+        
       </div>
     </main>
   );
