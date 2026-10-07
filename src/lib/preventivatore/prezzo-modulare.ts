@@ -83,6 +83,7 @@ export type PreventivoModulare = {
   righe: RigaCostoModulo[];
   costoProduzione: number;
   prezzoIndicativo: number;
+  prezzoFalegname: number;
   errori: string[];
 };
 
