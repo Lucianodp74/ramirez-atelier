@@ -118,8 +118,12 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const retro = schienaleM2;
   const bordoMl = (2 * modulo.altezzaCm + 2 * modulo.larghezzaCm + 2 * ripiani * modulo.larghezzaCm) / 100;
 
-  const materiale = superficie * tariffe.materialeEuroM2[modulo.materiale];
-  const finitura = (frontaliM2 + fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[modulo.finitura];
+  const materialeAnte = modulo.materialeAnte ?? modulo.materiale;
+  const finituraStruttura = modulo.finituraStruttura ?? modulo.finitura;
+  const finituraAnte = modulo.finituraAnte ?? modulo.finitura;
+  const superficieStruttura = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2) * (1 + sfrido);
+  const materiale = superficieStruttura * tariffe.materialeEuroM2[modulo.materiale] + frontaliM2 * (1 + sfrido) * tariffe.materialeEuroM2[materialeAnte];
+  const finitura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[finituraStruttura] + frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
   const costoRetro = retro * tariffe.retroEuroM2;
   const ferramenta = porte * tariffe.ferramentaPerPorta + cassetti * tariffe.ferramentaPerCassetto;
