@@ -13,7 +13,7 @@ const materialLabels: Record<Materiale, string> = { TRUCIOLARE: 'Truciolare', MD
 const materialDescriptions: Record<Materiale, string> = { TRUCIOLARE: 'Pratico e versatile, ottimo rapporto qualità/prezzo.', MDF: 'Superficie liscia, ideale per finiture uniformi.', MULTISTRATO: 'Struttura resistente per una scelta più tecnica e premium.' };
 const finishLabels: Record<Finitura, string> = { MELAMINICO: 'Melaminico', LAMINATO: 'Laminato', LACCATO: 'Laccato' };
 const finishDescriptions: Record<Finitura, string> = { MELAMINICO: 'Ampia scelta di decorativi e colori.', LAMINATO: 'Superficie resistente e adatta all’uso quotidiano.', LACCATO: 'Aspetto raffinato e possibilità di colore personalizzato.' };
-const configLabels: Record<ConfigurazioneModulo, string> = { APERTO: 'Aperto', '1_PORTA': '1 anta', '2_PORTE': '2 ante', '3_CASSETTI': '3 cassetti', '4_CASSETTI': '4 cassetti', PORTE_CASSETTI: 'Ante + cassetti' };
+const configLabels: Record<ConfigurazioneModulo, string> = { APERTO: 'Aperto', '1_PORTA': '1 anta', '2_PORTE': '2 ante', '3_CASSETTI': '3 cassetti', '4_CASSETTI': '4 cassetti', PORTE_CASSETTI: 'Ante + cassetti', ANTE_BATTENTI: 'Ante battenti', ANTE_SCORREVOLI: 'Ante scorrevoli' };
 const projectTypes = [
   { id: 'ARMADIO', title: 'Armadio su misura', text: 'Composizione completa: scegliamo la larghezza totale e la dividiamo in moduli.' },
   { id: 'PARETE_ATTREZZATA', title: 'Parete attrezzata', text: 'TV, contenitori e libreria.' },
@@ -65,7 +65,7 @@ function costruisciColonneArmadio(larghezzaTotale: number, altezzaCm: number, pr
   const larghezze = migliore ? [...migliore.standard, ...(migliore.residuo > 0 ? [migliore.residuo] : [])] : [totale];
   return larghezze.map((larghezza) => {
     const base = nuovoModulo('COLONNA');
-    const anta = larghezza <= 60 ? '1_PORTA' : '2_PORTE';
+    const anta = 'ANTE_BATTENTI' as const;
     return {
       ...base,
       larghezzaCm: larghezza,
@@ -294,7 +294,7 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
           {step === 4 && <div>
             <div className="mb-5 text-center"><p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">04 · Personalizza</p><h2 className="mt-1 font-serif text-2xl font-light sm:text-3xl">{projectType === 'ARMADIO' ? 'Organizza le colonne' : 'Come vuoi organizzarlo?'}</h2><p className="mx-auto mt-1 max-w-xl text-xs text-muted-foreground">{projectType === 'ARMADIO' ? 'Ogni colonna può avere una configurazione diversa.' : 'Scegli la configurazione più vicina alla tua idea.'}</p></div>
             {projectType === 'ARMADIO' && <div className="mb-5 grid gap-2 sm:grid-cols-2">{moduli.map((item, i) => <button key={item.id} type="button" onClick={() => setIndice(i)} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left ${i === indice ? 'border-foreground bg-muted/60' : 'border-border bg-background'}`}><span><span className="block text-sm font-medium">Colonna {i + 1}</span><span className="text-xs text-muted-foreground">{item.larghezzaCm} cm · {item.larghezzaCm <= 60 ? '1 anta' : '2 ante'}{!([45, 60, 90, 120].includes(item.larghezzaCm)) ? ' · fuori misura' : ''}</span></span>{i === indice && <Check className="h-4 w-4" />}</button>)}</div>}
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{catalogo.configurazioni.map((value) => { const selected = modulo.configurazione === value; return <button key={value} type="button" onClick={() => aggiorna({ configurazione: value })} className={`flex items-center justify-between rounded-xl border px-4 py-4 text-left text-sm ${selected ? 'border-foreground bg-muted/60' : 'border-border bg-background'}`}><span>{configLabels[value]}</span>{selected && <Check className="h-4 w-4" />}</button>; })}</div>
+            <div className="grid gap-2 sm:grid-cols-2">{catalogo.configurazioni.map((value) => { const selected = modulo.configurazione === value; return <button key={value} type="button" onClick={() => aggiorna({ configurazione: value })} className={`flex items-center justify-between rounded-xl border px-4 py-4 text-left text-sm ${selected ? 'border-foreground bg-muted/60' : 'border-border bg-background'}`}><span>{configLabels[value]}</span>{selected && <Check className="h-4 w-4" />}</button>; })}</div>
             <div className="mt-5 border-t border-border pt-5"><label className="block max-w-sm text-sm font-medium">Ripiani <span className="font-normal text-muted-foreground">(0–20)</span><input type="number" min="0" max="20" value={modulo.ripiani ?? 0} onChange={(e) => aggiorna({ ripiani: Number(e.target.value) })} className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-lg" /></label></div>
           </div>}
           {step === 5 && <div>
