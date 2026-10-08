@@ -6,6 +6,7 @@ const labels: Record<string, string> = {
   TRUCIOLARE: 'Truciolare', MDF: 'MDF', MULTISTRATO: 'Multistrato',
   MELAMINICO: 'Melaminico', LAMINATO: 'Laminato', LACCATO: 'Laccato',
   APERTO: 'Aperto', '1_PORTA': '1 porta', '2_PORTE': '2 porte', '3_CASSETTI': '3 cassetti', '4_CASSETTI': '4 cassetti', PORTE_CASSETTI: 'Porte + cassetti',
+  ANTE_BATTENTI: 'Ante battenti', ANTE_SCORREVOLI: 'Ante scorrevoli',
 };
 
 type Props = { datiEstensione: unknown };
@@ -34,6 +35,9 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
             const tipo = String(modulo.tipo ?? '');
             const materiale = String(modulo.materiale ?? '');
             const finitura = String(modulo.finitura ?? '');
+            const finituraStruttura = String(modulo.finituraStruttura ?? modulo.finitura ?? '');
+            const finituraAnte = String(modulo.finituraAnte ?? modulo.finitura ?? '');
+            const materialeAnte = String(modulo.materialeAnte ?? modulo.materiale ?? '');
             const configurazione = String(modulo.configurazione ?? '');
             return (
               <div key={String(modulo.id ?? index)} className="rounded-lg border p-4">
@@ -43,8 +47,10 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
                 </div>
                 <p className="mt-2 text-sm">{String(modulo.larghezzaCm ?? '—')} × {String(modulo.altezzaCm ?? '—')} × {String(modulo.profonditaCm ?? '—')} cm</p>
                 <dl className="mt-3 space-y-1 text-xs text-muted-foreground">
-                  <div className="flex justify-between gap-2"><dt>Materiale</dt><dd className="font-medium text-foreground">{labels[materiale] ?? materiale}</dd></div>
-                  <div className="flex justify-between gap-2"><dt>Finitura</dt><dd className="font-medium text-foreground">{labels[finitura] ?? finitura}</dd></div>
+                  <div className="flex justify-between gap-2"><dt>Struttura</dt><dd className="font-medium text-foreground">{labels[materiale] ?? materiale}</dd></div>
+                  <div className="flex justify-between gap-2"><dt>Ante</dt><dd className="font-medium text-foreground">{labels[materialeAnte] ?? materialeAnte}</dd></div>
+                  <div className="flex justify-between gap-2"><dt>Finitura struttura</dt><dd className="font-medium text-foreground">{labels[finituraStruttura] ?? finituraStruttura}</dd></div>
+                  <div className="flex justify-between gap-2"><dt>Finitura ante</dt><dd className="font-medium text-foreground">{labels[finituraAnte] ?? finituraAnte}</dd></div>
                   <div className="flex justify-between gap-2"><dt>Configurazione</dt><dd className="font-medium text-foreground">{labels[configurazione] ?? configurazione}</dd></div>
                   <div className="flex justify-between gap-2"><dt>Ripiani</dt><dd className="font-medium text-foreground">{String(modulo.ripiani ?? 0)}</dd></div>
                 </dl>
@@ -54,12 +60,15 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
         </div>
 
         {stima && typeof stima.prezzoIndicativo === 'number' && (
-          <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">Stima ricevuta dal configuratore</p>
-              <p className="text-xs text-muted-foreground">Valore indicativo; il preventivo commerciale definitivo resta quello salvato sulla BOM.</p>
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-sm font-medium">Stima ricevuta dal configuratore</p>
+            <p className="text-xs text-muted-foreground">Snapshot economico iniziale. I valori interni non vengono mostrati al cliente.</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {typeof stima.costoProduzione === 'number' && <div><p className="text-xs text-muted-foreground">Costo produzione</p><p className="text-lg font-semibold">{euro.format(stima.costoProduzione)}</p></div>}
+              {typeof stima.prezzoFalegname === 'number' && <div><p className="text-xs text-muted-foreground">Prezzo falegname</p><p className="text-lg font-semibold">{euro.format(stima.prezzoFalegname)}</p></div>}
+              <div><p className="text-xs text-muted-foreground">Prezzo privato / architetto</p><p className="text-lg font-semibold">{euro.format(stima.prezzoIndicativo)}</p></div>
             </div>
-            <p className="text-2xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
+            <p className="mt-3 text-xs text-muted-foreground">Il prezzo falegname è derivato dallo stesso motore; il prezzo privato/architetto applica il ricarico commerciale configurato nel Listino.</p>
           </div>
         )}
       </CardContent>
