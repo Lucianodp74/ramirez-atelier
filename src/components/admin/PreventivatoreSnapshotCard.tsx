@@ -62,6 +62,16 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
             <p className="text-2xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
           </div>
         )}
+
+        {stima && typeof stima.prezzoFalegname === 'number' && (
+          <div className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Prezzo falegname</p>
+              <p className="text-xs text-muted-foreground">Valore interno derivato dallo stesso motore di calcolo e mantenuto nello snapshot.</p>
+            </div>
+            <p className="text-xl font-semibold">{euro.format(stima.prezzoFalegname)}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
