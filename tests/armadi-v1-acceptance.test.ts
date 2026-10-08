@@ -10,7 +10,7 @@ const colonna = (id: string): ModuloConfigurato => ({
   profonditaCm: 60,
   materiale: 'TRUCIOLARE',
   finitura: 'MELAMINICO',
-  configurazione: '2_PORTE',
+  configurazione: 'ANTE_BATTENTI',
   ripiani: 4,
 });
 
