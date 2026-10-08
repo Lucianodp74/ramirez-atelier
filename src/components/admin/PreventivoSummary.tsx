@@ -21,7 +21,7 @@ type PreventivoSalvato = {
 };
 
 export function PreventivoSummary({ bomId, costoProduzione }: Props) {
-  const [ricarico, setRicarico] = useState(20);
+  const [ricarico, setRicarico] = useState(40);
   const [costiFissi, setCostiFissi] = useState(0);
   const [lavorazioni, setLavorazioni] = useState(0);
   const [manodopera, setManodopera] = useState(0);
@@ -134,7 +134,7 @@ export function PreventivoSummary({ bomId, costoProduzione }: Props) {
       <div className="mt-5">
         <div className="mb-3 text-sm font-semibold text-slate-800">Parametri commerciali</div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {campo('Ricarico %', ricarico, setRicarico, '1')}
+          {campo('Ricarico privato / architetto %', ricarico, setRicarico, '1')}
           {campo('Costi fissi', costiFissi, setCostiFissi)}
           {campo('Lavorazioni', lavorazioni, setLavorazioni)}
           {campo('Manodopera', manodopera, setManodopera)}
