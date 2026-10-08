@@ -52,7 +52,7 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
     const richiesta = await tx.richiestaProgetto.create({ data: {
       tenantId, tipoProgettoId: tipoProgetto.id, clienteNome: nome, clienteEmail: email, clienteTelefono: telefono, messaggioLibero: messaggio,
       datiFormJson: { origine: 'preventivatore-modulare-v2' },
-      datiEstensione: { preventivatoreModulare: { versione: 2, moduli, stima: { prezzoIndicativo: preventivo.prezzoIndicativo, costoProduzione: preventivo.costoProduzione, calcolataIl: new Date().toISOString() } } },
+      datiEstensione: { preventivatoreModulare: { versione: 2, moduli, stima: { prezzoIndicativo: preventivo.prezzoIndicativo, prezzoFalegname: preventivo.prezzoFalegname, costoProduzione: preventivo.costoProduzione, calcolataIl: new Date().toISOString() } } },
       fasciaPrezzoMin: preventivo.prezzoIndicativo, fasciaPrezzoMax: preventivo.prezzoIndicativo, indiceCompletezza: 100, stato: 'NUOVA',
     } });
 

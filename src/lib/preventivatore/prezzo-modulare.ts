@@ -82,6 +82,7 @@ export type PreventivoModulare = {
   righe: RigaCostoModulo[];
   costoProduzione: number;
   prezzoIndicativo: number;
+  prezzoFalegname: number;
   errori: string[];
 };
 
@@ -170,5 +171,7 @@ export function calcolaPreventivoModulare(moduli: ModuloConfigurato[], tariffe: 
     catch (error) { errori.push(`${modulo.id}: ${error instanceof Error ? error.message : 'modulo non valido'}`); }
   }
   const costoProduzione = euro(righe.reduce((s, r) => s + r.costoProduzione, 0));
-  return { righe, costoProduzione, prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)), errori };
+  const prezzoIndicativo = euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100));
+  const prezzoFalegname = euro(prezzoIndicativo / (1 + tariffe.ricaricoPercentuale / 100));
+  return { righe, costoProduzione, prezzoIndicativo, prezzoFalegname, errori };
 }
