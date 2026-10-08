@@ -53,13 +53,32 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
           })}
         </div>
 
-        {stima && typeof stima.prezzoIndicativo === 'number' && (
-          <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">Stima ricevuta dal configuratore</p>
-              <p className="text-xs text-muted-foreground">Valore indicativo; il preventivo commerciale definitivo resta quello salvato sulla BOM.</p>
-            </div>
-            <p className="text-2xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
+        {stima && (
+          <div className="space-y-3">
+            {typeof stima.prezzoIndicativo === 'number' && (
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Prezzo privato / architetto</p>
+                  <p className="text-xs text-muted-foreground">Stima indicativa ricevuta dal configuratore.</p>
+                </div>
+                <p className="text-2xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
+              </div>
+            )}
+            {typeof stima.prezzoFalegname === 'number' && (
+              <div className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Prezzo falegname</p>
+                  <p className="text-xs text-muted-foreground">Valore interno dello stesso snapshot; non viene ricalcolato con il Listino corrente.</p>
+                </div>
+                <p className="text-xl font-semibold">{euro.format(stima.prezzoFalegname)}</p>
+              </div>
+            )}
+            {typeof stima.costoProduzione === 'number' && (
+              <div className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                <span className="text-muted-foreground">Costo produzione interno</span>
+                <span className="font-medium">{euro.format(stima.costoProduzione)}</span>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
