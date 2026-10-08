@@ -152,22 +152,29 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
 
   componenti.push(
     { codice: 'BORDO-ML', voce: 'Bordatura', categoria: 'BORDO', unita: 'ML', quantita: euro(bordoMl), note: 'Sviluppo parametrico dei bordi principali e dei fronti dei ripiani; non sostituisce il calcolo esecutivo delle coste a vista.' },
-    { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: porte + cassetti },
+    { codice: 'FER-HARDWARE', voce: 'Ferramenta', categoria: 'FERRAMENTA', unita: 'PZ', quantita: modulo.configurazione === 'ANTE_SCORREVOLI' ? 1 : porte + cassetti },
     { codice: 'MAN-ORE', voce: 'Lavorazione e assemblaggio', categoria: 'MANODOPERA', unita: 'H', quantita: euro(ore) },
   );
 
   return {
     id: modulo.id, tipo: modulo.tipo, superficieM2: euro(superficie), materiale: euro(materiale), finitura: euro(finitura), bordo: euro(costoBordo), retro: euro(costoRetro), ferramenta: euro(ferramenta), manodopera: euro(manodopera), costoProduzione,
     prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
-    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: porte + cassetti, ore: euro(ore), componenti },
+    distinta: { fianchi: 2, base: 1, cielo: 1, schienale: 1, ripiani, ante: porte, cassetti, bordaturaMl: euro(bordoMl), ferramentaPz: modulo.configurazione === 'ANTE_SCORREVOLI' ? 1 : porte + cassetti, ore: euro(ore), componenti },
   };
 }
 
 export function calcolaPreventivoModulare(moduli: ModuloConfigurato[], tariffe: TariffePreventivatore = TARIFFE_DEMO): PreventivoModulare {
   const errori: string[] = [];
   const righe: RigaCostoModulo[] = [];
+  let sistemaScorrevoleApplicato = false;
   for (const modulo of moduli) {
-    try { righe.push(calcolaCostoModulo(modulo, tariffe)); }
+    try {
+      const tariffeModulo = modulo.configurazione === 'ANTE_SCORREVOLI'
+        ? { ...tariffe, ferramentaPerScorrevole: sistemaScorrevoleApplicato ? 0 : tariffe.ferramentaPerScorrevole }
+        : tariffe;
+      righe.push(calcolaCostoModulo(modulo, tariffeModulo));
+      if (modulo.configurazione === 'ANTE_SCORREVOLI') sistemaScorrevoleApplicato = true;
+    }
     catch (error) { errori.push(`${modulo.id}: ${error instanceof Error ? error.message : 'modulo non valido'}`); }
   }
   const costoProduzione = euro(righe.reduce((s, r) => s + r.costoProduzione, 0));
