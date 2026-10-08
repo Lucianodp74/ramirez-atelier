@@ -54,6 +54,7 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
         </div>
 
         {stima && (typeof stima.prezzoIndicativo === 'number' || typeof stima.prezzoFalegname === 'number' || typeof stima.costoProduzione === 'number') && (
+          <>
           <div className="grid gap-3 sm:grid-cols-3">
             {typeof stima.costoProduzione === 'number' && (
               <div className="rounded-lg border bg-muted/30 p-4">
@@ -80,6 +81,7 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
           {typeof stima.prezzoFalegname === 'number' && typeof stima.prezzoIndicativo === 'number' && (
             <p className="text-xs text-muted-foreground">Il prezzo falegname viene mantenuto nello stesso snapshot del configuratore e non viene ricalcolato con il Listino corrente.</p>
           )}
+          </>
         )}
       </CardContent>
     </Card>
