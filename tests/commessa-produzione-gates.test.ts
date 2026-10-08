@@ -61,8 +61,8 @@ describe('workflow produzione commessa', () => {
 
     expect(queryRaw).toHaveBeenCalledTimes(2);
     expect(executeRaw).not.toHaveBeenCalled();
-    expect(String(queryRaw.mock.calls[1][0][0])).toContain('NOT EXISTS');
-    expect(String(queryRaw.mock.calls[1][0][0])).toContain('"statoLavorazione" <> \'COMPLETATA\'');
+    expect(queryRaw.mock.calls[1][0].join('')).toContain('NOT EXISTS');
+    expect(queryRaw.mock.calls[1][0].join('')).toContain('"statoLavorazione" <> \'COMPLETATA\'');
   });
 
   it('porta a PRONTA una commessa solo quando il gate atomico non trova righe incomplete', async () => {
@@ -75,9 +75,9 @@ describe('workflow produzione commessa', () => {
     const result = await cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'PRONTA');
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
-    expect(String(queryRaw.mock.calls[1][0][0])).toContain('UPDATE "commessa"');
-    expect(String(queryRaw.mock.calls[1][0][0])).toContain('"stato" = \'PRONTA\'');
-    expect(String(queryRaw.mock.calls[1][0][0])).toContain('NOT EXISTS');
+    expect(queryRaw.mock.calls[1][0].join('')).toContain('UPDATE "commessa"');
+    expect(queryRaw.mock.calls[1][0].join('')).toContain('"stato" = \'PRONTA\'');
+    expect(queryRaw.mock.calls[1][0].join('')).toContain('NOT EXISTS');
   });
 
   it('aggiorna lo stato di una riga solo quando la commessa è IN_PRODUZIONE', async () => {
