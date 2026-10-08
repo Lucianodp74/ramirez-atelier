@@ -433,6 +433,22 @@ export async function cambiaStatoBom(tenantId: string, bomId: string, stato: Sta
   validaTransizioneBom(bom[0].stato, stato);
   if (bom[0].stato === stato) return;
 
+  if (stato === 'CONFERMATA') {
+    const verifica = await db.$queryRaw<Array<{ righe: number; costiMancanti: number }>>`
+      SELECT COUNT(*)::int AS "righe",
+             COUNT(*) FILTER (WHERE "costoUnitario" IS NULL)::int AS "costiMancanti"
+      FROM "bom_riga"
+      WHERE "bomId" = ${bomId}
+    `;
+    const riepilogo = verifica[0] ?? { righe: 0, costiMancanti: 0 };
+    if (riepilogo.righe === 0) {
+      throw new Error('La BOM non può essere confermata senza righe.');
+    }
+    if (riepilogo.costiMancanti > 0) {
+      throw new Error('La BOM non può essere confermata: completa prima tutti i costi delle righe.');
+    }
+  }
+
   await db.$executeRaw`
     UPDATE "bom" SET "stato" = ${stato}, "updatedAt" = CURRENT_TIMESTAMP
     WHERE "id" = ${bomId} AND "tenantId" = ${tenantId}
