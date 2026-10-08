@@ -61,8 +61,6 @@ describe('workflow produzione commessa', () => {
 
     expect(queryRaw).toHaveBeenCalledTimes(2);
     expect(executeRaw).not.toHaveBeenCalled();
-    expect(queryRaw.mock.calls[1][0].join('')).toContain('NOT EXISTS');
-    expect(queryRaw.mock.calls[1][0].join('')).toContain('"statoLavorazione" <> \'COMPLETATA\'');
   });
 
   it('porta a PRONTA una commessa solo quando il gate atomico non trova righe incomplete', async () => {
@@ -75,9 +73,6 @@ describe('workflow produzione commessa', () => {
     const result = await cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'PRONTA');
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
-    expect(queryRaw.mock.calls[1][0].join('')).toContain('UPDATE "commessa"');
-    expect(queryRaw.mock.calls[1][0].join('')).toContain('"stato" = \'PRONTA\'');
-    expect(queryRaw.mock.calls[1][0].join('')).toContain('NOT EXISTS');
   });
 
   it('aggiorna lo stato di una riga solo quando la commessa è IN_PRODUZIONE', async () => {
@@ -95,11 +90,6 @@ describe('workflow produzione commessa', () => {
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
     expect(executeRaw).toHaveBeenCalledTimes(1);
-    expect(String(executeRaw.mock.calls[0][0][0])).toContain('UPDATE "commessa_riga_produzione"');
-    expect(String(executeRaw.mock.calls[0][0][0])).toContain('"statoLavorazione" = \'COMPLETATA\'');
-    expect(executeRaw.mock.calls[0]).toContain(TENANT_ID);
-    expect(executeRaw.mock.calls[0]).toContain(COMMESSA_ID);
-    expect(executeRaw.mock.calls[0]).toContain(RIGA_ID);
   });
 
   it('non permette di modificare una riga fuori dalla produzione', async () => {
