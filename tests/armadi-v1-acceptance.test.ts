@@ -44,3 +44,22 @@ describe('Armadi V1 — caso di collaudo 240 x 260 x 60', () => {
     expect(risultato.errori[0]).toContain('altezza fuori limite');
   });
 });
+
+
+describe('Armadi V1 — sistema ante scorrevoli', () => {
+  it('addebita il sistema scorrevole da 700 € una sola volta sull intero armadio', () => {
+    const moduli = [
+      { ...colonna('scorrevole-1'), configurazione: 'ANTE_SCORREVOLI' as const },
+      { ...colonna('scorrevole-2'), configurazione: 'ANTE_SCORREVOLI' as const },
+      { ...colonna('scorrevole-3'), configurazione: 'ANTE_SCORREVOLI' as const },
+    ];
+    const tariffe = { ...TARIFFE_DEMO, ferramentaPerScorrevole: 700 };
+    const risultato = calcolaPreventivoModulare(moduli, tariffe);
+
+    expect(risultato.errori).toEqual([]);
+    expect(risultato.righe).toHaveLength(3);
+    expect(risultato.righe.map((riga) => riga.ferramenta)).toEqual([700, 0, 0]);
+    expect(risultato.righe.map((riga) => riga.distinta.ferramentaPz)).toEqual([1, 1, 1]);
+    expect(risultato.righe.reduce((totale, riga) => totale + riga.ferramenta, 0)).toBe(700);
+  });
+});
