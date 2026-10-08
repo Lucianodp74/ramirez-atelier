@@ -16,9 +16,11 @@ describe('prezzo falegname', () => {
       ripiani: 1,
     };
 
-    const preventivo = calcolaPreventivoModulare([modulo], TARIFFE_DEMO);
+    const tariffe = { ...TARIFFE_DEMO, ricaricoPercentuale: 40 };
+    const preventivo = calcolaPreventivoModulare([modulo], tariffe);
 
     expect(preventivo.errori).toEqual([]);
-    expect(preventivo.prezzoFalegname * (1 + TARIFFE_DEMO.ricaricoPercentuale / 100)).toBeCloseTo(preventivo.prezzoIndicativo, 2);
+    expect(preventivo.prezzoFalegname * 1.4).toBeCloseTo(preventivo.prezzoIndicativo, 2);
+    expect(preventivo.prezzoFalegname).toBeCloseTo(preventivo.costoProduzione, 2);
   });
 });
