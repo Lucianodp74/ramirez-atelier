@@ -53,14 +53,33 @@ export function PreventivatoreSnapshotCard({ datiEstensione }: Props) {
           })}
         </div>
 
-        {stima && typeof stima.prezzoIndicativo === 'number' && (
-          <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">Stima ricevuta dal configuratore</p>
-              <p className="text-xs text-muted-foreground">Valore indicativo; il preventivo commerciale definitivo resta quello salvato sulla BOM.</p>
-            </div>
-            <p className="text-2xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
+        {stima && (typeof stima.prezzoIndicativo === 'number' || typeof stima.prezzoFalegname === 'number' || typeof stima.costoProduzione === 'number') && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {typeof stima.costoProduzione === 'number' && (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Costo produzione</p>
+                <p className="mt-1 text-xl font-semibold">{euro.format(stima.costoProduzione)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Solo uso interno.</p>
+              </div>
+            )}
+            {typeof stima.prezzoFalegname === 'number' && (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Prezzo falegname</p>
+                <p className="mt-1 text-xl font-semibold">{euro.format(stima.prezzoFalegname)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Base prima del ricarico privato/architetto.</p>
+              </div>
+            )}
+            {typeof stima.prezzoIndicativo === 'number' && (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Prezzo privato / architetto</p>
+                <p className="mt-1 text-xl font-semibold">{euro.format(stima.prezzoIndicativo)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Stima commerciale congelata.</p>
+              </div>
+            )}
           </div>
+          {typeof stima.prezzoFalegname === 'number' && typeof stima.prezzoIndicativo === 'number' && (
+            <p className="text-xs text-muted-foreground">Il prezzo falegname viene mantenuto nello stesso snapshot del configuratore e non viene ricalcolato con il Listino corrente.</p>
+          )}
         )}
       </CardContent>
     </Card>
