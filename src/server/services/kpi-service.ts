@@ -43,11 +43,16 @@ const STATI_APERTI = ['NUOVA', 'IN_REVISIONE', 'PREVENTIVO_INVIATO'] as const;
  * non prima, per non ottimizzare un problema che non esiste ancora.
  */
 export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Promise<RiepilogoKpi> {
+  // dataA è inclusiva: trasformiamo la data selezionata nell'inizio del giorno
+  // successivo e usiamo lt, così includiamo tutte le ore del giorno finale.
+  const dataAEsclusiva = filtri.dataA ? new Date(filtri.dataA) : null;
+  if (dataAEsclusiva) dataAEsclusiva.setDate(dataAEsclusiva.getDate() + 1);
+
   const where: Record<string, unknown> = { tenantId, stato: { in: STATI_OPERATIVI } };
   if (filtri.dataDa || filtri.dataA) {
     where.createdAt = {
       ...(filtri.dataDa ? { gte: new Date(filtri.dataDa) } : {}),
-      ...(filtri.dataA ? { lte: new Date(filtri.dataA) } : {}),
+      ...(dataAEsclusiva ? { lt: dataAEsclusiva } : {}),
     };
   }
 
@@ -211,7 +216,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     JOIN "richiesta_progetto" r ON r."id" = c."richiestaId"
     WHERE c."tenantId" = ${tenantId}
       AND (${filtri.dataDa ? new Date(filtri.dataDa) : null}::timestamp IS NULL OR c."createdAt" >= ${filtri.dataDa ? new Date(filtri.dataDa) : null})
-      AND (${filtri.dataA ? new Date(filtri.dataA) : null}::timestamp IS NULL OR c."createdAt" <= ${filtri.dataA ? new Date(filtri.dataA) : null})
+      AND (${dataAEsclusiva}::timestamp IS NULL OR c."createdAt" < ${dataAEsclusiva})
   `;
 
   const righeCommessa = await db.$queryRaw<Array<{ commessaId: string; quantita: number; costoUnitario: number | null }>>`
@@ -220,7 +225,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     JOIN "commessa" c ON c."id" = cr."commessaId"
     WHERE cr."tenantId" = ${tenantId}
       AND (${filtri.dataDa ? new Date(filtri.dataDa) : null}::timestamp IS NULL OR c."createdAt" >= ${filtri.dataDa ? new Date(filtri.dataDa) : null})
-      AND (${filtri.dataA ? new Date(filtri.dataA) : null}::timestamp IS NULL OR c."createdAt" <= ${filtri.dataA ? new Date(filtri.dataA) : null})
+      AND (${dataAEsclusiva}::timestamp IS NULL OR c."createdAt" < ${dataAEsclusiva})
   `;
   const costiPerCommessa = new Map<string, number>();
   for (const riga of righeCommessa) {
