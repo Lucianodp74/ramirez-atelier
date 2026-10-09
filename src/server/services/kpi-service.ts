@@ -75,6 +75,17 @@ export function calcolaPuntualitaConsegne(consegne: ConsegnaKpi[]) {
   };
 }
 
+/**
+ * Calcola il margine solo se esistono un imponibile commerciale salvato valido
+ * e un costo di produzione completo. Non usa stime indicative né rilegge il listino.
+ * Il margine può essere negativo: anche una perdita deve restare visibile.
+ */
+export function calcolaMargineLordo(imponibile: unknown, costoProduzione: number | undefined): number | null {
+  if (typeof imponibile !== 'number' || !Number.isFinite(imponibile) || imponibile < 0) return null;
+  if (typeof costoProduzione !== 'number' || !Number.isFinite(costoProduzione) || costoProduzione < 0) return null;
+  return imponibile - costoProduzione;
+}
+
 const STATI_APERTI = ['NUOVA', 'IN_REVISIONE', 'PREVENTIVO_INVIATO'] as const;
 
 /**
@@ -290,8 +301,9 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     const prezzo = (preventivo as Record<string, unknown>).prezzo;
     if (!prezzo || typeof prezzo !== 'object' || Array.isArray(prezzo)) continue;
     const imponibile = (prezzo as Record<string, unknown>).imponibile;
-    if (typeof imponibile !== 'number' || !Number.isFinite(imponibile)) continue;
-    margini.push(imponibile - (costiPerCommessa.get(commessa.id) ?? 0));
+    const margine = calcolaMargineLordo(imponibile, costiPerCommessa.get(commessa.id));
+    if (margine === null) continue;
+    margini.push(margine);
   }
 
   const produzione = {
