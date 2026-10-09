@@ -31,6 +31,30 @@ export interface RiepilogoKpi {
   };
 }
 
+type RigaCostoKpi = { commessaId: string; quantita: number; costoUnitario: number | null };
+
+/**
+ * Restituisce il costo solo per commesse con tutte le righe valorizzate.
+ * Una riga senza costo non deve far apparire completo un totale parziale.
+ */
+export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<string, number> {
+  const totali = new Map<string, number>();
+  const incomplete = new Set<string>();
+
+  for (const riga of righe) {
+    const quantita = Number(riga.quantita);
+    const costo = riga.costoUnitario == null ? NaN : Number(riga.costoUnitario);
+    if (!Number.isFinite(quantita) || !Number.isFinite(costo)) {
+      incomplete.add(riga.commessaId);
+      continue;
+    }
+    totali.set(riga.commessaId, (totali.get(riga.commessaId) ?? 0) + quantita * costo);
+  }
+
+  for (const commessaId of incomplete) totali.delete(commessaId);
+  return totali;
+}
+
 const STATI_APERTI = ['NUOVA', 'IN_REVISIONE', 'PREVENTIVO_INVIATO'] as const;
 
 /**
@@ -227,12 +251,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
       AND (${filtri.dataDa ? new Date(filtri.dataDa) : null}::timestamp IS NULL OR c."createdAt" >= ${filtri.dataDa ? new Date(filtri.dataDa) : null})
       AND (${dataAEsclusiva}::timestamp IS NULL OR c."createdAt" < ${dataAEsclusiva})
   `;
-  const costiPerCommessa = new Map<string, number>();
-  for (const riga of righeCommessa) {
-    if (riga.costoUnitario != null && Number.isFinite(Number(riga.costoUnitario))) {
-      costiPerCommessa.set(riga.commessaId, (costiPerCommessa.get(riga.commessaId) ?? 0) + Number(riga.quantita) * Number(riga.costoUnitario));
-    }
-  }
+  const costiPerCommessa = calcolaCostiCompletiPerCommessa(righeCommessa);
 
   const costoProduzioneTotale = commesse.reduce((totale, c) => totale + (costiPerCommessa.get(c.id) ?? 0), 0);
   const commesseConCosto = commesse.filter((c) => costiPerCommessa.has(c.id));
