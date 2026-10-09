@@ -26,7 +26,7 @@ export interface RiepilogoKpi {
     costoProduzioneTotale: number;
     costoProduzioneMedio: number;
     tempoMedioProduzioneGiorni: { valore: number; disponibile: boolean; campione: number };
-    puntualitaConsegne: { percentuale: number; puntuali: number; campione: number };
+    puntualitaConsegne: { percentuale: number; puntuali: number; campione: number; disponibile: boolean };
     margineLordo: { totale: number; medio: number; disponibile: boolean; campione: number };
   };
 }
@@ -53,6 +53,31 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
 
   for (const commessaId of incomplete) totali.delete(commessaId);
   return totali;
+}
+
+export type ConsegnaKpi = { consegnataIl: Date | string | null; dataPrevistaConsegna: Date | string | null };
+
+/** Misura la puntualità solo sulle consegne con entrambe le date disponibili. */
+export function calcolaPuntualitaConsegne(consegne: ConsegnaKpi[]) {
+  const campione = consegne.filter((c) => c.consegnataIl != null && c.dataPrevistaConsegna != null);
+  const puntuali = campione.filter((c) => {
+    const effettiva = new Date(c.consegnataIl!).getTime();
+    const prevista = new Date(c.dataPrevistaConsegna!).getTime();
+    return Number.isFinite(effettiva) && Number.isFinite(prevista) && effettiva <= prevista;
+  }).length;
+  const valide = campione.filter((c) =>
+    Number.isFinite(new Date(c.consegnataIl!).getTime()) &&
+    Number.isFinite(new Date(c.dataPrevistaConsegna!).getTime())
+  );
+  const numeroPuntuali = valide.filter((c) =>
+    new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime()
+  ).length;
+  return {
+    percentuale: valide.length > 0 ? Math.round((numeroPuntuali / valide.length) * 1000) / 10 : 0,
+    puntuali: numeroPuntuali,
+    campione: valide.length,
+    disponibile: valide.length > 0,
+  };
 }
 
 const STATI_APERTI = ['NUOVA', 'IN_REVISIONE', 'PREVENTIVO_INVIATO'] as const;
@@ -259,8 +284,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     .filter((c) => c.avviataIl && c.prontaIl)
     .map((c) => (new Date(c.prontaIl!).getTime() - new Date(c.avviataIl!).getTime()) / 86400000)
     .filter((giorni) => giorni >= 0);
-  const consegneConData = commesse.filter((c) => c.consegnataIl && c.dataPrevistaConsegna);
-  const puntuali = consegneConData.filter((c) => new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime()).length;
+  const puntualitaConsegne = calcolaPuntualitaConsegne(commesse);
 
   const margini: number[] = [];
   for (const commessa of commesse) {
@@ -286,11 +310,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
       disponibile: tempoProduzione.length > 0,
       campione: tempoProduzione.length,
     },
-    puntualitaConsegne: {
-      percentuale: consegneConData.length > 0 ? Math.round((puntuali / consegneConData.length) * 1000) / 10 : 0,
-      puntuali,
-      campione: consegneConData.length,
-    },
+    puntualitaConsegne,
     margineLordo: {
       totale: margini.reduce((a, b) => a + b, 0),
       medio: margini.length > 0 ? margini.reduce((a, b) => a + b, 0) / margini.length : 0,
