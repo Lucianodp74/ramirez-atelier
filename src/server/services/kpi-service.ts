@@ -44,11 +44,20 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
   for (const riga of righe) {
     const quantita = Number(riga.quantita);
     const costo = riga.costoUnitario == null ? NaN : Number(riga.costoUnitario);
-    if (!Number.isFinite(quantita) || !Number.isFinite(costo)) {
+    // Quantità positive e costi unitari non negativi sono necessari per
+    // considerare attendibile lo snapshot economico della commessa.
+    if (!Number.isFinite(quantita) || quantita <= 0 ||
+        !Number.isFinite(costo) || costo < 0) {
       incomplete.add(riga.commessaId);
       continue;
     }
-    totali.set(riga.commessaId, (totali.get(riga.commessaId) ?? 0) + quantita * costo);
+    const subtotale = quantita * costo;
+    const totaleAggiornato = (totali.get(riga.commessaId) ?? 0) + subtotale;
+    if (!Number.isFinite(subtotale) || !Number.isFinite(totaleAggiornato)) {
+      incomplete.add(riga.commessaId);
+      continue;
+    }
+    totali.set(riga.commessaId, totaleAggiornato);
   }
 
   for (const commessaId of incomplete) totali.delete(commessaId);
