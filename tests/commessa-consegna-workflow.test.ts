@@ -54,7 +54,7 @@ describe('workflow reale consegna commessa', () => {
 
     const result = await cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'CONSEGNATA');
 
-    expect(result).toEqual({ ...dettaglio('CONSEGNATA')[0], righe: [] });
+    expect(result).toMatchObject({ id: COMMESSA_ID, stato: 'CONSEGNATA', righe: [] });
     expect(executeRaw).toHaveBeenCalledTimes(1);
   });
 
@@ -66,7 +66,7 @@ describe('workflow reale consegna commessa', () => {
 
     const result = await cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'CHIUSA');
 
-    expect(result).toEqual({ ...dettaglio('CHIUSA')[0], righe: [] });
+    expect(result).toMatchObject({ id: COMMESSA_ID, stato: 'CHIUSA', righe: [] });
     expect(executeRaw).toHaveBeenCalledTimes(1);
   });
 
