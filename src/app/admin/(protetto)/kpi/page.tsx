@@ -145,7 +145,7 @@ export default async function KpiPage({ searchParams }: { searchParams: Promise<
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Costo produzione totale</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.costoProduzioneTotale)}</p><p className="text-xs text-muted-foreground">snapshot delle commesse con costi disponibili</p></CardContent>
+            <CardContent>{kpi.produzione.costoProduzioneDisponibile ? <><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.costoProduzioneTotale)}</p><p className="text-xs text-muted-foreground">totale su {kpi.produzione.costoProduzioneCampione} commesse con snapshot costi completo</p></> : <p className="text-sm text-muted-foreground">Costi non ancora disponibili: nessuna commessa con snapshot completo nel periodo.</p>}</CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Tempo medio produzione</CardTitle></CardHeader>
@@ -153,7 +153,7 @@ export default async function KpiPage({ searchParams }: { searchParams: Promise<
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Puntualità consegne</CardTitle></CardHeader>
-            <CardContent>{kpi.produzione.puntualitaConsegne.campione > 0 ? <><p className="text-2xl font-semibold">{kpi.produzione.puntualitaConsegne.percentuale}%</p><p className="text-xs text-muted-foreground">{kpi.produzione.puntualitaConsegne.puntuali} puntuali su {kpi.produzione.puntualitaConsegne.campione} con data prevista</p></> : <p className="text-sm text-muted-foreground">Nessuna consegna con data prevista.</p>}</CardContent>
+            <CardContent>{kpi.produzione.puntualitaConsegne.disponibile ? <><p className="text-2xl font-semibold">{kpi.produzione.puntualitaConsegne.percentuale}%</p><p className="text-xs text-muted-foreground">{kpi.produzione.puntualitaConsegne.puntuali} puntuali su {kpi.produzione.puntualitaConsegne.campione} con data prevista</p></> : <p className="text-sm text-muted-foreground">Nessuna consegna con data prevista.</p>}</CardContent>
           </Card>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
