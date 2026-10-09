@@ -145,7 +145,7 @@ export default async function KpiPage({ searchParams }: { searchParams: Promise<
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Costo produzione totale</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.costoProduzioneTotale)}</p><p className="text-xs text-muted-foreground">snapshot delle commesse con costi disponibili</p></CardContent>
+            <CardContent>{kpi.produzione.costoProduzioneDisponibile ? <><p className="text-2xl font-semibold">{formattaEuro(kpi.produzione.costoProduzioneTotale)}</p><p className="text-xs text-muted-foreground">su {kpi.produzione.costoProduzioneCampione} commesse con costi completi · {kpi.produzione.commesseTotali} commesse nel periodo</p></> : <p className="text-sm text-muted-foreground">Costi non ancora disponibili: nessuna commessa con costi completi nel periodo.</p>}</CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-normal text-muted-foreground">Tempo medio produzione</CardTitle></CardHeader>
