@@ -46,7 +46,7 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
   // dataA è inclusiva: trasformiamo la data selezionata nell'inizio del giorno
   // successivo e usiamo lt, così includiamo tutte le ore del giorno finale.
   const dataAEsclusiva = filtri.dataA ? new Date(filtri.dataA) : null;
-  if (dataAEsclusiva) dataAEsclusiva.setDate(dataAEsclusiva.getDate() + 1);
+  if (dataAEsclusiva) dataAEsclusiva.setUTCDate(dataAEsclusiva.getUTCDate() + 1);
 
   const where: Record<string, unknown> = { tenantId, stato: { in: STATI_OPERATIVI } };
   if (filtri.dataDa || filtri.dataA) {
