@@ -59,22 +59,17 @@ export type ConsegnaKpi = { consegnataIl: Date | string | null; dataPrevistaCons
 
 /** Misura la puntualità solo sulle consegne con entrambe le date disponibili. */
 export function calcolaPuntualitaConsegne(consegne: ConsegnaKpi[]) {
-  const campione = consegne.filter((c) => c.consegnataIl != null && c.dataPrevistaConsegna != null);
-  const puntuali = campione.filter((c) => {
-    const effettiva = new Date(c.consegnataIl!).getTime();
-    const prevista = new Date(c.dataPrevistaConsegna!).getTime();
-    return Number.isFinite(effettiva) && Number.isFinite(prevista) && effettiva <= prevista;
-  }).length;
-  const valide = campione.filter((c) =>
-    Number.isFinite(new Date(c.consegnataIl!).getTime()) &&
-    Number.isFinite(new Date(c.dataPrevistaConsegna!).getTime())
-  );
-  const numeroPuntuali = valide.filter((c) =>
+  const valide = consegne.filter((c) => {
+    if (c.consegnataIl == null || c.dataPrevistaConsegna == null) return false;
+    return Number.isFinite(new Date(c.consegnataIl).getTime()) &&
+      Number.isFinite(new Date(c.dataPrevistaConsegna).getTime());
+  });
+  const puntuali = valide.filter((c) =>
     new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime()
   ).length;
   return {
-    percentuale: valide.length > 0 ? Math.round((numeroPuntuali / valide.length) * 1000) / 10 : 0,
-    puntuali: numeroPuntuali,
+    percentuale: valide.length > 0 ? Math.round((puntuali / valide.length) * 1000) / 10 : 0,
+    puntuali,
     campione: valide.length,
     disponibile: valide.length > 0,
   };
