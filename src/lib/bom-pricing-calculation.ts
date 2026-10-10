@@ -42,7 +42,7 @@ const importo = (nome: string, valore: number) => {
 export function calcolaPrezzoBom(costoProduzione: number, input: BomPrezzoInput = {}): BomPrezzoSummary {
   importo('Il costo di produzione', costoProduzione);
 
-  const ricaricoPercentuale = input.ricaricoPercentuale ?? 0;
+  const ricaricoPercentuale = input.ricaricoPercentuale ?? 40;
   const costiFissi = input.costiFissi ?? 0;
   const lavorazioni = input.lavorazioni ?? 0;
   const manodopera = input.manodopera ?? 0;
