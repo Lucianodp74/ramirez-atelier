@@ -25,6 +25,8 @@ export interface RiepilogoKpi {
     commesseChiuse: number;
     costoProduzioneTotale: number;
     costoProduzioneMedio: number;
+    costoProduzioneDisponibile: boolean;
+    costoProduzioneCampione: number;
     tempoMedioProduzioneGiorni: { valore: number; disponibile: boolean; campione: number };
     puntualitaConsegne: { percentuale: number; puntuali: number; campione: number; disponibile: boolean };
     margineLordo: { totale: number; medio: number; disponibile: boolean; campione: number };
@@ -321,6 +323,8 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
     commesseChiuse: commesse.filter((c) => c.stato === 'CHIUSA').length,
     costoProduzioneTotale,
     costoProduzioneMedio: commesseConCosto.length > 0 ? costoProduzioneTotale / commesseConCosto.length : 0,
+    costoProduzioneDisponibile: commesseConCosto.length > 0,
+    costoProduzioneCampione: commesseConCosto.length,
     tempoMedioProduzioneGiorni: {
       valore: tempoProduzione.length > 0 ? Math.round((tempoProduzione.reduce((a, b) => a + b, 0) / tempoProduzione.length) * 10) / 10 : 0,
       disponibile: tempoProduzione.length > 0,
