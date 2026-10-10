@@ -29,13 +29,14 @@ describe('BOM pricing invariants', () => {
     expect(() => calcolaPrezzoBom(100, { costiFissi: -1 })).toThrow();
   });
 
-  it('uses explicit zero defaults without inventing economics', () => {
+  it('uses the Ramirez 40% default markup without inventing additional costs', () => {
     const result = calcolaPrezzoBom(100);
 
-    expect(result.ricaricoPercentuale).toBe(0);
+    expect(result.ricaricoPercentuale).toBe(40);
     expect(result.costiFissi).toBe(0);
     expect(result.scontoPercentuale).toBe(0);
     expect(result.ivaPercentuale).toBe(0);
-    expect(result.totale).toBe(100);
+    expect(result.baseConRicarico).toBe(140);
+    expect(result.totale).toBe(140);
   });
 });
