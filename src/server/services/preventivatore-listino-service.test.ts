@@ -14,6 +14,7 @@ function listinoCompleto() {
     voce(CODICI_TARIFFE_PREVENTIVATORE.bordo, 4, 'ML'),
     voce(CODICI_TARIFFE_PREVENTIVATORE.retro, 5, 'M2'),
     voce(CODICI_TARIFFE_PREVENTIVATORE.ferramentaPorta, 6, 'PZ'),
+    voce(CODICI_TARIFFE_PREVENTIVATORE.ferramentaScorrevole, 700, 'PZ'),
     voce(CODICI_TARIFFE_PREVENTIVATORE.ferramentaCassetto, 7, 'PZ'),
     voce(CODICI_TARIFFE_PREVENTIVATORE.oreBase, 0.5, 'H'),
     voce(CODICI_TARIFFE_PREVENTIVATORE.orePerM2, 0.6, 'H/M2'),
@@ -32,6 +33,19 @@ describe('adapter Listino -> Preventivatore', () => {
     expect(tariffe.finituraEuroM2.LACCATO).toBe(3);
     expect(tariffe.costoOra).toBe(40);
     expect(tariffe.ricaricoPercentuale).toBe(35);
+  });
+
+  it('legge dal Listino il sistema scorrevole come importo totale configurato, senza moltiplicarlo per le ante', () => {
+    const tariffe = costruisciTariffeDaListino(listinoCompleto());
+    expect(tariffe.ferramentaPerScorrevole).toBe(700);
+  });
+
+  it('non sostituisce con un prezzo dimostrativo un sistema scorrevole assente o inattivo', () => {
+    const senzaSistema = listinoCompleto().filter((x) => x.codice !== CODICI_TARIFFE_PREVENTIVATORE.ferramentaScorrevole);
+    const inattivo = listinoCompleto().map((x) => x.codice === CODICI_TARIFFE_PREVENTIVATORE.ferramentaScorrevole ? { ...x, attivo: false } : x);
+
+    expect(costruisciTariffeDaListino(senzaSistema).ferramentaPerScorrevole).toBeUndefined();
+    expect(costruisciTariffeDaListino(inattivo).ferramentaPerScorrevole).toBeUndefined();
   });
 
   it('riflette una modifica al prezzo senza modificare il contratto del motore', () => {
