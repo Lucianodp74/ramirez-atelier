@@ -12,7 +12,7 @@ describe('prezzo falegname', () => {
       profonditaCm: 40,
       materiale: 'TRUCIOLARE',
       finitura: 'MELAMINICO',
-      configurazione: 'ANTE_BATTENTI',
+      configurazione: '2_PORTE',
       ripiani: 1,
     };
 
