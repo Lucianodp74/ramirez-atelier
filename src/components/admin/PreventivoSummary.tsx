@@ -42,7 +42,7 @@ export function PreventivoSummary({ bomId, costoProduzione }: Props) {
       .then((data) => {
         if (!active || !data?.preventivo) return;
         const pricing = data.preventivo.pricing;
-        setRicarico(pricing.ricaricoPercentuale ?? 0);
+        setRicarico(pricing.ricaricoPercentuale ?? 40);
         setCostiFissi(pricing.costiFissi ?? 0);
         setLavorazioni(pricing.lavorazioni ?? 0);
         setManodopera(pricing.manodopera ?? 0);
