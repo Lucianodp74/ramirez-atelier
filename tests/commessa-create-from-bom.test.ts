@@ -223,4 +223,29 @@ describe('creaCommessaDaRichiesta — test reale (non mock del risultato)', () =
       'violazione vincolo simulata su commessa_riga_produzione',
     );
   });
+
+  it('congela i costi della BOM nella commessa: un listino successivamente diverso non li ricalcola', async () => {
+    // Questi sono i costi salvati nella BOM confermata. Il listino corrente,
+    // ipoteticamente aggiornato a 99 e 88, non deve essere consultato in questa fase.
+    const snapshotConCostiStorici = [
+      { ...RIGHE_BOM[0], costoUnitario: 31.5 },
+      { ...RIGHE_BOM[1], costoUnitario: 6.2 },
+    ];
+    queryRaw
+      .mockResolvedValueOnce(RICHIESTA_CONVERTITA)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(bomConfermata({ versione: 4 }))
+      .mockResolvedValueOnce(snapshotConCostiStorici);
+
+    await creaCommessaDaRichiesta(TENANT_ID, RICHIESTA_ID);
+
+    const insertRighe = executeRaw.mock.calls.filter((call) =>
+      String(call[0][0]).includes('INSERT INTO "commessa_riga_produzione"'),
+    );
+    expect(insertRighe.map((call) => call[12])).toEqual([31.5, 6.2]);
+
+    const tutteLeQuery = [...queryRaw.mock.calls, ...executeRaw.mock.calls].map((call) => String(call[0][0]));
+    expect(tutteLeQuery.some((sql) => sql.includes('listino_prezzo'))).toBe(false);
+  });
+
 });
