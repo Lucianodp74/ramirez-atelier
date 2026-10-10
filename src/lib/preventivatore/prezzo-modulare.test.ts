@@ -79,4 +79,20 @@ describe('preventivatore modulare', () => {
   it('rifiuta dimensioni fuori dai limiti del modulo', () => {
     expect(() => calcolaCostoModulo({ ...base, larghezzaCm: 10 })).toThrow('larghezza fuori limite');
   });
+
+  it('applica il sistema scorrevole una sola volta a un armadio composto da più moduli e mantiene il ricarico configurato', () => {
+    const tariffe = { ...TARIFFE_DEMO, ferramentaPerScorrevole: 700, ricaricoPercentuale: 40 };
+    const moduliScorrevoli: ModuloConfigurato[] = [
+      { ...base, id: 'colonna-scorrevole-1', tipo: 'COLONNA', larghezzaCm: 60, altezzaCm: 200, profonditaCm: 60, configurazione: 'ANTE_SCORREVOLI' },
+      { ...base, id: 'colonna-scorrevole-2', tipo: 'COLONNA', larghezzaCm: 60, altezzaCm: 200, profonditaCm: 60, configurazione: 'ANTE_SCORREVOLI' },
+    ];
+
+    const preventivo = calcolaPreventivoModulare(moduliScorrevoli, tariffe);
+
+    expect(preventivo.errori).toEqual([]);
+    expect(preventivo.righe.map((riga) => riga.ferramenta)).toEqual([700, 0]);
+    expect(preventivo.righe.reduce((somma, riga) => somma + riga.ferramenta, 0)).toBe(700);
+    expect(preventivo.prezzoIndicativo).toBe(Math.round(preventivo.costoProduzione * 1.4 * 100) / 100);
+    expect(preventivo.prezzoFalegname).toBe(Math.round((preventivo.prezzoIndicativo / 1.4) * 100) / 100);
+  });
 });
