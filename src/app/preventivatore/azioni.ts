@@ -94,10 +94,15 @@ export async function salvaRichiestaPreventivatore(moduli: unknown, dati: DatiRi
           ? ` · ${item.larghezzaCm}×${item.altezzaCm}${item.profonditaCm ? `×${item.profonditaCm}` : ''} cm`
           : '';
         const note = item.note ? `${item.note} ` : '';
+        const sistemaScorrevoleArmadio = item.codice === 'FER-HARDWARE' && modulo.configurazione === 'ANTE_SCORREVOLI';
+        const voceBom = sistemaScorrevoleArmadio ? 'Sistema ante scorrevoli (totale armadio)' : item.voce;
+        const notaScorrevole = sistemaScorrevoleArmadio && costo > 0
+          ? 'Importo complessivo del sistema scorrevole applicato una sola volta all’intero armadio; non moltiplicare per modulo o anta. '
+          : '';
         return {
-          categoria: item.categoria, codice: item.codice, voce: item.voce, unita: item.unita, quantita: item.quantita, costo,
-          descrizione: `${item.voce}${dimensioni} · ${descrizione}`,
-          note: `${note}Snapshot parametrico: verificare dimensioni esecutive prima della produzione`.trim(),
+          categoria: item.categoria, codice: item.codice, voce: voceBom, unita: item.unita, quantita: item.quantita, costo,
+          descrizione: `${voceBom}${dimensioni} · ${descrizione}`,
+          note: `${notaScorrevole}${note}Snapshot parametrico: verificare dimensioni esecutive prima della produzione`.trim(),
         };
       });
 
