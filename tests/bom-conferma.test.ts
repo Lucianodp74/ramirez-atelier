@@ -12,7 +12,7 @@ vi.mock('@/server/db', () => ({
   },
 }));
 
-import { cambiaStatoBom } from '@/server/services/bom-service';
+import { aggiungiRigaBom, aggiornaRigaBom, cambiaStatoBom } from '@/server/services/bom-service';
 
 const TENANT_ID = 'tenant-1';
 const BOM_ID = 'bom-1';
@@ -53,6 +53,32 @@ describe('cambiaStatoBom — conferma', () => {
     await cambiaStatoBom(TENANT_ID, BOM_ID, 'CONFERMATA');
 
     expect(executeRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocca l’aggiunta di righe dopo la conferma: lo snapshot BOM resta congelato', async () => {
+    queryRaw.mockResolvedValueOnce([{ id: BOM_ID, stato: 'CONFERMATA' }]);
+
+    await expect(
+      aggiungiRigaBom(TENANT_ID, BOM_ID, {
+        categoria: 'PANNELLO',
+        descrizione: 'Nuovo fianco',
+        quantita: 1,
+        costoUnitario: 25,
+      }),
+    ).rejects.toThrow('La distinta non è più modificabile.');
+
+    expect(executeRaw).not.toHaveBeenCalled();
+  });
+
+  it('blocca la modifica dei costi dopo la conferma: il prezzo congelato non può cambiare', async () => {
+    queryRaw.mockResolvedValueOnce([{ id: 'riga-1', bomId: BOM_ID, stato: 'CONFERMATA' }]);
+
+    await expect(
+      aggiornaRigaBom(TENANT_ID, 'riga-1', { costoUnitario: 999 }),
+    ).rejects.toThrow('La distinta non è più modificabile.');
+
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    expect(executeRaw).not.toHaveBeenCalled();
   });
 
   it('non esegue il controllo dei costi quando lo stato richiesto non è CONFERMATA', async () => {
