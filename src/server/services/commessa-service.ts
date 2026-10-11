@@ -306,6 +306,11 @@ export async function cambiaStatoCommessa(
       WHERE "id" = ${id}
         AND "tenantId" = ${tenantId}
         AND "stato" = 'IN_PRODUZIONE'
+        AND EXISTS (
+          SELECT 1 FROM "commessa_riga_produzione" cr
+          WHERE cr."tenantId" = ${tenantId}
+            AND cr."commessaId" = ${id}
+        )
         AND NOT EXISTS (
           SELECT 1 FROM "commessa_riga_produzione" cr
           WHERE cr."tenantId" = ${tenantId}
