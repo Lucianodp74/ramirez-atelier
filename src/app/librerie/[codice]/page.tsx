@@ -21,6 +21,9 @@ import {
 import { DisegnoLibreria } from '@/components/librerie/DisegnoLibreria';
 import { Button } from '@/components/ui/button';
 
+// L'anteprima interna dipende dal cookie di sessione: mai prerendering statico.
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: 'Librerie | Ramirez Atelier' };
 
 function Voce({ etichetta, children }: { etichetta: string; children: React.ReactNode }) {

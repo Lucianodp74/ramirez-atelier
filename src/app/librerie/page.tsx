@@ -10,6 +10,9 @@ import {
 } from '@/components/librerie/CorniceLibrerie';
 import { DisegnoLibreria } from '@/components/librerie/DisegnoLibreria';
 
+// L'anteprima interna dipende dal cookie di sessione: mai prerendering statico.
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Librerie | Ramirez Atelier',
   description: 'Le linee di librerie su misura di Ramirez Atelier.',
