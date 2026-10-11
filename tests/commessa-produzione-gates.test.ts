@@ -63,6 +63,19 @@ describe('workflow produzione commessa', () => {
     expect(executeRaw).not.toHaveBeenCalled();
   });
 
+  it('blocca PRONTA se la commessa non contiene righe di produzione', async () => {
+    queryRaw
+      .mockResolvedValueOnce([{ id: COMMESSA_ID, stato: 'IN_PRODUZIONE' }])
+      .mockResolvedValueOnce([]);
+
+    await expect(cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'PRONTA')).rejects.toThrow(
+      'La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.',
+    );
+
+    expect(queryRaw).toHaveBeenCalledTimes(2);
+    expect(executeRaw).not.toHaveBeenCalled();
+  });
+
   it('porta a PRONTA una commessa solo quando il gate atomico non trova righe incomplete', async () => {
     queryRaw
       .mockResolvedValueOnce([{ id: COMMESSA_ID, stato: 'IN_PRODUZIONE' }])
