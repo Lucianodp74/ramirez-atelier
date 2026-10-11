@@ -130,7 +130,7 @@ describe('workflow produzione commessa', () => {
     );
 
     expect(executeRaw).toHaveBeenCalledTimes(1);
-    expect(String(executeRaw.mock.calls[0][0][0])).toContain('c."stato"');
+    expect(executeRaw.mock.calls[0][0].join(' ')).toContain('c."stato"');
     expect(queryRaw).toHaveBeenCalledTimes(1);
   });
 
