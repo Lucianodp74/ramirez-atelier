@@ -331,15 +331,24 @@ export async function cambiaStatoCommessa(
     chiusaIl: nuovoStato === 'CHIUSA' ? timestamp : null,
   };
 
-  await db.$executeRaw`
+  const aggiornate = await db.$executeRaw`
     UPDATE "commessa"
     SET "stato" = ${nuovoStato},
         "avviataIl" = COALESCE("avviataIl", ${data.avviataIl}),
         "consegnataIl" = COALESCE("consegnataIl", ${data.consegnataIl}),
         "chiusaIl" = COALESCE("chiusaIl", ${data.chiusaIl}),
         "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${id} AND "tenantId" = ${tenantId}
+    WHERE "id" = ${id}
+      AND "tenantId" = ${tenantId}
+      AND "stato" = ${commessa[0].stato}
   `;
+
+  // La validazione applicativa avviene prima della scrittura: vincolare anche
+  // lo stato di partenza nell'UPDATE evita transizioni stale in caso di richieste
+  // concorrenti che cambiano la stessa commessa.
+  if (aggiornate === 0) {
+    throw new Error('La commessa è stata modificata da un’altra operazione. Ricarica e riprova.');
+  }
 
   return dettaglioCommessa(tenantId, id);
 }
