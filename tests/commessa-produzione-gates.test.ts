@@ -88,6 +88,20 @@ describe('workflow produzione commessa', () => {
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
   });
 
+  it('rifiuta una transizione non PRONTA se lo stato cambia prima dell’UPDATE', async () => {
+    queryRaw.mockResolvedValueOnce([{ id: COMMESSA_ID, stato: 'DA_AVVIARE' }]);
+    executeRaw.mockResolvedValueOnce(0);
+
+    await expect(
+      cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'IN_PRODUZIONE'),
+    ).rejects.toThrow(
+      'La commessa è stata modificata da un’altra operazione. Ricarica e riprova.',
+    );
+
+    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+  });
+
   it('aggiorna lo stato di una riga solo quando la commessa è IN_PRODUZIONE', async () => {
     queryRaw
       .mockResolvedValueOnce([{ stato: 'IN_PRODUZIONE' }])
