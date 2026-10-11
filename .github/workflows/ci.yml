@@ -29,6 +29,7 @@ jobs:
       DATABASE_URL: postgresql://ramirez:ramirez_test_password@localhost:5432/ramirez_atelier_test?schema=public
       DIRECT_URL: postgresql://ramirez:ramirez_test_password@localhost:5432/ramirez_atelier_test?schema=public
       SITE_URL: http://localhost:3000
+      RUN_POSTGRES_CONCURRENCY_TESTS: 'true'
 
     steps:
       - uses: actions/checkout@v7
