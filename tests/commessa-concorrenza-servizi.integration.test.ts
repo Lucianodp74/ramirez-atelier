@@ -1,4 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  TIMEOUT_TEST_MS,
+  attendiSessioniInAttesa,
+  conLockDetenuto,
+  type SessioneInAttesa,
+} from './helpers/postgres-lock';
 
 /**
  * Prova d'integrazione dei servizi REALI `aggiornaStatoRigaProduzione` e
@@ -28,26 +34,12 @@ type Servizio = typeof import('@/server/services/commessa-service');
 const suffisso = `${process.env.GITHUB_RUN_ID ?? 'local'}-${process.env.GITHUB_RUN_ATTEMPT ?? '1'}-${Date.now()}`;
 const COMMESSA_ID = `commessa-concorrenza-${suffisso}`;
 const RIGA_ID = `riga-concorrenza-${suffisso}`;
-const ATTESA_LOCK_MS = 300;
 
 let db: Db;
 let servizio: Servizio;
 let tenantId: string;
 let tipoProgettoId: string;
 let richiestaId: string;
-
-const pausa = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Esito di una promise dopo `ATTESA_LOCK_MS`: serve a osservare che sia bloccata. */
-function esitoDopoAttesa(promise: Promise<unknown>) {
-  return Promise.race([
-    promise.then(
-      () => 'risolta' as const,
-      () => 'rifiutata' as const,
-    ),
-    pausa(ATTESA_LOCK_MS).then(() => 'in attesa' as const),
-  ]);
-}
 
 async function leggiStato() {
   const commesse = await db.$queryRaw<Array<{ stato: string }>>`
@@ -69,27 +61,26 @@ async function ripristina(statoRiga: string) {
 }
 
 /**
- * Apre una transazione che detiene il lock sulla riga padre della commessa,
- * come farebbe un'operazione concorrente, finché non viene chiamato `rilascia`.
+ * Esegue `corpo` mentre una seconda transazione detiene il lock sulla riga
+ * padre della commessa, come farebbe un'operazione concorrente.
  */
-async function bloccaCommessa() {
-  let segnalaLock!: () => void;
-  const lockAcquisito = new Promise<void>((resolve) => {
-    segnalaLock = resolve;
-  });
-  let rilascia!: () => void;
-  const rilascio = new Promise<void>((resolve) => {
-    rilascia = resolve;
-  });
+function conCommessaBloccata<T>(corpo: (pidBloccante: number) => Promise<T>) {
+  return conLockDetenuto(
+    db,
+    async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "commessa" WHERE "id" = ${COMMESSA_ID} FOR UPDATE`;
+    },
+    corpo,
+  );
+}
 
-  const transazione = db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "commessa" WHERE "id" = ${COMMESSA_ID} FOR UPDATE`;
-    segnalaLock();
-    await rilascio;
-  });
-
-  await lockAcquisito;
-  return { rilascia, transazione };
+/** Le sessioni in attesa devono essere ferme sul lock della commessa, non altrove. */
+function verificaAttesaSulLockCommessa(sessioni: SessioneInAttesa[]) {
+  for (const sessione of sessioni) {
+    expect(sessione.waitEventType).toBe('Lock');
+    expect(sessione.query).toContain('"commessa"');
+    expect(sessione.query).toContain('FOR UPDATE');
+  }
 }
 
 describePostgres('concorrenza PostgreSQL reale — servizi commessa', () => {
@@ -141,62 +132,98 @@ describePostgres('concorrenza PostgreSQL reale — servizi commessa', () => {
     await ripristina('IN_LAVORAZIONE');
   });
 
-  it('aggiornaStatoRigaProduzione attende il lock sulla commessa prima di scrivere', async () => {
-    const blocco = await bloccaCommessa();
+  it(
+    'aggiornaStatoRigaProduzione attende il lock sulla commessa prima di scrivere',
+    async () => {
+      const aggiornamento = await conCommessaBloccata(async (pidBloccante) => {
+        const inCorso = servizio.aggiornaStatoRigaProduzione(
+          tenantId,
+          COMMESSA_ID,
+          RIGA_ID,
+          'COMPLETATA',
+        );
+        inCorso.catch(() => undefined);
 
-    const aggiornamento = servizio.aggiornaStatoRigaProduzione(
-      tenantId,
-      COMMESSA_ID,
-      RIGA_ID,
-      'COMPLETATA',
-    );
+        verificaAttesaSulLockCommessa(await attendiSessioniInAttesa(db, pidBloccante));
+        // Il servizio è fermo sul lock: la riga non può essere già cambiata.
+        expect(await leggiStato()).toEqual({ commessa: 'IN_PRODUZIONE', riga: 'IN_LAVORAZIONE' });
+        return { inCorso };
+      });
 
-    expect(await esitoDopoAttesa(aggiornamento)).toBe('in attesa');
-    expect((await leggiStato()).riga).toBe('IN_LAVORAZIONE');
+      await aggiornamento.inCorso;
+      expect(await leggiStato()).toEqual({ commessa: 'IN_PRODUZIONE', riga: 'COMPLETATA' });
+    },
+    TIMEOUT_TEST_MS,
+  );
 
-    blocco.rilascia();
-    await blocco.transazione;
-    await aggiornamento;
-
-    expect(await leggiStato()).toEqual({ commessa: 'IN_PRODUZIONE', riga: 'COMPLETATA' });
-  });
-
-  it('cambiaStatoCommessa verso PRONTA attende il lock sulla commessa prima di valutare il gate', async () => {
-    await ripristina('COMPLETATA');
-    const blocco = await bloccaCommessa();
-
-    const transizione = servizio.cambiaStatoCommessa(tenantId, COMMESSA_ID, 'PRONTA');
-
-    expect(await esitoDopoAttesa(transizione)).toBe('in attesa');
-    expect((await leggiStato()).commessa).toBe('IN_PRODUZIONE');
-
-    blocco.rilascia();
-    await blocco.transazione;
-    const dettaglio = await transizione;
-
-    expect(dettaglio?.stato).toBe('PRONTA');
-    expect(await leggiStato()).toEqual({ commessa: 'PRONTA', riga: 'COMPLETATA' });
-  });
-
-  it('non lascia mai una commessa PRONTA con una riga riaperta in concorrenza', async () => {
-    for (let giro = 0; giro < 20; giro += 1) {
+  it(
+    'cambiaStatoCommessa verso PRONTA attende il lock sulla commessa prima di valutare il gate',
+    async () => {
       await ripristina('COMPLETATA');
 
-      const [transizione, riapertura] = await Promise.allSettled([
-        servizio.cambiaStatoCommessa(tenantId, COMMESSA_ID, 'PRONTA'),
-        servizio.aggiornaStatoRigaProduzione(tenantId, COMMESSA_ID, RIGA_ID, 'DA_FARE'),
-      ]);
+      const transizione = await conCommessaBloccata(async (pidBloccante) => {
+        const inCorso = servizio.cambiaStatoCommessa(tenantId, COMMESSA_ID, 'PRONTA');
+        inCorso.catch(() => undefined);
 
-      // Le due operazioni sono mutuamente esclusive: vince la prima che ottiene il lock.
-      const esiti = [transizione.status, riapertura.status];
-      expect(esiti.filter((esito) => esito === 'fulfilled')).toHaveLength(1);
+        verificaAttesaSulLockCommessa(await attendiSessioniInAttesa(db, pidBloccante));
+        expect(await leggiStato()).toEqual({ commessa: 'IN_PRODUZIONE', riga: 'COMPLETATA' });
+        return { inCorso };
+      });
 
-      const stato = await leggiStato();
-      expect(stato).toEqual(
-        transizione.status === 'fulfilled'
-          ? { commessa: 'PRONTA', riga: 'COMPLETATA' }
-          : { commessa: 'IN_PRODUZIONE', riga: 'DA_FARE' },
-      );
-    }
-  });
+      expect((await transizione.inCorso)?.stato).toBe('PRONTA');
+      expect(await leggiStato()).toEqual({ commessa: 'PRONTA', riga: 'COMPLETATA' });
+    },
+    TIMEOUT_TEST_MS,
+  );
+
+  it(
+    'con entrambe le operazioni in coda sul lock, la commessa non resta mai PRONTA con una riga riaperta',
+    async () => {
+      const avvia = {
+        transizione: (): Promise<unknown> =>
+          servizio.cambiaStatoCommessa(tenantId, COMMESSA_ID, 'PRONTA'),
+        riapertura: (): Promise<unknown> =>
+          servizio.aggiornaStatoRigaProduzione(tenantId, COMMESSA_ID, RIGA_ID, 'DA_FARE'),
+      };
+
+      for (let giro = 0; giro < 10; giro += 1) {
+        await ripristina('COMPLETATA');
+        // A giri alterni cambia chi si mette in coda per primo.
+        const transizionePerPrima = giro % 2 === 0;
+
+        const inCorso = await conCommessaBloccata(async (pidBloccante) => {
+          const prima = transizionePerPrima ? avvia.transizione() : avvia.riapertura();
+          prima.catch(() => undefined);
+          await attendiSessioniInAttesa(db, pidBloccante, 1);
+
+          const seconda = transizionePerPrima ? avvia.riapertura() : avvia.transizione();
+          seconda.catch(() => undefined);
+          // Entrambe le sessioni devono risultare in attesa prima del rilascio.
+          verificaAttesaSulLockCommessa(await attendiSessioniInAttesa(db, pidBloccante, 2));
+          expect(await leggiStato()).toEqual({ commessa: 'IN_PRODUZIONE', riga: 'COMPLETATA' });
+
+          return transizionePerPrima
+            ? { transizione: prima, riapertura: seconda }
+            : { transizione: seconda, riapertura: prima };
+        });
+
+        const [transizione, riapertura] = await Promise.allSettled([
+          inCorso.transizione,
+          inCorso.riapertura,
+        ]);
+
+        // Mutua esclusione: riesce solo l'operazione che ottiene il lock per prima.
+        const riuscite = [transizione, riapertura].filter((e) => e.status === 'fulfilled');
+        expect(riuscite).toHaveLength(1);
+
+        // Invariante: PRONTA implica riga COMPLETATA, in qualunque ordine.
+        expect(await leggiStato()).toEqual(
+          transizione.status === 'fulfilled'
+            ? { commessa: 'PRONTA', riga: 'COMPLETATA' }
+            : { commessa: 'IN_PRODUZIONE', riga: 'DA_FARE' },
+        );
+      }
+    },
+    TIMEOUT_TEST_MS * 2,
+  );
 });
