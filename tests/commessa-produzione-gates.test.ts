@@ -90,6 +90,10 @@ describe('workflow produzione commessa', () => {
     const result = await cambiaStatoCommessa(TENANT_ID, COMMESSA_ID, 'PRONTA');
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(4);
+    expect(String(queryRaw.mock.calls[0][0].join(' '))).toContain('FOR UPDATE');
+    expect(String(queryRaw.mock.calls[1][0].join(' '))).toContain('NOT EXISTS');
   });
 
   it('rifiuta una transizione non PRONTA se lo stato cambia prima dell’UPDATE', async () => {
@@ -122,6 +126,9 @@ describe('workflow produzione commessa', () => {
     );
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(4);
+    expect(String(queryRaw.mock.calls[0][0].join(' '))).toContain('FOR UPDATE');
     expect(executeRaw).toHaveBeenCalledTimes(1);
   });
 
