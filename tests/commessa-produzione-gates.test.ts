@@ -119,6 +119,21 @@ describe('workflow produzione commessa', () => {
     expect(executeRaw).toHaveBeenCalledTimes(1);
   });
 
+  it('blocca atomicamente l’aggiornamento della riga se la commessa esce dalla produzione dopo la SELECT', async () => {
+    queryRaw.mockResolvedValueOnce([{ stato: 'IN_PRODUZIONE' }]);
+    executeRaw.mockResolvedValueOnce(0);
+
+    await expect(
+      aggiornaStatoRigaProduzione(TENANT_ID, COMMESSA_ID, RIGA_ID, 'DA_FARE'),
+    ).rejects.toThrow(
+      'La commessa è stata modificata da un’altra operazione. Ricarica e riprova.',
+    );
+
+    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(String(executeRaw.mock.calls[0][0][0])).toContain('c."stato" = \'IN_PRODUZIONE\'');
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+  });
+
   it('non permette di modificare una riga fuori dalla produzione', async () => {
     queryRaw.mockResolvedValueOnce([{ stato: 'PRONTA' }]);
 
