@@ -137,7 +137,7 @@ describe('workflow produzione commessa', () => {
 
     expect(executeRaw).toHaveBeenCalledTimes(1);
     expect(String(queryRaw.mock.calls[0][0].join(' '))).toContain('FOR UPDATE');
-    expect(queryRaw).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(2);
   });
 
   it('non permette di modificare una riga fuori dalla produzione', async () => {
