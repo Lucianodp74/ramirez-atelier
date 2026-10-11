@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryRaw, executeRaw } = vi.hoisted(() => ({
+const { queryRaw, executeRaw, transaction } = vi.hoisted(() => ({
   queryRaw: vi.fn(),
   executeRaw: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock('@/server/db', () => ({
   db: {
     $queryRaw: queryRaw,
     $executeRaw: executeRaw,
+    $transaction: transaction,
   },
 }));
 
@@ -48,6 +50,8 @@ describe('workflow produzione commessa', () => {
   beforeEach(() => {
     queryRaw.mockReset();
     executeRaw.mockReset();
+    transaction.mockReset();
+    transaction.mockImplementation(async (callback: (tx: { $queryRaw: typeof queryRaw; $executeRaw: typeof executeRaw }) => unknown) => callback({ $queryRaw: queryRaw, $executeRaw: executeRaw }));
   });
 
   it('blocca PRONTA se esiste una riga non completata', async () => {
@@ -105,8 +109,10 @@ describe('workflow produzione commessa', () => {
   it('aggiorna lo stato di una riga solo quando la commessa è IN_PRODUZIONE', async () => {
     queryRaw
       .mockResolvedValueOnce([{ stato: 'IN_PRODUZIONE' }])
+      .mockResolvedValueOnce([{ id: RIGA_ID }])
       .mockResolvedValueOnce(DETTAGLIO)
       .mockResolvedValueOnce([]);
+    executeRaw.mockResolvedValueOnce(1);
 
     const result = await aggiornaStatoRigaProduzione(
       TENANT_ID,
@@ -117,6 +123,21 @@ describe('workflow produzione commessa', () => {
 
     expect(result).toEqual({ ...DETTAGLIO[0], righe: [] });
     expect(executeRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocca atomicamente l’aggiornamento della riga se la commessa esce dalla produzione dopo la SELECT', async () => {
+    queryRaw.mockResolvedValueOnce([{ stato: 'IN_PRODUZIONE' }]).mockResolvedValueOnce([{ id: RIGA_ID }]);
+    executeRaw.mockResolvedValueOnce(0);
+
+    await expect(
+      aggiornaStatoRigaProduzione(TENANT_ID, COMMESSA_ID, RIGA_ID, 'DA_FARE'),
+    ).rejects.toThrow(
+      'La commessa è stata modificata da un’altra operazione. Ricarica e riprova.',
+    );
+
+    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(String(queryRaw.mock.calls[0][0].join(' '))).toContain('FOR UPDATE');
+    expect(queryRaw).toHaveBeenCalledTimes(2);
   });
 
   it('non permette di modificare una riga fuori dalla produzione', async () => {

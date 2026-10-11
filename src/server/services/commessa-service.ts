@@ -278,6 +278,50 @@ export async function cambiaStatoCommessa(
   id: string,
   nuovoStato: StatoCommessa,
 ) {
+  if (nuovoStato === 'PRONTA') {
+    // Entrambe le operazioni bloccano la stessa riga padre dentro una
+    // transazione: la modifica delle righe e il gate PRONTA diventano seriali.
+    const timestamp = new Date();
+    await db.$transaction(async (tx) => {
+      const commesse = await tx.$queryRaw<Array<{ id: string; stato: StatoCommessa }>>`
+        SELECT "id", "stato" FROM "commessa"
+        WHERE "id" = ${id} AND "tenantId" = ${tenantId}
+        FOR UPDATE
+      `;
+      const commessa = commesse[0];
+      if (!commessa) throw new Error('Commessa non trovata.');
+      if (!transizioneCommessaAmmessa(commessa.stato, nuovoStato)) {
+        throw new Error(`Transizione commessa non consentita: ${commessa.stato} → ${nuovoStato}.`);
+      }
+
+      const aggiornate = await tx.$queryRaw<Array<{ id: string }>>`
+        UPDATE "commessa"
+        SET "stato" = 'PRONTA',
+            "prontaIl" = COALESCE("prontaIl", ${timestamp}),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "id" = ${id}
+          AND "tenantId" = ${tenantId}
+          AND "stato" = 'IN_PRODUZIONE'
+          AND EXISTS (
+            SELECT 1 FROM "commessa_riga_produzione" cr
+            WHERE cr."tenantId" = ${tenantId}
+              AND cr."commessaId" = ${id}
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM "commessa_riga_produzione" cr
+            WHERE cr."tenantId" = ${tenantId}
+              AND cr."commessaId" = ${id}
+              AND cr."statoLavorazione" <> 'COMPLETATA'
+          )
+        RETURNING "id"
+      `;
+      if (aggiornate.length === 0) {
+        throw new Error('La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.');
+      }
+    });
+    return dettaglioCommessa(tenantId, id);
+  }
+
   const commessa = await db.$queryRaw<Array<{ id: string; stato: StatoCommessa }>>`
     SELECT "id", "stato" FROM "commessa"
     WHERE "id" = ${id} AND "tenantId" = ${tenantId}
@@ -289,41 +333,6 @@ export async function cambiaStatoCommessa(
   }
 
   const timestamp = new Date();
-
-  if (nuovoStato === 'PRONTA') {
-    // Atomico per costruzione: il controllo "nessuna riga incompleta" e il
-    // cambio di stato sono un'unica UPDATE, valutata da Postgres in un solo
-    // statement. A differenza di un SELECT applicativo seguito da una UPDATE
-    // separata, qui non esiste una finestra fra le due query in cui una riga
-    // di produzione concorrente possa essere riaperta senza che il gate se ne
-    // accorga: la transizione si applica solo se, nello stesso momento in cui
-    // Postgres esegue la scrittura, non esiste alcuna riga non completata.
-    const aggiornate = await db.$queryRaw<Array<{ id: string }>>`
-      UPDATE "commessa"
-      SET "stato" = 'PRONTA',
-          "prontaIl" = COALESCE("prontaIl", ${timestamp}),
-          "updatedAt" = CURRENT_TIMESTAMP
-      WHERE "id" = ${id}
-        AND "tenantId" = ${tenantId}
-        AND "stato" = 'IN_PRODUZIONE'
-        AND EXISTS (
-          SELECT 1 FROM "commessa_riga_produzione" cr
-          WHERE cr."tenantId" = ${tenantId}
-            AND cr."commessaId" = ${id}
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM "commessa_riga_produzione" cr
-          WHERE cr."tenantId" = ${tenantId}
-            AND cr."commessaId" = ${id}
-            AND cr."statoLavorazione" <> 'COMPLETATA'
-        )
-      RETURNING "id"
-    `;
-    if (aggiornate.length === 0) {
-      throw new Error('La commessa non può essere segnata come pronta: completa prima tutte le righe di produzione.');
-    }
-    return dettaglioCommessa(tenantId, id);
-  }
 
   const data = {
     avviataIl: nuovoStato === 'IN_PRODUZIONE' ? timestamp : null,
@@ -392,30 +401,42 @@ export async function aggiornaStatoRigaProduzione(
     throw new Error('Stato lavorazione non valido.');
   }
 
-  const righe = await db.$queryRaw<Array<{ stato: StatoCommessa }>>`
-    SELECT c."stato"
-    FROM "commessa" c
-    JOIN "commessa_riga_produzione" cr ON cr."commessaId" = c."id"
-    WHERE c."tenantId" = ${tenantId}
-      AND c."id" = ${commessaId}
-      AND cr."tenantId" = ${tenantId}
-      AND cr."id" = ${rigaId}
-    LIMIT 1
-  `;
+  await db.$transaction(async (tx) => {
+    // Stesso lock padre usato dalla transizione a PRONTA: una sola delle due
+    // operazioni può proseguire alla volta per questa commessa.
+    const commesse = await tx.$queryRaw<Array<{ stato: StatoCommessa }>>`
+      SELECT "stato"
+      FROM "commessa"
+      WHERE "tenantId" = ${tenantId} AND "id" = ${commessaId}
+      FOR UPDATE
+    `;
+    if (!commesse[0]) throw new Error('Riga di produzione non trovata.');
+    if (commesse[0].stato !== 'IN_PRODUZIONE') {
+      throw new Error('Le righe di produzione sono modificabili solo quando la commessa è in produzione.');
+    }
 
-  if (!righe[0]) throw new Error('Riga di produzione non trovata.');
-  if (righe[0].stato !== 'IN_PRODUZIONE') {
-    throw new Error('Le righe di produzione sono modificabili solo quando la commessa è in produzione.');
-  }
+    const righe = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT cr."id"
+      FROM "commessa_riga_produzione" cr
+      WHERE cr."tenantId" = ${tenantId}
+        AND cr."commessaId" = ${commessaId}
+        AND cr."id" = ${rigaId}
+      LIMIT 1
+    `;
+    if (!righe[0]) throw new Error('Riga di produzione non trovata.');
 
-  await db.$executeRaw`
-    UPDATE "commessa_riga_produzione"
-    SET "statoLavorazione" = ${statoLavorazione},
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${rigaId}
-      AND "tenantId" = ${tenantId}
-      AND "commessaId" = ${commessaId}
-  `;
+    const aggiornate = await tx.$executeRaw`
+      UPDATE "commessa_riga_produzione"
+      SET "statoLavorazione" = ${statoLavorazione},
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${rigaId}
+        AND "tenantId" = ${tenantId}
+        AND "commessaId" = ${commessaId}
+    `;
+    if (aggiornate === 0) {
+      throw new Error('La commessa è stata modificata da un’altra operazione. Ricarica e riprova.');
+    }
+  });
 
   return dettaglioCommessa(tenantId, commessaId);
 }
