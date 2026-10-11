@@ -13,6 +13,7 @@ const LINK_NAV = [
   ['/admin/fasce-budget', 'Fasce di budget'],
   ['/admin/spese', 'Spese'],
   ['/admin/catalogo', 'Catalogo'],
+  ['/admin/catalogo/librerie', 'Librerie'],
   ['/admin/regole', 'Regole'],
   ['/admin/utenti', 'Utenti'],
   ['/admin/kpi', 'KPI'],
@@ -30,11 +31,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-between gap-4">
             <span className="flex min-w-0 items-center gap-2 font-semibold">
-              <Image src="/logo-monogramma.png" alt="Ramirez Atelier" width={24} height={17} className="shrink-0" />
+              <Image
+                src="/logo-monogramma.png"
+                alt="Ramirez Atelier"
+                width={24}
+                height={17}
+                className="shrink-0"
+              />
               <span className="truncate">Ramirez Atelier — Area operativa</span>
             </span>
             <div className="flex shrink-0 items-center gap-3 text-sm text-muted-foreground">
-              <span className="hidden md:inline">{contesto.utenteNome} · {tenant?.nome}</span>
+              <span className="hidden md:inline">
+                {contesto.utenteNome} · {tenant?.nome}
+              </span>
               <LogoutButton />
             </div>
           </div>

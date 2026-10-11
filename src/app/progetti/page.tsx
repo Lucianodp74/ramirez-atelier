@@ -48,8 +48,8 @@ export default function ProgettiPage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Scegli moduli, dimensioni, materiale e finitura. Componi il tuo progetto e ricevi
-              una prima stima indicativa, senza impegno.
+              Scegli moduli, dimensioni, materiale e finitura. Componi il tuo progetto e ricevi una
+              prima stima indicativa, senza impegno.
             </p>
 
             <div className="mt-9">
@@ -64,6 +64,13 @@ export default function ProgettiPage() {
 
             <p className="mt-5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
               Stima indicativa · senza impegno
+            </p>
+
+            <p className="mt-8 text-sm text-muted-foreground">
+              Cerchi un punto di partenza?{' '}
+              <Link href="/librerie" className="text-[#8F4525] underline-offset-4 hover:underline">
+                Scopri le linee di librerie
+              </Link>
             </p>
           </div>
         </div>

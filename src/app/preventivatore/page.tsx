@@ -1,6 +1,8 @@
 import { PreventivatoreModulare } from '@/components/preventivatore/PreventivatoreModulare';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { recuperaProgettoPreimpostatoPubblicato } from '@/server/services/progetto-preimpostato-service';
+import { moduliPerPreventivatore } from '@/lib/catalogo-librerie/catalogo';
+import { anteprimaInternaConsentita } from '@/server/services/catalogo-librerie-accesso';
 
 export const metadata = {
   title: 'Preventivatore | Ramirez Atelier',
@@ -10,9 +12,9 @@ export const metadata = {
 export default async function PreventivatorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ preset?: string }>;
+  searchParams: Promise<{ preset?: string; modello?: string }>;
 }) {
-  const { preset } = await searchParams;
+  const { preset, modello } = await searchParams;
 
   // COMPOSIZIONI / CATALOGO V1: il preset, se presente, viene caricato e
   // rivalidato interamente lato server (tenant-scoped, solo se pubblicato)
@@ -25,9 +27,16 @@ export default async function PreventivatorePage({
     const tenantId = await idTenantRamirezAtelier();
     const progetto = await recuperaProgettoPreimpostatoPubblicato(tenantId, preset);
     moduliIniziali = progetto?.moduli;
+  } else if (modello) {
+    // CATALOGO LIBRERIE V1: stesso principio del preset. Il codice modello
+    // viene risolto lato server: solo un modello approvato (o una bozza, per
+    // chi è autenticato nell'area operativa) apre il Preventivatore con la
+    // sua composizione; in ogni altro caso si apre col comportamento di sempre.
+    const anteprimaInterna = await anteprimaInternaConsentita();
+    moduliIniziali = moduliPerPreventivatore(modello, { anteprimaInterna }) ?? undefined;
   }
 
   return (
-    <PreventivatoreModulare key={preset ?? 'default'} moduliIniziali={moduliIniziali} />
+    <PreventivatoreModulare key={preset ?? modello ?? 'default'} moduliIniziali={moduliIniziali} />
   );
 }
