@@ -63,9 +63,7 @@ describePostgres('concorrenza PostgreSQL reale — lock padre produzione', () =>
     });
 
     const aggiornamentoRiga = prisma!.$transaction(async (tx) => {
-      await tx.$queryRawUnsafe(
-        `SELECT id FROM "${schema}".commessa WHERE id = 'c1' FOR UPDATE`,
-      );
+      await tx.$queryRawUnsafe(`SELECT id FROM "${schema}".commessa WHERE id = 'c1' FOR UPDATE`);
       segnalaLock();
       await rilascio;
       await tx.$executeRawUnsafe(
@@ -76,9 +74,7 @@ describePostgres('concorrenza PostgreSQL reale — lock padre produzione', () =>
     await lockAcquisito;
 
     const gatePronta = prisma!.$transaction(async (tx) => {
-      await tx.$queryRawUnsafe(
-        `SELECT id FROM "${schema}".commessa WHERE id = 'c1' FOR UPDATE`,
-      );
+      await tx.$queryRawUnsafe(`SELECT id FROM "${schema}".commessa WHERE id = 'c1' FOR UPDATE`);
       const righeIncomplete = await tx.$queryRawUnsafe<Array<{ id: string }>>(
         `SELECT id FROM "${schema}".riga WHERE commessa_id = 'c1' AND stato <> 'COMPLETATA'`,
       );
