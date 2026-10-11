@@ -408,14 +408,27 @@ export async function aggiornaStatoRigaProduzione(
     throw new Error('Le righe di produzione sono modificabili solo quando la commessa è in produzione.');
   }
 
-  await db.$executeRaw`
-    UPDATE "commessa_riga_produzione"
+  const aggiornate = await db.$executeRaw`
+    UPDATE "commessa_riga_produzione" cr
     SET "statoLavorazione" = ${statoLavorazione},
         "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${rigaId}
-      AND "tenantId" = ${tenantId}
-      AND "commessaId" = ${commessaId}
+    WHERE cr."id" = ${rigaId}
+      AND cr."tenantId" = ${tenantId}
+      AND cr."commessaId" = ${commessaId}
+      AND EXISTS (
+        SELECT 1
+        FROM "commessa" c
+        WHERE c."id" = cr."commessaId"
+          AND c."tenantId" = ${tenantId}
+          AND c."stato" = 'IN_PRODUZIONE'
+      )
   `;
+
+  // Ricontrollo atomico: la commessa potrebbe essere passata a PRONTA
+  // dopo la SELECT iniziale. In tal caso non riapriamo una riga completata.
+  if (aggiornate === 0) {
+    throw new Error('La commessa è stata modificata da un’altra operazione. Ricarica e riprova.');
+  }
 
   return dettaglioCommessa(tenantId, commessaId);
 }
