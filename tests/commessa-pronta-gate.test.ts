@@ -30,13 +30,14 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryRaw, executeRaw } = vi.hoisted(() => ({
+const { queryRaw, executeRaw, transaction } = vi.hoisted(() => ({
   queryRaw: vi.fn(),
   executeRaw: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock('@/server/db', () => ({
-  db: { $queryRaw: queryRaw, $executeRaw: executeRaw },
+  db: { $queryRaw: queryRaw, $executeRaw: executeRaw, $transaction: transaction },
 }));
 
 import { cambiaStatoCommessa } from '@/server/services/commessa-service';
@@ -55,6 +56,8 @@ describe('cambiaStatoCommessa — gate IN_PRODUZIONE → PRONTA (dopo fix C1)', 
   beforeEach(() => {
     queryRaw.mockReset();
     executeRaw.mockReset();
+    transaction.mockReset();
+    transaction.mockImplementation(async (callback: (tx: { $queryRaw: typeof queryRaw; $executeRaw: typeof executeRaw }) => unknown) => callback({ $queryRaw: queryRaw, $executeRaw: executeRaw }));
   });
 
   it('rifiuta la transizione a PRONTA se esiste almeno una riga di produzione non COMPLETATA', async () => {
