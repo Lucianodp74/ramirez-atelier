@@ -46,8 +46,20 @@ mostra le cinque linee con la dicitura "Modelli in definizione" e il rimando al 
 3. Stima, salvataggio della richiesta e BOM iniziale sono quelli già esistenti
    (`calcolaStimaPreventivatore`, `salvaRichiestaPreventivatore`): nessun secondo motore prezzi.
 
-L'identificativo di ogni modulo inizia con il codice del modello (es. `LIB-ATE-01:c1:1`), quindi
-la configurazione salvata con la richiesta conserva la traccia del modello d'origine.
+### Modello d'origine
+
+La richiesta salva il modello di partenza in
+`datiEstensione.preventivatoreModulare.modelloOrigine`: codice, nome e famiglia copiati al
+momento della richiesta, più `personalizzato` (vero se il cliente ha cambiato la configurazione
+proposta). Il modello dice da dove si è partiti; `moduli`, accanto, dice che cosa è stato chiesto.
+
+- Il codice arriva dal browser e viene convalidato dal server al salvataggio: un codice non
+  valido, o di un modello che non poteva avviare una richiesta, viene ignorato e la richiesta si
+  salva comunque.
+- È un dato descrittivo: non entra nella stima, nella BOM né nel flusso verso la commessa, e non
+  richiede migrazioni.
+- È visibile solo nell'area operativa, nella scheda "Modello di partenza" del dettaglio richiesta.
+- Le richieste precedenti non hanno il campo e non mostrano la scheda.
 
 ## Immagini
 
@@ -89,9 +101,8 @@ Nulla di quanto segue è stato deciso nel codice:
    Request. Portarli in una tabella richiede una migrazione; oggi `vercel-build` esegue
    `prisma migrate deploy` a ogni build, anteprime comprese, quindi va prima verificato a quale
    database punta l'ambiente Preview di Vercel.
-2. **Traccia esplicita del modello nella richiesta.** Oggi è deducibile dagli identificativi
-   dei moduli; un campo dedicato, visibile nel dettaglio della richiesta, richiede di modificare
-   `salvaRichiestaPreventivatore` e `PreventivatoreModulare`.
+2. **Modello d'origine fuori dal dettaglio richiesta.** Non compare nell'elenco richieste, nel
+   PDF del preventivo né nei KPI.
 3. **Collegamento dalla home page.** La sezione è raggiungibile da `/progetti` e dall'area
    operativa.
 4. **Editor di composizione.** La struttura è pronta, l'interfaccia per comporre colonne e vani

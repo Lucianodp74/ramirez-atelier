@@ -13,6 +13,7 @@ import { NoteInterne } from '@/components/admin/NoteInterne';
 import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
 import { PreventivatoreSnapshotCard } from '@/components/admin/PreventivatoreSnapshotCard';
+import { ModelloOrigineCard } from '@/components/admin/ModelloOrigineCard';
 import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
@@ -120,6 +121,8 @@ export default async function DettaglioRichiestaPage({
               </div>
             </CardContent>
           </Card>
+
+          <ModelloOrigineCard datiEstensione={richiesta.datiEstensione} />
 
           <PreventivatoreSnapshotCard datiEstensione={richiesta.datiEstensione} />
 

@@ -23,6 +23,7 @@ export default async function PreventivatorePage({
   // inesistente o non pubblicato non è un errore: il Preventivatore si apre
   // semplicemente col comportamento di sempre.
   let moduliIniziali;
+  let codiceModelloOrigine: string | undefined;
   if (preset) {
     const tenantId = await idTenantRamirezAtelier();
     const progetto = await recuperaProgettoPreimpostatoPubblicato(tenantId, preset);
@@ -34,9 +35,16 @@ export default async function PreventivatorePage({
     // sua composizione; in ogni altro caso si apre col comportamento di sempre.
     const anteprimaInterna = await anteprimaInternaConsentita();
     moduliIniziali = moduliPerPreventivatore(modello, { anteprimaInterna }) ?? undefined;
+    // Il codice accompagna la richiesta solo se il modello ha davvero aperto
+    // il Preventivatore; al salvataggio il server lo convalida di nuovo.
+    if (moduliIniziali) codiceModelloOrigine = modello;
   }
 
   return (
-    <PreventivatoreModulare key={preset ?? modello ?? 'default'} moduliIniziali={moduliIniziali} />
+    <PreventivatoreModulare
+      key={preset ?? modello ?? 'default'}
+      moduliIniziali={moduliIniziali}
+      codiceModelloOrigine={codiceModelloOrigine}
+    />
   );
 }

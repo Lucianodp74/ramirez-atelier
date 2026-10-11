@@ -5,6 +5,8 @@ import { db } from '@/server/db';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
 import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
+import { risolviModelloOrigine } from '@/lib/catalogo-librerie/modello-origine';
+import { anteprimaInternaConsentita } from '@/server/services/catalogo-librerie-accesso';
 
 const CHIAVI_TIPO_PROGETTO_PREVENTIVATORE = [
   'falegnameria',
@@ -42,10 +44,16 @@ export interface DatiRichiestaPreventivatore {
   messaggio?: string;
 }
 
+export interface OpzioniRichiestaPreventivatore {
+  /** Codice del modello di catalogo da cui il cliente è partito, se c'è. */
+  codiceModelloOrigine?: string;
+}
+
 /** Salva richiesta, snapshot della configurazione e BOM tecnica/economica iniziale in un'unica transazione. */
 export async function salvaRichiestaPreventivatore(
   moduli: unknown,
   dati: DatiRichiestaPreventivatore,
+  opzioni: OpzioniRichiestaPreventivatore = {},
 ) {
   validaInputModuli(moduli);
   const nome = dati.nome?.trim();
@@ -64,6 +72,15 @@ export async function salvaRichiestaPreventivatore(
   const preventivo = calcolaPreventivoModulare(moduli, tariffe);
   if (preventivo.errori.length) throw new Error(preventivo.errori.join(' '));
 
+  // Solo dato descrittivo, convalidato qui e mai letto dal calcolo: un codice
+  // non valido non blocca la richiesta, viene semplicemente ignorato.
+  const codiceModelloOrigine = opzioni?.codiceModelloOrigine;
+  const modelloOrigine = codiceModelloOrigine
+    ? risolviModelloOrigine(codiceModelloOrigine, moduli, {
+        anteprimaInterna: await anteprimaInternaConsentita(),
+      })
+    : null;
+
   const nuova = await db.$transaction(async (tx) => {
     const richiesta = await tx.richiestaProgetto.create({
       data: {
@@ -78,6 +95,7 @@ export async function salvaRichiestaPreventivatore(
           preventivatoreModulare: {
             versione: 2,
             moduli,
+            ...(modelloOrigine ? { modelloOrigine: { ...modelloOrigine } } : {}),
             stima: {
               prezzoIndicativo: preventivo.prezzoIndicativo,
               prezzoFalegname: preventivo.prezzoFalegname,
