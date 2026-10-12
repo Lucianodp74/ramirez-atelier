@@ -158,24 +158,49 @@ export default function HomePage() {
       </a>
       <Intestazione />
       <main id="contenuto" className="min-h-screen bg-background text-foreground">
-        {/* Hero: proposta di valore + modello 3D */}
-        <section className="grana relative overflow-hidden bg-[radial-gradient(circle_at_78%_48%,rgba(166,83,43,0.10),transparent_34%),linear-gradient(135deg,rgba(166,83,43,0.05),transparent_42%)]">
-          <div className="mx-auto grid max-w-7xl items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-10">
-            <div className="relative z-10 pb-4 pt-14 sm:pt-20 lg:py-24">
-              <Sovratitolo className="rivela">Falegnameria artigiana — dal 1987</Sovratitolo>
-              <h1 className="rivela text-balance font-serif text-[2.6rem] font-light leading-[1.05] tracking-tight [animation-delay:80ms] sm:text-6xl xl:text-[4.25rem]">
+        {/* Hero: render fotografico della madia STELLA a tutta larghezza */}
+        <section className="relative overflow-hidden bg-foreground text-background">
+          <div className="relative aspect-[4/3] sm:aspect-[16/9] lg:absolute lg:inset-0 lg:aspect-auto">
+            <Image
+              src="/stella-render-hero.jpg"
+              alt="La madia STELLA in radica d'olivo con maniglie a stella in pietra, illuminata dalla luce di una finestra"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[82%_50%] lg:object-center"
+            />
+            <div
+              className="absolute inset-0 hidden bg-gradient-to-r from-foreground/80 via-foreground/25 to-transparent lg:block"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-foreground to-transparent lg:hidden"
+              aria-hidden="true"
+            />
+          </div>
+          <div className="relative mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:flex lg:min-h-[calc(100svh-5rem)] lg:items-center lg:px-10 lg:py-24">
+            <div className="max-w-xl">
+              <Sovratitolo className="rivela text-brand-soft">
+                Falegnameria artigiana — dal 1987
+              </Sovratitolo>
+              <h1 className="rivela text-balance font-serif text-[2.6rem] font-light leading-[1.05] tracking-tight [animation-delay:80ms] sm:text-6xl xl:text-[4.5rem]">
                 La tua casa,
                 <br />
                 disegnata a mano,
                 <br />
-                <span className="italic text-brand">costruita per durare.</span>
+                <span className="italic text-brand-soft">costruita per durare.</span>
               </h1>
-              <p className="rivela mt-7 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground [animation-delay:160ms]">
+              <p className="rivela mt-7 max-w-lg text-pretty text-lg leading-relaxed text-background/80 [animation-delay:160ms]">
                 Arredi su misura nati dal dialogo tra progetto e materia. Raccontaci il tuo spazio:
                 in pochi minuti ricevi una prima stima, poi lo definiamo insieme.
               </p>
               <div className="rivela mt-9 flex flex-col gap-3 [animation-delay:240ms] sm:flex-row sm:items-center sm:gap-4">
-                <Button size="lg" variant="brand" asChild>
+                <Button
+                  size="lg"
+                  variant="brand"
+                  className="focus-visible:ring-background focus-visible:ring-offset-foreground"
+                  asChild
+                >
                   <Link href="/progetti">
                     Inizia il tuo progetto
                     <ArrowRight aria-hidden="true" className="size-4" />
@@ -184,23 +209,18 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-foreground/20 bg-card/60"
+                  className="border-background/40 bg-transparent text-background hover:bg-background/10 focus-visible:ring-background focus-visible:ring-offset-foreground"
                   asChild
                 >
-                  <a href="#lavori">Guarda cosa realizziamo</a>
+                  <a href="#stella">Esplora la madia STELLA</a>
                 </Button>
               </div>
             </div>
-            <figure className="-mx-4 sm:-mx-6 lg:mx-0">
-              <StellaHero3D />
-              <figcaption className="-mt-6 pb-8 text-center text-xs uppercase tracking-[0.18em] text-muted-foreground lg:-mt-10">
-                <span className="font-serif text-sm normal-case italic tracking-normal text-brand-strong">
-                  STELLA
-                </span>{' '}
-                · madia manifesto
-              </figcaption>
-            </figure>
           </div>
+          <p className="absolute bottom-4 right-4 hidden text-xs uppercase tracking-[0.18em] text-background/70 lg:block sm:right-6 lg:right-10">
+            <span className="font-serif text-sm normal-case italic tracking-normal">STELLA</span> ·
+            madia manifesto
+          </p>
         </section>
 
         {/* Garanzie: prova di credibilità subito sotto la hero */}
@@ -213,6 +233,44 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* STELLA: dettaglio fotografico + modello 3D esplorabile */}
+        <section
+          id="stella"
+          aria-labelledby="titolo-stella"
+          className="scroll-mt-24 bg-foreground py-20 text-background sm:py-28"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+            <div className="mb-12 max-w-2xl sm:mb-14">
+              <Sovratitolo className="text-brand-soft">STELLA · madia manifesto</Sovratitolo>
+              <h2
+                id="titolo-stella"
+                className="text-balance font-serif text-4xl font-light tracking-tight sm:text-5xl"
+              >
+                Radica d&apos;olivo, pietra e noce. Girale intorno.
+              </h2>
+              <p className="mt-6 text-lg leading-relaxed text-background/75">
+                Quattro ante impiallacciate in radica, maniglie a stella scolpite nella pietra,
+                struttura in noce. È il pezzo che racconta il nostro modo di lavorare: ogni
+                dettaglio pensato, nulla lasciato al caso.
+              </p>
+            </div>
+            <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="relative aspect-square overflow-hidden rounded-[1.25rem]">
+                <Image
+                  src="/stella-render-dettaglio.jpg"
+                  alt="Dettaglio di un'anta in radica d'olivo con la maniglia a stella in pietra"
+                  fill
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="overflow-hidden rounded-[1.25rem] bg-background text-foreground">
+                <StellaHero3D />
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Capitolo 1: cosa realizziamo */}
