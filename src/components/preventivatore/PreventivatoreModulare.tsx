@@ -185,9 +185,15 @@ interface Props {
    * Quando assente, il comportamento è identico a prima di questa modifica.
    */
   moduliIniziali?: ModuloConfigurato[];
+  /**
+   * Codice del modello del Catalogo Librerie da cui si è partiti. Viene solo
+   * riportato al salvataggio, dove il server lo convalida: non influisce su
+   * moduli, stima o interfaccia.
+   */
+  codiceModelloOrigine?: string;
 }
 
-export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
+export function PreventivatoreModulare({ moduliIniziali, codiceModelloOrigine }: Props = {}) {
   const [moduli, setModuli] = useState<ModuloConfigurato[]>(() =>
     moduliIniziali && moduliIniziali.length > 0 ? moduliIniziali : [nuovoModulo('BASE')],
   );
@@ -338,12 +344,16 @@ export function PreventivatoreModulare({ moduliIniziali }: Props = {}) {
     const messaggioCompleto = [progetto, note].filter(Boolean).join('\n\n');
     startTransition(async () => {
       try {
-        const result = await salvaRichiestaPreventivatore(moduli, {
-          nome: String(formData.get('nome') ?? ''),
-          email: String(formData.get('email') ?? ''),
-          telefono: String(formData.get('telefono') ?? ''),
-          messaggio: messaggioCompleto,
-        });
+        const result = await salvaRichiestaPreventivatore(
+          moduli,
+          {
+            nome: String(formData.get('nome') ?? ''),
+            email: String(formData.get('email') ?? ''),
+            telefono: String(formData.get('telefono') ?? ''),
+            messaggio: messaggioCompleto,
+          },
+          { codiceModelloOrigine },
+        );
         if (result.successo) setInviata({ id: result.id, prezzo: result.prezzoIndicativo });
       } catch (error) {
         setMessaggio(error instanceof Error ? error.message : 'Impossibile inviare la richiesta.');
