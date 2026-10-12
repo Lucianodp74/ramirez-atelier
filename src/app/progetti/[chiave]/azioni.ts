@@ -10,6 +10,7 @@ import { assicuraGestoriRegistrati } from '@/lib/rule-engine/bootstrap';
 import { eseguiRegolePerContesto } from '@/lib/rule-engine/motore';
 import { CONTESTO_PRICING } from '@/server/services/pricing-service';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
+import { datiPerCliente } from '@/lib/richiesta-cliente';
 import { variantiAttivePerTipoProgetto } from '@/server/services/variante-preimpostata-service';
 import { trovaOCreaCliente } from '@/server/services/cliente-service';
 import { getEmailAdapter } from '@/lib/notifiche';
@@ -74,7 +75,7 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
         maxAge: 60 * 60 * 24 * 90,
         path: '/',
       });
-      return { richiesta: esistente, tipoProgetto, varianti };
+      return { richiesta: datiPerCliente(esistente), tipoProgetto, varianti };
     }
   }
 
@@ -99,7 +100,7 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
     path: '/',
   });
 
-  return { richiesta: nuova, tipoProgetto, varianti };
+  return { richiesta: datiPerCliente(nuova), tipoProgetto, varianti };
 }
 
 /**
@@ -207,7 +208,7 @@ export async function salvaStep(
     });
   }
 
-  return { richiesta: aggiornata, errori: erroriStep };
+  return { richiesta: datiPerCliente(aggiornata), errori: erroriStep };
 }
 
 /**
@@ -294,7 +295,9 @@ export async function completaRichiesta(richiestaId: string) {
   if (!richiesta.tipoProgetto) throw new Error('Tipo di progetto non caricato correttamente.');
 
   if (richiesta.stato !== 'BOZZA') {
-    return { successo: true as const, richiesta };
+    // Richiesta già inviata: a quel punto contiene dati dell'area operativa
+    // (stima interna, note, preventivi). Al browser tornano solo i dati del cliente.
+    return { successo: true as const, richiesta: datiPerCliente(richiesta) };
   }
 
   const configurazione = TipoProgettoConfigurazioneSchema.parse(
@@ -398,15 +401,5 @@ export async function completaRichiesta(richiestaId: string) {
       ),
   );
 
-  return { successo: true as const, richiesta: richiestaConPrezzo ?? aggiornata };
-}
-
-/** Recupera la richiesta con documenti e configurazione del tipo di progetto, per il riepilogo finale. */
-export async function recuperaRiepilogo(richiestaId: string) {
-  const richiesta = await db.richiestaProgetto.findUnique({
-    where: { id: richiestaId },
-    include: { documenti: true, tipoProgetto: true },
-  });
-  if (!richiesta) throw new Error('Richiesta non trovata.');
-  return richiesta;
+  return { successo: true as const, richiesta: datiPerCliente(richiestaConPrezzo ?? aggiornata) };
 }
