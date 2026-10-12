@@ -5,8 +5,7 @@ const mock = vi.hoisted(() => ({
   evento: vi.fn(),
   executeRaw: vi.fn(),
   calcola: vi.fn(),
-  risolvi: vi.fn(),
-  anteprima: vi.fn(),
+  modelloOrigine: vi.fn(),
 }));
 
 vi.mock('@/server/db', () => ({
@@ -32,11 +31,8 @@ vi.mock('@/lib/preventivatore/prezzo-modulare', () => ({
   calcolaPreventivoModulare: mock.calcola,
 }));
 vi.mock('@/lib/preventivatore/validazione-moduli', () => ({ validaInputModuli: vi.fn() }));
-vi.mock('@/lib/catalogo-librerie/modello-origine', () => ({
-  risolviModelloOrigine: mock.risolvi,
-}));
-vi.mock('@/server/services/catalogo-librerie-accesso', () => ({
-  anteprimaInternaConsentita: mock.anteprima,
+vi.mock('@/server/services/modello-origine-service', () => ({
+  modelloOriginePerRichiesta: mock.modelloOrigine,
 }));
 
 import { salvaRichiestaPreventivatore } from '@/app/preventivatore/azioni';
@@ -67,52 +63,54 @@ describe("salvaRichiestaPreventivatore — modello d'origine", () => {
       prezzoIndicativo: 1540,
       errori: [],
     });
-    mock.anteprima.mockResolvedValue(false);
-    mock.risolvi.mockReturnValue(null);
+    mock.modelloOrigine.mockResolvedValue(null);
   });
 
   it('salva il modello convalidato accanto alla configurazione del cliente', async () => {
-    mock.risolvi.mockReturnValue(origine);
+    mock.modelloOrigine.mockResolvedValue(origine);
 
     await salvaRichiestaPreventivatore(moduli, cliente, { codiceModelloOrigine: 'LIB-ATE-01' });
 
-    expect(mock.risolvi).toHaveBeenCalledWith('LIB-ATE-01', moduli, { anteprimaInterna: false });
+    expect(mock.modelloOrigine).toHaveBeenCalledWith('LIB-ATE-01', moduli);
     expect(snapshotSalvato().modelloOrigine).toEqual(origine);
     // La configurazione personalizzata resta quella inviata, distinta dal modello.
     expect(snapshotSalvato().moduli).toBe(moduli);
   });
 
-  it("passa alla convalida l'esito reale dell'anteprima interna", async () => {
-    mock.anteprima.mockResolvedValue(true);
-
-    await salvaRichiestaPreventivatore(moduli, cliente, { codiceModelloOrigine: 'LIB-ATE-01' });
-
-    expect(mock.risolvi).toHaveBeenCalledWith('LIB-ATE-01', moduli, { anteprimaInterna: true });
-  });
-
-  it('salva comunque la richiesta, senza il campo, se il codice non è valido', async () => {
+  it('salva comunque la richiesta, senza il campo, se il modello non è registrabile', async () => {
     const risultato = await salvaRichiestaPreventivatore(moduli, cliente, {
       codiceModelloOrigine: 'LIB-ZZZ-99',
     });
 
     expect(risultato.successo).toBe(true);
+    expect(mock.crea).toHaveBeenCalledOnce();
     expect(snapshotSalvato()).not.toHaveProperty('modelloOrigine');
   });
 
   it('senza codice si comporta come prima: nessuna convalida, nessun campo', async () => {
     await salvaRichiestaPreventivatore(moduli, cliente);
 
-    expect(mock.risolvi).not.toHaveBeenCalled();
-    expect(mock.anteprima).not.toHaveBeenCalled();
+    expect(mock.modelloOrigine).not.toHaveBeenCalled();
     expect(snapshotSalvato()).not.toHaveProperty('modelloOrigine');
     expect(Object.keys(snapshotSalvato()).sort()).toEqual(['moduli', 'stima', 'versione']);
+  });
+
+  it('opzioni malformate dal browser non impediscono il salvataggio', async () => {
+    for (const opzioni of [null, 'LIB-ATE-01', 42, [], { codiceModelloOrigine: '' }]) {
+      mock.crea.mockClear();
+      const risultato = await salvaRichiestaPreventivatore(moduli, cliente, opzioni as never);
+
+      expect(risultato.successo, JSON.stringify(opzioni)).toBe(true);
+      expect(snapshotSalvato()).not.toHaveProperty('modelloOrigine');
+    }
+    expect(mock.modelloOrigine).not.toHaveBeenCalled();
   });
 
   it('non cambia stima, fascia di prezzo né risposta al browser', async () => {
     const senza = await salvaRichiestaPreventivatore(moduli, cliente);
     const datiSenza = mock.crea.mock.calls[0][0].data;
     mock.crea.mockClear();
-    mock.risolvi.mockReturnValue(origine);
+    mock.modelloOrigine.mockResolvedValue(origine);
     const con = await salvaRichiestaPreventivatore(moduli, cliente, {
       codiceModelloOrigine: 'LIB-ATE-01',
     });
