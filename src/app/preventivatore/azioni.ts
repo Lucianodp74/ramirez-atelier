@@ -5,6 +5,7 @@ import { db } from '@/server/db';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
 import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
+import { generaTokenRipresa } from '@/lib/identity/token';
 import { risolviModelloOrigine } from '@/lib/catalogo-librerie/modello-origine';
 import { anteprimaInternaConsentita } from '@/server/services/catalogo-librerie-accesso';
 
@@ -86,6 +87,7 @@ export async function salvaRichiestaPreventivatore(
       data: {
         tenantId,
         tipoProgettoId: tipoProgetto.id,
+        tokenRipresa: generaTokenRipresa(),
         clienteNome: nome,
         clienteEmail: email,
         clienteTelefono: telefono,
@@ -205,7 +207,6 @@ export async function salvaRichiestaPreventivatore(
   return {
     successo: true as const,
     id: nuova.richiesta.id,
-    tokenRipresa: nuova.richiesta.tokenRipresa,
     bomId: nuova.bomId,
     prezzoIndicativo: preventivo.prezzoIndicativo,
   };

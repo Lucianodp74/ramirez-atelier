@@ -67,6 +67,30 @@ describe('datiPerCliente', () => {
     expect(pubblica.tipoProgetto).toEqual(richiestaInviata.tipoProgetto);
   });
 
+  it('svuota il token di ripresa e il percorso interno degli allegati', () => {
+    const conAllegati = {
+      ...richiestaInviata,
+      documenti: [
+        {
+          id: 'doc-1',
+          nomeFileOriginale: 'pianta.pdf',
+          storageObjectKey: 'tenant/richiesta/pianta.pdf',
+        },
+      ],
+    };
+
+    const pubblica = datiPerCliente(conAllegati);
+
+    expect(pubblica.tokenRipresa).toBe('');
+    expect(pubblica.documenti).toEqual([
+      { id: 'doc-1', nomeFileOriginale: 'pianta.pdf', storageObjectKey: '' },
+    ]);
+    expect(JSON.stringify(pubblica)).not.toMatch(/token-di-ripresa|tenant\/richiesta/);
+    // L'originale, usato dal server per il cookie, resta intatto.
+    expect(conAllegati.tokenRipresa).toBe('token-di-ripresa-del-cliente');
+    expect(conAllegati.documenti[0].storageObjectKey).toBe('tenant/richiesta/pianta.pdf');
+  });
+
   it('non modifica la richiesta originale', () => {
     datiPerCliente(richiestaInviata);
 

@@ -10,8 +10,10 @@ import { assicuraGestoriRegistrati } from '@/lib/rule-engine/bootstrap';
 import { eseguiRegolePerContesto } from '@/lib/rule-engine/motore';
 import { CONTESTO_PRICING } from '@/server/services/pricing-service';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
-import { datiPerCliente } from '@/lib/richiesta-cliente';
+import { datiPerCliente, documentoPerCliente } from '@/lib/richiesta-cliente';
+import { generaTokenRipresa } from '@/lib/identity/token';
 import {
+  ErroreRichiestaNonAccessibile,
   PREFISSO_COOKIE_BOZZA,
   richiestaDelCliente,
 } from '@/server/services/accesso-richiesta-service';
@@ -84,7 +86,7 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
   }
 
   const nuova = await db.richiestaProgetto.create({
-    data: { tenantId, tipoProgettoId: tipoProgetto.id },
+    data: { tenantId, tipoProgettoId: tipoProgetto.id, tokenRipresa: generaTokenRipresa() },
     include: { documenti: true },
   });
 
@@ -269,18 +271,27 @@ export async function caricaDocumento(richiestaId: string, formData: FormData) {
     },
   });
 
-  return documento;
+  return documentoPerCliente(documento);
 }
 
 /** Rimuove un allegato (solo il riferimento in questo incremento - v. nota nel README). */
 export async function eliminaDocumento(documentoId: string) {
   if (typeof documentoId !== 'string' || documentoId.length === 0) return;
   const documento = await db.documentoRichiesta.findUnique({ where: { id: documentoId } });
-  if (!documento) return;
 
-  // Un allegato si elimina solo dalla propria bozza: mai da quella di un altro
-  // cliente, mai da una richiesta già inviata.
-  const richiesta = await richiestaDelCliente(documento.richiestaId);
+  // Un allegato si elimina solo dalla propria bozza. Un allegato che non esiste
+  // e uno che appartiene a un altro cliente devono essere indistinguibili per
+  // chi chiama: in entrambi i casi non succede nulla e non viene detto nulla.
+  let richiesta;
+  try {
+    richiesta = documento ? await richiestaDelCliente(documento.richiestaId) : null;
+  } catch (errore) {
+    if (!(errore instanceof ErroreRichiestaNonAccessibile)) throw errore;
+    richiesta = null;
+  }
+  if (!documento || !richiesta) return;
+
+  // Appartenenza verificata: solo ora si può dire qualcosa sull'allegato.
   if (richiesta.stato !== 'BOZZA') {
     throw new Error(
       'Questa richiesta è già stata inviata e i suoi allegati non sono modificabili.',
