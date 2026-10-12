@@ -11,6 +11,10 @@ import { eseguiRegolePerContesto } from '@/lib/rule-engine/motore';
 import { CONTESTO_PRICING } from '@/server/services/pricing-service';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { datiPerCliente } from '@/lib/richiesta-cliente';
+import {
+  PREFISSO_COOKIE_BOZZA,
+  richiestaDelCliente,
+} from '@/server/services/accesso-richiesta-service';
 import { variantiAttivePerTipoProgetto } from '@/server/services/variante-preimpostata-service';
 import { trovaOCreaCliente } from '@/server/services/cliente-service';
 import { getEmailAdapter } from '@/lib/notifiche';
@@ -22,7 +26,7 @@ import {
   isCampoRiservato,
 } from '@/lib/tipo-progetto-schema';
 
-const PREFISSO_COOKIE = 'ra_bozza_';
+const PREFISSO_COOKIE = PREFISSO_COOKIE_BOZZA;
 
 /**
  * Recupera la bozza in corso per questo tipo di progetto (dal cookie di ripresa)
@@ -114,11 +118,21 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
  * per ogni altro step del wizard (Requisito 1) si applica anche qui.
  */
 export async function registraVarianteSelezionata(richiestaId: string, varianteId: string) {
-  const richiesta = await db.richiestaProgetto.findUnique({ where: { id: richiestaId } });
-  if (!richiesta) throw new Error('Richiesta non trovata.');
+  const richiesta = await richiestaDelCliente(richiestaId);
+  if (richiesta.stato !== 'BOZZA') {
+    throw new Error('Questa richiesta è già stata inviata e non può più essere modificata.');
+  }
 
   const variante = await db.variantePreimpostata.findUnique({ where: { id: varianteId } });
-  if (!variante) throw new Error('Variante non trovata.');
+  // Solo uno stile attivo dello stesso tipo di progetto e della stessa azienda.
+  if (
+    !variante ||
+    !variante.attiva ||
+    variante.tenantId !== richiesta.tenantId ||
+    variante.tipoProgettoId !== richiesta.tipoProgettoId
+  ) {
+    throw new Error('Variante non trovata.');
+  }
 
   const datiEsistenti = (richiesta.datiFormJson as Record<string, unknown>) ?? {};
   const scelte = (variante.scelte as Record<string, string>) ?? {};
@@ -144,11 +158,7 @@ export async function salvaStep(
   valori: Record<string, unknown>,
   origine: 'autosave' | 'avanzamento' = 'autosave',
 ) {
-  const richiesta = await db.richiestaProgetto.findUnique({
-    where: { id: richiestaId },
-    include: { tipoProgetto: true },
-  });
-  if (!richiesta) throw new Error('Richiesta non trovata.');
+  const richiesta = await richiestaDelCliente(richiestaId);
   if (!richiesta.tipoProgetto) throw new Error('Tipo di progetto non caricato correttamente.');
   if (richiesta.stato !== 'BOZZA') {
     throw new Error('Questa richiesta è già stata inviata e non può più essere modificata.');
@@ -218,11 +228,11 @@ export async function salvaStep(
  * incremento, v. src/lib/extension-hooks.ts per dove si aggancerà in futuro).
  */
 export async function caricaDocumento(richiestaId: string, formData: FormData) {
+  const richiesta = await richiestaDelCliente(richiestaId);
+
   const file = formData.get('file');
   if (!(file instanceof File)) throw new Error('Nessun file ricevuto.');
 
-  const richiesta = await db.richiestaProgetto.findUnique({ where: { id: richiestaId } });
-  if (!richiesta) throw new Error('Richiesta non trovata.');
   if (richiesta.stato !== 'BOZZA') {
     throw new Error('Questa richiesta è già stata inviata e non accetta più allegati.');
   }
@@ -264,8 +274,18 @@ export async function caricaDocumento(richiestaId: string, formData: FormData) {
 
 /** Rimuove un allegato (solo il riferimento in questo incremento - v. nota nel README). */
 export async function eliminaDocumento(documentoId: string) {
+  if (typeof documentoId !== 'string' || documentoId.length === 0) return;
   const documento = await db.documentoRichiesta.findUnique({ where: { id: documentoId } });
   if (!documento) return;
+
+  // Un allegato si elimina solo dalla propria bozza: mai da quella di un altro
+  // cliente, mai da una richiesta già inviata.
+  const richiesta = await richiestaDelCliente(documento.richiestaId);
+  if (richiesta.stato !== 'BOZZA') {
+    throw new Error(
+      'Questa richiesta è già stata inviata e i suoi allegati non sono modificabili.',
+    );
+  }
 
   await db.documentoRichiesta.delete({ where: { id: documentoId } });
 
@@ -287,11 +307,7 @@ export async function eliminaDocumento(documentoId: string) {
  * cliente e visibile alla dashboard amministrativa (Incremento 3).
  */
 export async function completaRichiesta(richiestaId: string) {
-  const richiesta = await db.richiestaProgetto.findUnique({
-    where: { id: richiestaId },
-    include: { tipoProgetto: true },
-  });
-  if (!richiesta) throw new Error('Richiesta non trovata.');
+  const richiesta = await richiestaDelCliente(richiestaId);
   if (!richiesta.tipoProgetto) throw new Error('Tipo di progetto non caricato correttamente.');
 
   if (richiesta.stato !== 'BOZZA') {

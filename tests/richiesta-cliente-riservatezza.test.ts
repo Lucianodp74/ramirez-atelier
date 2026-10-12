@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const trovaRichiesta = vi.hoisted(() => vi.fn());
+/** Cookie presentati dal browser che invoca l'azione. */
+const browser = vi.hoisted(() => ({ cookie: {} as Record<string, string> }));
 
 vi.mock('@/server/db', () => ({
   db: { richiestaProgetto: { findUnique: trovaRichiesta } },
 }));
-vi.mock('next/headers', () => ({ cookies: vi.fn() }));
+vi.mock('next/headers', () => ({
+  cookies: async () => ({
+    get: (nome: string) =>
+      nome in browser.cookie ? { name: nome, value: browser.cookie[nome] } : undefined,
+  }),
+}));
 vi.mock('@/lib/storage', () => ({ getStorageAdapter: vi.fn(), determinaCategoria: vi.fn() }));
 vi.mock('@/lib/notifiche', () => ({ getEmailAdapter: vi.fn() }));
 vi.mock('@/lib/rule-engine/bootstrap', () => ({ assicuraGestoriRegistrati: vi.fn() }));
@@ -24,6 +31,7 @@ import { CAMPI_RISERVATI_RICHIESTA, datiPerCliente } from '@/lib/richiesta-clien
 /** Una richiesta già lavorata dall'atelier, con tutto ciò che il cliente non deve vedere. */
 const richiestaInviata = {
   id: 'richiesta-1',
+  tokenRipresa: 'token-di-ripresa-del-cliente',
   tenantId: 'tenant-ramirez',
   stato: 'PREVENTIVO_INVIATO',
   clienteNome: 'Mario Rossi',
@@ -76,13 +84,15 @@ describe('datiPerCliente', () => {
 describe('azioni pubbliche — nessun dato interno al browser', () => {
   beforeEach(() => {
     trovaRichiesta.mockReset();
+    browser.cookie = {};
   });
 
   it('completaRichiesta su una richiesta già inviata non restituisce costi né note interne', async () => {
     trovaRichiesta.mockResolvedValue(richiestaInviata);
+    browser.cookie = { ra_bozza_falegnameria: 'token-di-ripresa-del-cliente' };
 
-    // Chi conosce solo l'id della richiesta (anche il cliente stesso) può
-    // richiamare l'azione: la risposta non deve contenere dati dell'area operativa.
+    // Anche il cliente proprietario, con il suo cookie, non deve ricevere i
+    // dati dell'area operativa della propria richiesta.
     const risposta = await azioniWizard.completaRichiesta('richiesta-1');
 
     expect(risposta.successo).toBe(true);
@@ -92,6 +102,25 @@ describe('azioni pubbliche — nessun dato interno al browser', () => {
     expect(risposta.richiesta.noteInterne).toBeNull();
     expect(risposta.richiesta.prioritaCommerciale).toBeNull();
     expect(risposta.richiesta.regolaPrezzoApplicataId).toBeNull();
+  });
+
+  it('completaRichiesta rifiuta chi conosce l’id ma non presenta il token di ripresa', async () => {
+    trovaRichiesta.mockResolvedValue(richiestaInviata);
+
+    await expect(azioniWizard.completaRichiesta('richiesta-1')).rejects.toThrow(
+      'Richiesta non trovata.',
+    );
+
+    browser.cookie = { ra_bozza_falegnameria: 'token-di-un-altro-cliente!!!' };
+    await expect(azioniWizard.completaRichiesta('richiesta-1')).rejects.toThrow(
+      'Richiesta non trovata.',
+    );
+
+    // Il token giusto nel cookie di un altro tipo di progetto non vale.
+    browser.cookie = { ra_bozza_cucina: 'token-di-ripresa-del-cliente' };
+    await expect(azioniWizard.completaRichiesta('richiesta-1')).rejects.toThrow(
+      'Richiesta non trovata.',
+    );
   });
 
   it('non esiste più un’azione pubblica che restituisce la richiesta dato il solo id', () => {
