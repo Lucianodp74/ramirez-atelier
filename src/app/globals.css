@@ -24,6 +24,12 @@
   --input: #e3dbcb;
   --ring: #8b6e4e;
   --radius: 0.5rem;
+  /* terracotta: accento della home pubblica (CTA, sovratitoli).
+     brand su avorio 4.9:1, testo avorio su brand 5.4:1, brand-strong 6.2:1. */
+  --brand: #a6532b;
+  --brand-strong: #8f4525;
+  --brand-foreground: #fdfbf7;
+  --brand-soft: #d9a07e;
 }
 
 @theme inline {
@@ -43,6 +49,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 0.25rem);
   --radius-sm: calc(var(--radius) - 0.5rem);
@@ -61,4 +71,38 @@ body {
 
 * {
   border-color: var(--border);
+}
+
+/* Ingresso morbido degli elementi above-the-fold della home.
+   Con prefers-reduced-motion gli elementi sono subito nello stato finale. */
+@keyframes rivela {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rivela {
+    animation: rivela 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Grana leggera da carta/legno sulle superfici calde (stile "Nature Distilled"). */
+.grana {
+  position: relative;
+  isolation: isolate;
+}
+.grana::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
