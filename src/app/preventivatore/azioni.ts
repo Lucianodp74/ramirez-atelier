@@ -2,10 +2,10 @@
 
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { db } from '@/server/db';
+import { generaTokenRipresa } from '@/lib/identity/token';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
 import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
-import { generaTokenRipresa } from '@/lib/identity/token';
 import { risolviModelloOrigine } from '@/lib/catalogo-librerie/modello-origine';
 import { anteprimaInternaConsentita } from '@/server/services/catalogo-librerie-accesso';
 
