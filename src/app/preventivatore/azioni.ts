@@ -5,8 +5,7 @@ import { db } from '@/server/db';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
 import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
-import { risolviModelloOrigine } from '@/lib/catalogo-librerie/modello-origine';
-import { anteprimaInternaConsentita } from '@/server/services/catalogo-librerie-accesso';
+import { modelloOriginePerRichiesta } from '@/server/services/modello-origine-service';
 
 const CHIAVI_TIPO_PROGETTO_PREVENTIVATORE = [
   'falegnameria',
@@ -76,9 +75,7 @@ export async function salvaRichiestaPreventivatore(
   // non valido non blocca la richiesta, viene semplicemente ignorato.
   const codiceModelloOrigine = opzioni?.codiceModelloOrigine;
   const modelloOrigine = codiceModelloOrigine
-    ? risolviModelloOrigine(codiceModelloOrigine, moduli, {
-        anteprimaInterna: await anteprimaInternaConsentita(),
-      })
+    ? await modelloOriginePerRichiesta(codiceModelloOrigine, moduli)
     : null;
 
   const nuova = await db.$transaction(async (tx) => {

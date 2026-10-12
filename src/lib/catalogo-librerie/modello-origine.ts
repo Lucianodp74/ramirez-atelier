@@ -1,4 +1,5 @@
 import type { ModuloConfigurato } from '@/lib/preventivatore/moduli';
+import { ripianiEffettivi } from '@/lib/preventivatore/ripiani';
 import {
   FORMATO_CODICE_MODELLO,
   MODELLI_LIBRERIE,
@@ -32,7 +33,11 @@ export interface ModelloOrigine {
   personalizzato: boolean;
 }
 
-/** I soli campi che descrivono un modulo: l'identificativo non conta. */
+/**
+ * I soli campi che descrivono un modulo: l'identificativo non conta. I valori
+ * facoltativi sono risolti con gli stessi default del motore prezzi, così due
+ * moduli hanno la stessa firma se e solo se vengono stimati allo stesso modo.
+ */
 function firmaModulo(modulo: ModuloConfigurato): string {
   return JSON.stringify([
     modulo.tipo,
@@ -45,13 +50,25 @@ function firmaModulo(modulo: ModuloConfigurato): string {
     modulo.finituraStruttura ?? modulo.finitura,
     modulo.finituraAnte ?? modulo.finitura,
     modulo.configurazione,
-    modulo.ripiani ?? 0,
+    ripianiEffettivi(modulo),
   ]);
 }
 
 /** Stessa configurazione se i moduli coincidono, nello stesso ordine. */
 export function stessaConfigurazione(a: ModuloConfigurato[], b: ModuloConfigurato[]): boolean {
   return a.length === b.length && a.every((modulo, i) => firmaModulo(modulo) === firmaModulo(b[i]));
+}
+
+/**
+ * true se il codice indica un modello in bozza: l'unico caso in cui serve
+ * verificare il permesso di anteprima interna prima di registrarlo.
+ */
+export function richiedeAnteprimaInterna(
+  codice: unknown,
+  catalogo: readonly ModelloLibreria[] = MODELLI_LIBRERIE,
+): boolean {
+  if (typeof codice !== 'string') return false;
+  return trovaModello(codice, catalogo)?.stato === 'BOZZA';
 }
 
 /**
