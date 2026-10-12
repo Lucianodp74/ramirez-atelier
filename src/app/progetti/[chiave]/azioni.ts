@@ -78,6 +78,7 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
       cookieStore.set(nomeCookie, esistente.tokenRipresa, {
         httpOnly: true,
         sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 90,
         path: '/',
       });
@@ -102,6 +103,7 @@ export async function iniziaORecuperaBozza(chiaveTipoProgetto: string, tokenEspl
   cookieStore.set(nomeCookie, nuova.tokenRipresa, {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 90, // 90 giorni: coerente con un ciclo di decisione lungo (progetti di arredo)
     path: '/',
   });
