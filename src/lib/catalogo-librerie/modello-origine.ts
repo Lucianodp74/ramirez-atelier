@@ -3,12 +3,11 @@ import {
   FORMATO_CODICE_MODELLO,
   MODELLI_LIBRERIE,
   famigliaPerCodice,
-  richiedibile,
+  moduliPerPreventivatore,
   trovaModello,
   type ModelloLibreria,
   type OpzioniAccesso,
 } from './catalogo';
-import { moduliPreventivatoreDa } from './composizione';
 
 /**
  * MODELLO D'ORIGINE - traccia del modello di catalogo da cui è partita una
@@ -67,12 +66,13 @@ export function risolviModelloOrigine(
   catalogo: readonly ModelloLibreria[] = MODELLI_LIBRERIE,
 ): ModelloOrigine | null {
   if (typeof codice !== 'string') return null;
+  // Stessa regola di ammissione del Preventivatore (stato del modello e
+  // validità della composizione): un modello che non può aprirlo non può
+  // esserne l'origine.
+  const proposti = moduliPerPreventivatore(codice, { anteprimaInterna }, catalogo);
   const modello = trovaModello(codice, catalogo);
-  if (!modello) return null;
-  const ammesso = richiedibile(modello) || (anteprimaInterna && modello.stato === 'BOZZA');
-  if (!ammesso) return null;
+  if (!proposti || !modello) return null;
 
-  const proposti = moduliPreventivatoreDa(modello.codice, modello.composizione);
   return {
     codice: modello.codice,
     nome: modello.nome,

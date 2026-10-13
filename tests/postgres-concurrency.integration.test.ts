@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { TIMEOUT_TEST_MS, attendiSessioniInAttesa, conLockDetenuto } from './helpers/postgres-lock';
+import { databaseUrlLocaleDiTest } from './helpers/database-test';
 
 /**
  * Prova d'integrazione PostgreSQL reale del protocollo di lock condiviso.
@@ -11,12 +12,7 @@ const enabled = process.env.RUN_POSTGRES_CONCURRENCY_TESTS === 'true';
 const describePostgres = enabled ? describe : describe.skip;
 
 const databaseUrl = process.env.DATABASE_URL;
-if (
-  enabled &&
-  (!databaseUrl ||
-    !/localhost|127\.0\.0\.1/.test(new URL(databaseUrl).hostname) ||
-    !/test/i.test(new URL(databaseUrl).pathname))
-) {
+if (enabled && !databaseUrlLocaleDiTest(databaseUrl)) {
   throw new Error(
     'Il test di concorrenza richiede un DATABASE_URL locale con nome contenente "test".',
   );

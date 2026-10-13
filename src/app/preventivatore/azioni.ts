@@ -1,5 +1,6 @@
 'use server';
 
+import { unstable_rethrow } from 'next/navigation';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { db } from '@/server/db';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
@@ -25,6 +26,22 @@ async function caricaTipoProgettoPreventivatore(tenantId: string) {
   ).find(Boolean);
   if (!tipo) throw new Error('Il tipo di progetto del preventivatore non è ancora configurato.');
   return tipo;
+}
+
+/**
+ * Anteprima interna per la sola convalida del modello d'origine. Un errore
+ * tecnico nella verifica della sessione non deve impedire la richiesta del
+ * cliente: in quel caso valgono i privilegi pubblici (solo modelli approvati),
+ * mai privilegi aggiuntivi. I segnali di controllo di Next.js vengono
+ * comunque rilanciati.
+ */
+async function anteprimaInternaPerModelloOrigine(): Promise<boolean> {
+  try {
+    return await anteprimaInternaConsentita();
+  } catch (errore) {
+    unstable_rethrow(errore);
+    return false;
+  }
 }
 
 /** DTO pubblico: il browser riceve solo la stima commerciale, mai costi, ore o ricarico interni. */
@@ -77,7 +94,7 @@ export async function salvaRichiestaPreventivatore(
   const codiceModelloOrigine = opzioni?.codiceModelloOrigine;
   const modelloOrigine = codiceModelloOrigine
     ? risolviModelloOrigine(codiceModelloOrigine, moduli, {
-        anteprimaInterna: await anteprimaInternaConsentita(),
+        anteprimaInterna: await anteprimaInternaPerModelloOrigine(),
       })
     : null;
 
