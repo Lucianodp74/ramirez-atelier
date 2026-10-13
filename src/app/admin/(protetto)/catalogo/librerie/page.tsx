@@ -66,12 +66,22 @@ export default async function CatalogoLibreriePage() {
                   </p>
                 )}
               </div>
-              <Link
-                href={`/librerie/${modello.codice}`}
-                className="text-sm text-primary hover:underline"
-              >
-                Apri la scheda
-              </Link>
+              <div className="flex flex-col items-end gap-1">
+                <Link
+                  href={`/librerie/${modello.codice}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Apri la scheda
+                </Link>
+                {errori.length === 0 && modello.stato !== 'NON_DISPONIBILE' && (
+                  <Link
+                    href={`/admin/catalogo/librerie/${modello.codice}/anteprima`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Prova nel Preventivatore
+                  </Link>
+                )}
+              </div>
             </div>
           );
         })}
