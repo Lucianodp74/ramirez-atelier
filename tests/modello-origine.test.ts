@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ModelloLibreria, StatoModello } from '@/lib/catalogo-librerie/catalogo';
+import {
+  moduliPerPreventivatore,
+  type ModelloLibreria,
+  type StatoModello,
+} from '@/lib/catalogo-librerie/catalogo';
 import { moduliPreventivatoreDa } from '@/lib/catalogo-librerie/composizione';
 import {
   leggiModelloOrigine,
@@ -123,6 +127,33 @@ describe("modello d'origine — convalida al salvataggio", () => {
   it('non contiene prezzi né costi', () => {
     const origine = risolviModelloOrigine('LIB-TST-02', proposti('LIB-TST-02'), {}, catalogo);
     expect(JSON.stringify(origine)).not.toMatch(/prezzo|costo|ricarico|margine/i);
+  });
+});
+
+describe("modello d'origine — LIB-ESS-01 dal catalogo reale", () => {
+  const interno = { anteprimaInterna: true };
+  const essenziale = () => moduliPerPreventivatore('LIB-ESS-01', interno)!;
+
+  it('la composizione aperta dalla scheda, non modificata, risulta non personalizzata', () => {
+    expect(risolviModelloOrigine('LIB-ESS-01', essenziale(), interno)).toEqual({
+      codice: 'LIB-ESS-01',
+      nome: 'Essenziale 180',
+      famiglia: 'ESSENZIALE',
+      nomeFamiglia: expect.any(String),
+      personalizzato: false,
+    });
+  });
+
+  it('un modulo riportato ai valori predefiniti rende la richiesta personalizzata', () => {
+    const [primo, ...altri] = essenziale();
+    const azzerato = { ...primo, larghezzaCm: 80, altezzaCm: 100, profonditaCm: 40, ripiani: 1 };
+    expect(risolviModelloOrigine('LIB-ESS-01', [azzerato, ...altri], interno)?.personalizzato).toBe(
+      true,
+    );
+  });
+
+  it('per il pubblico la bozza non viene registrata come modello d’origine', () => {
+    expect(risolviModelloOrigine('LIB-ESS-01', essenziale(), {})).toBeNull();
   });
 });
 
