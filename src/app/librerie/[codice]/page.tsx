@@ -49,7 +49,11 @@ export default async function SchedaModelloPage({
   const ingombro = ingombroComposizione(modello.composizione);
   const elementi = riepilogoElementi(modello.composizione);
   const opzioni = opzioniDisponibili(modello.composizione);
-  const puoRichiedere = richiedibile(modello) || (anteprimaInterna && modello.stato === 'BOZZA');
+  const bozzaInAnteprima = anteprimaInterna && modello.stato === 'BOZZA';
+  const puoRichiedere = richiedibile(modello) || bozzaInAnteprima;
+  const hrefPreventivatore = bozzaInAnteprima
+    ? `/admin/catalogo/librerie/${modello.codice}/anteprima`
+    : `/preventivatore?modello=${modello.codice}`;
 
   return (
     <CorniceLibrerie
@@ -144,7 +148,9 @@ export default async function SchedaModelloPage({
           <div className="mt-8">
             {puoRichiedere ? (
               <Button size="lg" variant="accent" asChild>
-                <Link href={`/preventivatore?modello=${modello.codice}`}>Richiedi preventivo</Link>
+                <Link href={hrefPreventivatore}>
+                  {bozzaInAnteprima ? 'Prova nel Preventivatore' : 'Richiedi preventivo'}
+                </Link>
               </Button>
             ) : (
               <div>
