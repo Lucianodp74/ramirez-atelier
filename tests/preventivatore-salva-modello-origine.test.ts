@@ -90,6 +90,50 @@ describe("salvaRichiestaPreventivatore — modello d'origine", () => {
     expect(mock.risolvi).toHaveBeenCalledWith('LIB-ATE-01', moduli, { anteprimaInterna: true });
   });
 
+  it('un errore tecnico nella verifica della sessione non blocca la richiesta né concede privilegi', async () => {
+    mock.anteprima.mockRejectedValue(new Error('Database delle sessioni non raggiungibile'));
+    mock.risolvi.mockReturnValue(origine);
+
+    const risultato = await salvaRichiestaPreventivatore(moduli, cliente, {
+      codiceModelloOrigine: 'LIB-ATE-01',
+    });
+
+    expect(risultato.successo).toBe(true);
+    expect(mock.crea).toHaveBeenCalledTimes(1);
+    // Solo privilegi pubblici: nessuna bozza ammessa in caso di errore.
+    expect(mock.risolvi).toHaveBeenCalledWith('LIB-ATE-01', moduli, { anteprimaInterna: false });
+    expect(snapshotSalvato().modelloOrigine).toEqual(origine);
+  });
+
+  it('con un errore tecnico la stima, le fasce e la risposta restano quelle senza codice', async () => {
+    const senza = await salvaRichiestaPreventivatore(moduli, cliente);
+    const datiSenza = mock.crea.mock.calls[0][0].data;
+    const scrittureBomSenza = mock.executeRaw.mock.calls.length;
+    mock.crea.mockClear();
+    mock.executeRaw.mockClear();
+    mock.anteprima.mockRejectedValue(new Error('guasto'));
+    mock.risolvi.mockReturnValue(origine);
+    const con = await salvaRichiestaPreventivatore(moduli, cliente, {
+      codiceModelloOrigine: 'LIB-ATE-01',
+    });
+    const datiCon = mock.crea.mock.calls[0][0].data;
+
+    // bomId è generato a ogni salvataggio: tutto il resto deve coincidere.
+    expect({ ...con, bomId: null }).toEqual({ ...senza, bomId: null });
+    expect(JSON.stringify(con)).not.toMatch(/costoProduzione|prezzoFalegname|modelloOrigine/);
+    expect(datiCon.fasciaPrezzoMin).toBe(datiSenza.fasciaPrezzoMin);
+    expect(datiCon.fasciaPrezzoMax).toBe(datiSenza.fasciaPrezzoMax);
+    // calcolataIl è l'istante del salvataggio: si confrontano solo gli importi.
+    const importi = (dati: typeof datiCon) => {
+      const stima = dati.datiEstensione.preventivatoreModulare.stima;
+      return [stima.prezzoIndicativo, stima.prezzoFalegname, stima.costoProduzione];
+    };
+    expect(importi(datiCon)).toEqual(importi(datiSenza));
+    // Stessa BOM: stesse scritture e motore di calcolo con soli moduli e tariffe.
+    expect(mock.executeRaw.mock.calls.length).toBe(scrittureBomSenza);
+    for (const chiamata of mock.calcola.mock.calls) expect(chiamata).toEqual([moduli, {}]);
+  });
+
   it('salva comunque la richiesta, senza il campo, se il codice non è valido', async () => {
     const risultato = await salvaRichiestaPreventivatore(moduli, cliente, {
       codiceModelloOrigine: 'LIB-ZZZ-99',

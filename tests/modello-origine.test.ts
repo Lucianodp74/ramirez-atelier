@@ -93,6 +93,24 @@ describe("modello d'origine — convalida al salvataggio", () => {
     ).toBeNull();
   });
 
+  it('ignora un modello approvato con composizione non valida, anche in anteprima interna', () => {
+    const nonValidi = [
+      {
+        ...modello('APPROVATO', 'LIB-TST-04'),
+        composizione: { ...catalogo[1].composizione, colonne: [] },
+      },
+      {
+        ...modello('BOZZA', 'LIB-TST-05'),
+        composizione: { ...catalogo[0].composizione, colonne: [] },
+      },
+    ];
+    const moduli = proposti('LIB-TST-02');
+    for (const opzioni of [{}, { anteprimaInterna: true }]) {
+      expect(risolviModelloOrigine('LIB-TST-04', moduli, opzioni, nonValidi)).toBeNull();
+      expect(risolviModelloOrigine('LIB-TST-05', moduli, opzioni, nonValidi)).toBeNull();
+    }
+  });
+
   it('ignora codici assenti, inesistenti, malformati o non testuali', () => {
     const moduli = proposti('LIB-TST-02');
     for (const codice of [undefined, null, '', 'LIB-ZZZ-99', 'LIB-TST-02 ', '<script>', 42, {}]) {
