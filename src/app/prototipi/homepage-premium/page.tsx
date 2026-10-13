@@ -31,6 +31,22 @@ const palette = {
   '--pa-linea-forte': 'rgba(30, 27, 24, 0.28)',
 } as CSSProperties;
 
+// ease-out deciso per le interazioni, ease-in-out per ciò che si sposta sullo schermo.
+// Pressione 160 ms con scale(0.97); con prefers-reduced-motion niente movimento,
+// resta solo una dissolvenza breve.
+const STILI_PAGINA = `
+html{scroll-padding-top:6rem}
+.pa-premi,.pa-colore{transition-property:color,background-color,border-color,box-shadow,transform,translate,scale;transition-duration:160ms;transition-timing-function:cubic-bezier(0.23,1,0.32,1)}
+.pa-freccia{transition-property:transform,translate;transition-duration:200ms;transition-timing-function:cubic-bezier(0.23,1,0.32,1)}
+.pa-sposta{transition-property:transform,translate;transition-duration:200ms;transition-timing-function:cubic-bezier(0.77,0,0.175,1)}
+.pa-ombra{transition:box-shadow 200ms cubic-bezier(0.23,1,0.32,1)}
+.pa-zoom{transition-property:transform,scale;transition-duration:600ms;transition-timing-function:cubic-bezier(0.23,1,0.32,1)}
+@keyframes pa-comparsa{from{opacity:0;transform:translateY(-6px)}}
+@keyframes pa-dissolvenza{from{opacity:0}}
+@media (prefers-reduced-motion:no-preference){.pa-premi:active{transform:scale(0.97)}.pa-comparsa{animation:pa-comparsa 200ms cubic-bezier(0.23,1,0.32,1)}}
+@media (prefers-reduced-motion:reduce){.pa-comparsa{animation:pa-dissolvenza 150ms ease}}
+`;
+
 const focusChiaro =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pa-antracite)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pa-avorio)]';
 const focusScuro =
@@ -72,8 +88,9 @@ export default function HomepagePremiumPrototipo() {
       style={palette}
       className="min-h-screen bg-[var(--pa-avorio)] text-[var(--pa-antracite)] antialiased selection:bg-[var(--pa-rovere)]/40"
     >
-      {/* solo per questa pagina: l'intestazione fissa non copre ancore ed elementi a fuoco */}
-      <style>{'html{scroll-padding-top:6rem}'}</style>
+      {/* Solo per questa pagina: l'intestazione fissa non copre ancore ed elementi a fuoco,
+          e le transizioni condivise del prototipo (curve e durate da emil-design-eng). */}
+      <style>{STILI_PAGINA}</style>
       <a
         href="#contenuto"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-[var(--pa-antracite)] focus:px-5 focus:py-3 focus:text-[var(--pa-avorio)]"
@@ -137,17 +154,17 @@ export default function HomepagePremiumPrototipo() {
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <a
                   href="#realizzazioni"
-                  className={`group inline-flex h-13 items-center justify-center gap-3 rounded-full bg-[var(--pa-avorio)] px-7 text-sm font-medium text-[var(--pa-antracite)] transition-colors duration-200 hover:bg-[var(--pa-avorio-2)] ${focusScuro}`}
+                  className={`group inline-flex h-13 items-center justify-center gap-3 rounded-full bg-[var(--pa-avorio)] px-7 text-sm font-medium text-[var(--pa-antracite)] pa-premi hover:bg-[var(--pa-avorio-2)] ${focusScuro}`}
                 >
                   Scopri le realizzazioni
                   <ArrowDownRight
                     aria-hidden="true"
-                    className="size-4 transition-transform duration-300 motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:translate-y-0.5"
+                    className="size-4 pa-freccia motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:translate-y-0.5"
                   />
                 </a>
                 <a
                   href="#contatti"
-                  className={`inline-flex h-13 items-center justify-center rounded-full border border-[var(--pa-avorio)]/40 px-7 text-sm font-medium text-[var(--pa-avorio)] transition-colors duration-200 hover:bg-[var(--pa-avorio)]/10 ${focusScuro}`}
+                  className={`inline-flex h-13 items-center justify-center rounded-full border border-[var(--pa-avorio)]/40 px-7 text-sm font-medium text-[var(--pa-avorio)] pa-premi hover:bg-[var(--pa-avorio)]/10 ${focusScuro}`}
                 >
                   Parliamo del tuo progetto
                 </a>
@@ -228,7 +245,7 @@ export default function HomepagePremiumPrototipo() {
                 <li key={l.titolo} className={i < 2 ? 'md:col-span-3' : 'md:col-span-2'}>
                   <Link
                     href="/progetti"
-                    className={`group flex h-full flex-col overflow-hidden rounded-[1.25rem] bg-[var(--pa-avorio)] transition-shadow duration-300 hover:shadow-[0_24px_60px_-28px_rgba(30,27,24,0.45)] ${focusChiaro}`}
+                    className={`group flex h-full flex-col overflow-hidden rounded-[1.25rem] bg-[var(--pa-avorio)] pa-ombra hover:shadow-[0_24px_60px_-28px_rgba(30,27,24,0.45)] ${focusChiaro}`}
                   >
                     <div
                       className={`relative overflow-hidden ${i < 2 ? 'aspect-[16/10]' : 'aspect-[4/3]'}`}
@@ -242,7 +259,7 @@ export default function HomepagePremiumPrototipo() {
                             ? '(min-width: 768px) 50vw, 100vw'
                             : '(min-width: 768px) 33vw, 100vw'
                         }
-                        className="object-cover transition-transform duration-[900ms] ease-out motion-safe:group-hover:scale-[1.03]"
+                        className="object-cover pa-zoom motion-safe:group-hover:scale-[1.02]"
                       />
                     </div>
                     <div className="flex flex-1 items-start justify-between gap-4 p-6">
@@ -256,7 +273,7 @@ export default function HomepagePremiumPrototipo() {
                       </div>
                       <ArrowRight
                         aria-hidden="true"
-                        className="mt-2 size-5 shrink-0 text-[var(--pa-bronzo)] transition-transform duration-300 motion-safe:group-hover:translate-x-1"
+                        className="mt-2 size-5 shrink-0 text-[var(--pa-bronzo)] pa-freccia motion-safe:group-hover:translate-x-1"
                       />
                     </div>
                   </Link>
@@ -339,7 +356,7 @@ export default function HomepagePremiumPrototipo() {
                           ? '(min-width: 1024px) 50vw, 100vw'
                           : '(min-width: 1024px) 25vw, 50vw'
                       }
-                      className="object-cover transition-transform duration-[1200ms] ease-out motion-safe:group-hover:scale-[1.04]"
+                      className="object-cover pa-zoom motion-safe:group-hover:scale-[1.03]"
                     />
                     <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-10 text-xs uppercase tracking-[0.14em] text-[var(--pa-avorio)]">
                       {g.didascalia}
@@ -394,12 +411,12 @@ export default function HomepagePremiumPrototipo() {
             <div className="mt-16">
               <Link
                 href="/progetti"
-                className={`group inline-flex h-13 items-center gap-3 rounded-full bg-[var(--pa-antracite)] px-7 text-sm font-medium text-[var(--pa-avorio)] transition-colors duration-200 hover:bg-[var(--pa-noce)] ${focusChiaro}`}
+                className={`group inline-flex h-13 items-center gap-3 rounded-full bg-[var(--pa-antracite)] px-7 text-sm font-medium text-[var(--pa-avorio)] pa-premi hover:bg-[var(--pa-noce)] ${focusChiaro}`}
               >
                 Richiedi un progetto
                 <ArrowRight
                   aria-hidden="true"
-                  className="size-4 transition-transform duration-300 motion-safe:group-hover:translate-x-1"
+                  className="size-4 pa-freccia motion-safe:group-hover:translate-x-1"
                 />
               </Link>
             </div>
@@ -448,7 +465,7 @@ export default function HomepagePremiumPrototipo() {
               </ul>
               <a
                 href={`mailto:${CONTATTI.email}?subject=${encodeURIComponent('Collaborazione professionale')}`}
-                className={`mt-10 inline-flex h-13 items-center gap-3 rounded-full border border-[var(--pa-avorio)]/50 px-7 text-sm font-medium transition-colors duration-200 hover:bg-[var(--pa-avorio)]/10 ${focusNoce}`}
+                className={`mt-10 inline-flex h-13 items-center gap-3 rounded-full border border-[var(--pa-avorio)]/50 px-7 text-sm font-medium pa-premi hover:bg-[var(--pa-avorio)]/10 ${focusNoce}`}
               >
                 <Mail aria-hidden="true" className="size-4" />
                 Scriveteci per collaborare
@@ -479,17 +496,17 @@ export default function HomepagePremiumPrototipo() {
                 <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <Link
                     href="/progetti"
-                    className={`group inline-flex h-13 items-center justify-center gap-3 rounded-full bg-[var(--pa-antracite)] px-7 text-sm font-medium text-[var(--pa-avorio)] transition-colors duration-200 hover:bg-[var(--pa-noce)] ${focusChiaro}`}
+                    className={`group inline-flex h-13 items-center justify-center gap-3 rounded-full bg-[var(--pa-antracite)] px-7 text-sm font-medium text-[var(--pa-avorio)] pa-premi hover:bg-[var(--pa-noce)] ${focusChiaro}`}
                   >
                     Richiedi un progetto
                     <ArrowRight
                       aria-hidden="true"
-                      className="size-4 transition-transform duration-300 motion-safe:group-hover:translate-x-1"
+                      className="size-4 pa-freccia motion-safe:group-hover:translate-x-1"
                     />
                   </Link>
                   <a
                     href={`mailto:${CONTATTI.email}`}
-                    className={`inline-flex h-13 items-center justify-center gap-3 rounded-full border border-[var(--pa-linea-forte)] px-7 text-sm font-medium transition-colors duration-200 hover:border-[var(--pa-antracite)] ${focusChiaro}`}
+                    className={`inline-flex h-13 items-center justify-center gap-3 rounded-full border border-[var(--pa-linea-forte)] px-7 text-sm font-medium pa-premi hover:border-[var(--pa-antracite)] ${focusChiaro}`}
                   >
                     <Mail aria-hidden="true" className="size-4" />
                     {CONTATTI.email}

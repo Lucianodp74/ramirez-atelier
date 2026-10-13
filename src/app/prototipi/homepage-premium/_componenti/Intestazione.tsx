@@ -54,7 +54,7 @@ export function Intestazione() {
               <li key={voce.href}>
                 <a
                   href={voce.href}
-                  className={`relative rounded-sm py-2 transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-[var(--pa-bronzo)] after:transition-transform after:duration-300 hover:text-[var(--pa-antracite)] hover:after:scale-x-100 ${focusAnello}`}
+                  className={`relative rounded-sm py-2 pa-colore after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-[var(--pa-bronzo)] after:transition-transform after:duration-200 after:ease-[cubic-bezier(0.23,1,0.32,1)] hover:text-[var(--pa-antracite)] hover:after:scale-x-100 ${focusAnello}`}
                 >
                   {voce.etichetta}
                 </a>
@@ -66,7 +66,7 @@ export function Intestazione() {
         <div className="flex items-center gap-2">
           <Link
             href="/progetti"
-            className={`hidden h-11 items-center rounded-full bg-[var(--pa-antracite)] px-6 text-sm font-medium text-[var(--pa-avorio)] transition-colors duration-200 hover:bg-[var(--pa-noce)] sm:inline-flex ${focusAnello}`}
+            className={`hidden h-11 items-center rounded-full bg-[var(--pa-antracite)] px-6 text-sm font-medium text-[var(--pa-avorio)] pa-premi hover:bg-[var(--pa-noce)] sm:inline-flex ${focusAnello}`}
           >
             Richiedi un progetto
           </Link>
@@ -76,7 +76,7 @@ export function Intestazione() {
             aria-expanded={aperto}
             aria-controls="menu-mobile"
             onClick={() => setAperto((v) => !v)}
-            className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-full border border-[var(--pa-linea)] text-[var(--pa-antracite)] transition-colors duration-200 hover:bg-[var(--pa-avorio-2)] lg:hidden ${focusAnello}`}
+            className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-full border border-[var(--pa-linea)] text-[var(--pa-antracite)] pa-premi hover:bg-[var(--pa-avorio-2)] lg:hidden ${focusAnello}`}
           >
             {aperto ? (
               <X aria-hidden="true" className="size-5" />
@@ -91,7 +91,7 @@ export function Intestazione() {
       <div
         id="menu-mobile"
         hidden={!aperto}
-        className="border-t border-[var(--pa-linea)] bg-[var(--pa-avorio)] lg:hidden"
+        className="pa-comparsa border-t border-[var(--pa-linea)] bg-[var(--pa-avorio)] lg:hidden"
       >
         <nav
           aria-label="Navigazione principale (mobile)"

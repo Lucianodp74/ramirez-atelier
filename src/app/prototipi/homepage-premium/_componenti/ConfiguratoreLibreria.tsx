@@ -137,7 +137,7 @@ function Opzione({
 }) {
   return (
     <label
-      className={`relative flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-colors duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--pa-antracite)] has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-[var(--pa-avorio)] ${
+      className={`relative flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-sm pa-premi has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--pa-antracite)] has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-[var(--pa-avorio)] ${
         selezionato
           ? 'border-[var(--pa-antracite)] bg-[var(--pa-antracite)] text-[var(--pa-avorio)]'
           : 'border-[var(--pa-linea-forte)] text-[var(--pa-antracite)] hover:border-[var(--pa-antracite)]'
@@ -301,7 +301,7 @@ export function ConfiguratoreLibreria() {
           }
           fill
           sizes="(min-width: 1024px) 58vw, 100vw"
-          className={`object-cover transition-opacity duration-700 ${modelloVisto ? 'opacity-0' : 'opacity-100'}`}
+          className={`object-cover transition-opacity duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${modelloVisto ? 'opacity-0' : 'opacity-100'}`}
         />
         {stato === 'pronto' && (
           <ModelViewer
@@ -377,7 +377,7 @@ export function ConfiguratoreLibreria() {
                 onClick={azione}
                 aria-label={etichetta}
                 title={etichetta}
-                className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-full bg-[var(--pa-avorio)]/92 text-[var(--pa-antracite)] shadow-sm backdrop-blur transition-colors duration-200 hover:bg-[var(--pa-avorio)] ${focusAnello}`}
+                className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-full bg-[var(--pa-avorio)]/92 text-[var(--pa-antracite)] shadow-sm backdrop-blur pa-premi hover:bg-[var(--pa-avorio)] ${focusAnello}`}
               >
                 <Icona aria-hidden="true" className="size-4" />
               </button>
@@ -454,13 +454,13 @@ export function ConfiguratoreLibreria() {
             aria-checked={led}
             aria-labelledby="etichetta-led"
             onClick={() => setLed((v) => !v)}
-            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 before:absolute before:-inset-1.5 before:content-[''] ${
+            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full pa-colore before:absolute before:-inset-1.5 before:content-[''] ${
               led ? 'bg-[var(--pa-bronzo)]' : 'bg-[var(--pa-linea-forte)]'
             } ${focusAnello}`}
           >
             <span
               aria-hidden="true"
-              className={`inline-block size-6 rounded-full bg-[var(--pa-avorio)] shadow transition-transform duration-200 ${
+              className={`inline-block size-6 rounded-full bg-[var(--pa-avorio)] shadow pa-sposta ${
                 led ? 'translate-x-7' : 'translate-x-1'
               }`}
             />
@@ -474,7 +474,7 @@ export function ConfiguratoreLibreria() {
           <button
             type="button"
             onClick={ripristina}
-            className={`mt-4 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--pa-linea-forte)] px-5 text-sm text-[var(--pa-antracite)] transition-colors duration-200 hover:border-[var(--pa-antracite)] ${focusAnello}`}
+            className={`mt-4 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--pa-linea-forte)] px-5 text-sm text-[var(--pa-antracite)] pa-premi hover:border-[var(--pa-antracite)] ${focusAnello}`}
           >
             <Undo2 aria-hidden="true" className="size-4" />
             Ripristina configurazione iniziale
