@@ -21,6 +21,12 @@ import type {
 } from '@/lib/preventivatore/moduli';
 import { CATALOGO_MODULI } from '@/lib/preventivatore/moduli';
 import {
+  confermaSostituzione,
+  effettoSceltaTipoProgetto,
+  tipoProgettoIniziale,
+  type TipoProgetto,
+} from '@/lib/preventivatore/tipo-progetto';
+import {
   calcolaStimaPreventivatore,
   salvaRichiestaPreventivatore,
 } from '@/app/preventivatore/azioni';
@@ -199,7 +205,12 @@ export function PreventivatoreModulare({ moduliIniziali, codiceModelloOrigine }:
   );
   const [indice, setIndice] = useState(0);
   const [step, setStep] = useState(1);
-  const [projectType, setProjectType] = useState('ALTRO');
+  const [projectType, setProjectType] = useState<TipoProgetto>(() =>
+    tipoProgettoIniziale(moduliIniziali),
+  );
+  // Moduli arrivati dal catalogo o da un progetto preimpostato: la prima
+  // schermata non li modifica mai senza conferma.
+  const composizioneDaConservare = Boolean(moduliIniziali?.length);
   const [layout, setLayout] = useState('LINEARE');
   const [larghezzaTotaleArmadio, setLarghezzaTotaleArmadio] = useState<number | ''>(250);
   const [stima, setStima] = useState<number | null>(null);
@@ -236,6 +247,17 @@ export function PreventivatoreModulare({ moduliIniziali, codiceModelloOrigine }:
       configurazione: base.configurazione,
       ripiani: base.ripiani,
     });
+  }
+
+  function scegliTipoProgetto(tipo: TipoProgetto) {
+    const effetto = effettoSceltaTipoProgetto(tipo, modulo, { composizioneDaConservare });
+    const conferma = composizioneDaConservare ? confermaSostituzione(effetto) : null;
+    if (conferma && !window.confirm(conferma)) return;
+    setProjectType(tipo);
+    if (effetto.tipo === 'COMPOSIZIONE_ARMADIO') {
+      preparaArmadio();
+      setStep(2);
+    } else if (effetto.tipo === 'CAMBIA_TIPO_MODULO') cambiaTipo(effetto.tipoModulo);
   }
 
   function preparaArmadio() {
@@ -427,16 +449,7 @@ export function PreventivatoreModulare({ moduliIniziali, codiceModelloOrigine }:
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
-                        setProjectType(item.id);
-                        if (item.id === 'ARMADIO') {
-                          preparaArmadio();
-                          setStep(2);
-                        } else if (item.id === 'LIBRERIA') cambiaTipo('LIBRERIA');
-                        else if (item.id === 'MADIA') cambiaTipo('BASE');
-                        else if (item.id === 'PARETE_ATTREZZATA') cambiaTipo('LIBRERIA');
-                        else if (item.id === 'MOBILE_BAGNO') cambiaTipo('BASE');
-                      }}
+                      onClick={() => scegliTipoProgetto(item.id)}
                       className={`flex items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors ${selected ? 'border-foreground bg-muted/60' : 'border-border bg-background hover:bg-muted/40'}`}
                     >
                       <span className="text-sm font-medium">{item.title}</span>
