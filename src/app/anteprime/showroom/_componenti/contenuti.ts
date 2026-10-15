@@ -75,13 +75,14 @@ export const TAPPE: Tappa[] = [
   {
     id: 'cucina',
     sovratitolo: 'Cucine su misura',
-    titolo: 'Cucina con colonne',
-    testo: 'Basi con cassettoni, colonne a tutta altezza, alzata in pietra e mensola illuminata.',
+    titolo: 'Cucina con isola',
+    testo:
+      'Colonne con forno incassato, pensili senza maniglie, piano e alzata in pietra. Davanti, l’isola con piano a cascata e piano cottura a filo.',
     arredo: 2,
     finiture: ['avorio', 'antracite', 'rovere', 'noce'],
     led: true,
     immagine: `${BASE}/img/cucina.jpg`,
-    alt: 'Cucina laccata avorio con colonne',
+    alt: 'Cucina laccata avorio con isola in pietra',
   },
   {
     id: 'armadio',
@@ -100,7 +101,7 @@ export const TAPPE: Tappa[] = [
     sovratitolo: 'Boiserie',
     titolo: 'Boiserie a pannelli',
     testo:
-      'Pannelli bugnati con cornici modanate tagliate a 45°, zoccolo, fascia e cornicione. Applique in bronzo e consolle in pietra.',
+      'Pannelli bugnati con cornici modanate tagliate a 45°, zoccolo, fascia e cornicione, con applique in bronzo.',
     arredo: 4,
     finiture: ['avorio', 'rovere', 'noce', 'antracite'],
     led: true,

@@ -32,6 +32,9 @@ function posa(tappa: number | null): [THREE.Vector3, THREE.Vector3] {
   // l'arredo sta a destra del centro: a sinistra c'è la scheda
   if (tappa === 0)
     return [new THREE.Vector3(x - 1.5, 1.3, 3.3), new THREE.Vector3(x - 0.45, 0.55, PARETE_Z)];
+  // la cucina ha l'isola davanti: vista più ampia e più alta
+  if (tappa === 2)
+    return [new THREE.Vector3(x - 2.6, 2.1, 7.4), new THREE.Vector3(x - 0.8, 1.0, 0.6)];
   return [new THREE.Vector3(x - 2.0, 1.65, 6.0), new THREE.Vector3(x - 0.75, 1.3, PARETE_Z)];
 }
 
@@ -63,6 +66,12 @@ function Arredo({
       mesh.receiveShadow = true;
       const m = mesh.material as THREE.MeshStandardMaterial;
       if (['finitura', 'schienale', 'led'].includes(m.name)) mesh.material = m.clone();
+      // i metalli in una galleria buia riflettono poco: più luce d'ambiente solo per bronzo e acciaio
+      if (m.name === 'bronzo' || m.name === 'acciaio') {
+        const metallo = m.clone();
+        metallo.envMapIntensity = 3.2;
+        mesh.material = metallo;
+      }
     });
     return c;
   }, [scene]);
