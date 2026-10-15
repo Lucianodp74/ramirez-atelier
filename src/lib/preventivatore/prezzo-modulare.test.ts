@@ -17,6 +17,17 @@ describe('preventivatore modulare', () => {
     expect(riga.costoProduzione).toBeGreaterThan(riga.materiale);
   });
 
+  it('non conteggia due volte il materiale dello schienale MDF da 6 mm', () => {
+    const riga = calcolaCostoModulo(base, { ...TARIFFE_DEMO, materialeEuroM2: { ...TARIFFE_DEMO.materialeEuroM2, TRUCIOLARE: 30 } });
+    // Fianchi (0,96 m²) + base/cielo (0,72 m²) + ripiano (0,36 m²) + frontali (0,48 m²).
+    // Lo schienale (0,48 m²) è escluso dal truciolare e tariffato separatamente a 12 €/m².
+    expect(riga.materiale).toBe(75.6);
+    expect(riga.retro).toBe(5.76);
+    const schienale = riga.distinta.componenti.find((componente) => componente.codice === 'SCHIENALE');
+    expect(schienale?.note).toContain('Spessore tecnico 6 mm');
+    expect(schienale?.voce).toBe('Schienale MDF 6 mm');
+  });
+
   it('non aggiunge superficie frontale a un modulo aperto', () => {
     const aperto = calcolaCostoModulo({ ...base, id: 'base-open', configurazione: 'APERTO', ripiani: 0 });
     const struttura = calcolaCostoModulo({ ...base, id: 'base-structure', configurazione: 'APERTO', ripiani: 0, finitura: 'MELAMINICO' });
