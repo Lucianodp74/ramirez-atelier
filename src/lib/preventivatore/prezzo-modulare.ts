@@ -124,7 +124,8 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
   const materialeAnte = modulo.materialeAnte ?? modulo.materiale;
   const finituraStruttura = modulo.finituraStruttura ?? modulo.finitura;
   const finituraAnte = modulo.finituraAnte ?? modulo.finitura;
-  const superficieStruttura = (fianchiM2 + baseCieloM2 + ripianiM2 + schienaleM2) * (1 + sfrido);
+  // Lo schienale è tariffato separatamente come MDF da 6 mm (MAT-RETRO-M2): non includerlo anche nel pannello strutturale.
+  const superficieStruttura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido);
   const materiale = superficieStruttura * tariffe.materialeEuroM2[modulo.materiale] + frontaliM2 * (1 + sfrido) * tariffe.materialeEuroM2[materialeAnte];
   const finitura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido) * tariffe.finituraEuroM2[finituraStruttura] + frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
@@ -139,7 +140,7 @@ export function calcolaCostoModulo(modulo: ModuloConfigurato, tariffe: TariffePr
     componentePannello('PANNELLO-FIANCO', 'Fianco struttura', 2, modulo.profonditaCm, modulo.altezzaCm, 0, spessoreMm),
     componentePannello('PANNELLO-BASE', 'Base', 1, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm),
     componentePannello('PANNELLO-CIELO', 'Cielo', 1, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm),
-    componentePannello('SCHIENALE', 'Schienale', 1, modulo.larghezzaCm, modulo.altezzaCm, 0, spessoreMm),
+    componentePannello('SCHIENALE', 'Schienale MDF 6 mm', 1, modulo.larghezzaCm, modulo.altezzaCm, 0, 6, 'Tariffato separatamente con MAT-RETRO-M2.'),
   ];
   if (ripiani > 0) componenti.push(componentePannello('RIPIANO', 'Ripiano', ripiani, modulo.larghezzaCm, modulo.profonditaCm, 0, spessoreMm));
 
