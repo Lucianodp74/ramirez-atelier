@@ -113,10 +113,10 @@ function Apertura() {
               <ArrowDown aria-hidden="true" className="size-4" />
             </a>
             <Link
-              href="/preventivatore"
+              href="/progetti"
               className={`inline-flex h-13 items-center justify-center rounded-full border border-[#F6F1E9]/45 px-7 text-sm font-medium hover:bg-[#F6F1E9]/10 ${premi} ${focusScuro}`}
             >
-              Configura il tuo progetto
+              Inizia il tuo progetto
             </Link>
           </div>
         </div>
@@ -207,13 +207,11 @@ export function Esperienza() {
 
   return (
     <div className="bg-[#F6F1E9] text-[#1E1B18] antialiased">
-      <div className="bg-[#1E1B18] px-5 py-2 text-center text-xs text-[#B9AE9F]">
-        Anteprima · Fase B · non è il sito pubblicato. Video e arredi 3D sono dimostrativi.
-      </div>
       <header className="sticky top-0 z-40 border-b border-[#1E1B18]/10 bg-[#F6F1E9]/92 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between gap-4 px-5 sm:h-[72px] sm:px-10">
-          <a
-            href="#titolo-apertura"
+          <Link
+            href="/"
+            aria-label="Ramirez Atelier"
             className={`flex min-h-11 items-center gap-3 rounded-sm ${focusChiaro}`}
           >
             <Image
@@ -224,13 +222,15 @@ export function Esperienza() {
               className="h-9 w-auto"
               priority
             />
-            <span className="font-serif text-[1.05rem]">Ramirez Atelier</span>
-          </a>
+            <span className="font-serif text-[1.05rem] whitespace-nowrap max-[400px]:sr-only">
+              Ramirez Atelier
+            </span>
+          </Link>
           <Link
             href="/progetti"
-            className={`inline-flex h-11 items-center rounded-full bg-[#1E1B18] px-5 text-sm font-medium text-[#F6F1E9] hover:bg-[#5B3F2C] ${premi} ${focusChiaro}`}
+            className={`inline-flex h-11 items-center whitespace-nowrap rounded-full bg-[#1E1B18] px-5 text-sm font-medium text-[#F6F1E9] hover:bg-[#5B3F2C] ${premi} ${focusChiaro}`}
           >
-            Richiedi un progetto
+            Inizia il tuo progetto
           </Link>
         </div>
       </header>
@@ -446,13 +446,7 @@ export function Esperienza() {
                   href="/progetti"
                   className={`inline-flex h-13 items-center justify-center rounded-full bg-[#F6F1E9] px-7 text-sm font-medium text-[#1E1B18] ${premi} ${focusScuro}`}
                 >
-                  Richiedi un progetto
-                </Link>
-                <Link
-                  href="/preventivatore"
-                  className={`inline-flex h-13 items-center justify-center rounded-full border border-[#F6F1E9]/45 px-7 text-sm font-medium ${premi} ${focusScuro}`}
-                >
-                  Apri il preventivatore
+                  Inizia il tuo progetto
                 </Link>
               </div>
             </div>
@@ -472,31 +466,50 @@ export function Esperienza() {
         </section>
       </main>
 
-      <footer className="bg-[#EDE5D8] px-5 py-10 text-xs text-[#5E564C] sm:px-10">
-        <div className="mx-auto flex max-w-[1320px] flex-wrap items-end justify-between gap-6">
-          <Image
-            src="/logo-completo.png"
-            alt="Ramirez Atelier — Arredi su misura"
-            width={906}
-            height={889}
-            className="h-auto w-24"
-          />
-          <nav
-            aria-label="Informazioni legali"
-            className="flex flex-wrap gap-x-6 uppercase tracking-[0.12em]"
-          >
-            {[
-              ['/privacy', 'Privacy'],
-              ['/cookie-policy', 'Cookie Policy'],
-              ['/termini-e-condizioni', 'Termini e condizioni'],
-              ['/admin/login', 'Area riservata'],
-            ].map(([h, l]) => (
-              <Link key={h} href={h} className={`inline-flex min-h-11 items-center ${focusChiaro}`}>
-                {l}
-              </Link>
-            ))}
-          </nav>
-          <p className="w-full">ITALDESIGN DI RAMIREZ ROBERTO · P.IVA 04951160755</p>
+      {/* stessi collegamenti della home precedente: legali, P.IVA e accesso all'area riservata */}
+      <footer className="bg-[#EDE5D8] px-5 py-10 text-[#5E564C] sm:px-10">
+        <div className="mx-auto max-w-[1320px]">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="flex items-end gap-5">
+              <Image
+                src="/logo-completo.png"
+                alt="Ramirez Atelier — Arredi su misura"
+                width={906}
+                height={889}
+                className="h-auto w-24"
+              />
+              <p className="text-xs uppercase tracking-[0.2em] text-[#7A5A32]">
+                Arredi su misura · Falegnameria artigiana dal 1987
+              </p>
+            </div>
+            <nav
+              aria-label="Informazioni legali"
+              className="flex flex-wrap gap-x-6 text-xs uppercase tracking-[0.12em]"
+            >
+              {[
+                ['/privacy', 'Privacy'],
+                ['/cookie-policy', 'Cookie Policy'],
+                ['/termini-e-condizioni', 'Termini e condizioni'],
+              ].map(([h, l]) => (
+                <Link
+                  key={h}
+                  href={h}
+                  className={`inline-flex min-h-11 items-center ${focusChiaro}`}
+                >
+                  {l}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[#1E1B18]/10 pt-4 text-xs">
+            <p className="tracking-[0.06em]">ITALDESIGN DI RAMIREZ ROBERTO · P.IVA 04951160755</p>
+            <Link
+              href="/admin/login"
+              className={`inline-flex min-h-11 items-center uppercase tracking-[0.14em] text-[#7A5A32] hover:text-[#1E1B18] ${focusChiaro}`}
+            >
+              Accedi all&apos;area riservata
+            </Link>
+          </div>
         </div>
       </footer>
       <style>{STILI}</style>

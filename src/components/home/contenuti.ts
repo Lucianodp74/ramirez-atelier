@@ -1,8 +1,8 @@
-// Contenuti dello showroom 3D (anteprima, Fase B).
+// Contenuti della home: showroom 3D.
 // Solo dati già presenti nel sito (indirizzo, email, "dal 1987"); i testi descrittivi
 // raccontano ciò che i modelli mostrano e restano da validare con l'atelier.
 
-export const BASE = '/anteprime/showroom';
+export const BASE = '/home';
 
 export type IdFinitura = 'rovere' | 'noce' | 'avorio' | 'antracite';
 
@@ -46,7 +46,8 @@ export const TAPPE: Tappa[] = [
     id: 'insieme',
     sovratitolo: 'Lo showroom',
     titolo: 'Cinque arredi, un solo modo di lavorare.',
-    testo: 'Scorri per avvicinarti a ciascun pezzo: materiali, proporzioni, dettagli.',
+    testo:
+      'Scorri per avvicinarti a ciascun pezzo: materiali, proporzioni, dettagli. Gli arredi in 3D sono dimostrativi.',
     arredo: null,
     immagine: `${BASE}/img/stella-panorama.jpg`,
     alt: 'Madia STELLA in radica d’olivo',
