@@ -2,6 +2,8 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer, OrbitControls, useGLTF, useTexture } from '@react-three/drei';
+import { EffectComposer, N8AO, ToneMapping } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type ComponentRef } from 'react';
 import * as THREE from 'three';
 import { ARREDI, BASE, FINITURE, PASSO, type IdFinitura } from './contenuti';
@@ -27,9 +29,10 @@ function posa(tappa: number | null): [THREE.Vector3, THREE.Vector3] {
     return [new THREE.Vector3(-2.4, 3.6, 10.5), new THREE.Vector3(2.1 * PASSO, 0.7, -0.6)];
   }
   const x = tappa * PASSO;
+  // l'arredo sta a destra del centro: a sinistra c'è la scheda
   if (tappa === 0)
-    return [new THREE.Vector3(x - 0.9, 1.25, 2.9), new THREE.Vector3(x + 0.1, 0.55, PARETE_Z)];
-  return [new THREE.Vector3(x - 1.1, 1.55, 4.6), new THREE.Vector3(x + 0.15, 1.2, PARETE_Z)];
+    return [new THREE.Vector3(x - 1.5, 1.3, 3.3), new THREE.Vector3(x - 0.45, 0.55, PARETE_Z)];
+  return [new THREE.Vector3(x - 2.0, 1.65, 6.0), new THREE.Vector3(x - 0.75, 1.3, PARETE_Z)];
 }
 
 function Arredo({
@@ -42,7 +45,12 @@ function Arredo({
   led: boolean;
 }) {
   const { scene } = useGLTF(ARREDI[indice].file);
-  const [rovere, noce] = useTexture([`${BASE}/texture/rovere.jpg`, `${BASE}/texture/noce.jpg`]);
+  const [rovere, noce, rovereN, noceN] = useTexture([
+    `${BASE}/texture/rovere.jpg`,
+    `${BASE}/texture/noce.jpg`,
+    `${BASE}/texture/rovere-normale.jpg`,
+    `${BASE}/texture/noce-normale.jpg`,
+  ]);
   const gruppo = useRef<THREE.Group>(null);
 
   // copia indipendente: finiture e luci di un arredo non toccano gli altri
@@ -69,14 +77,14 @@ function Arredo({
   }, [copia, indice]);
 
   useEffect(() => {
-    for (const t of [rovere, noce]) {
+    for (const t of [rovere, noce, rovereN, noceN]) {
       t.flipY = false; // convenzione UV del glTF
-      t.colorSpace = THREE.SRGBColorSpace;
+      t.colorSpace = t === rovereN || t === noceN ? THREE.NoColorSpace : THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = 8;
       t.needsUpdate = true;
     }
-  }, [rovere, noce]);
+  }, [rovere, noce, rovereN, noceN]);
 
   useEffect(() => {
     copia.traverse((o) => {
@@ -90,14 +98,19 @@ function Arredo({
       }
       if (!finitura || (m.name !== 'finitura' && m.name !== 'schienale')) return;
       const f = FINITURE[finitura];
-      m.map = f.texture ? (finitura === 'rovere' ? rovere : noce) : null;
+      const legno = Boolean(f.texture);
+      m.map = legno ? (finitura === 'rovere' ? rovere : noce) : null;
+      // rilievo della venatura solo sul legno; il laccato resta liscio
+      m.normalMap = legno ? (finitura === 'rovere' ? rovereN : noceN) : null;
+      m.normalScale.set(0.55, 0.55);
       m.color.set(f.colore);
-      if (m.name === 'schienale') m.color.multiplyScalar(0.88);
+      // fondi e interni più scuri: danno profondità ai vani
+      if (m.name === 'schienale') m.color.multiplyScalar(legno ? 0.72 : 0.9);
       m.roughness = f.ruvidita;
       m.metalness = 0;
       m.needsUpdate = true;
     });
-  }, [copia, finitura, led, rovere, noce]);
+  }, [copia, finitura, led, rovere, noce, rovereN, noceN]);
 
   return <primitive ref={gruppo} object={copia} />;
 }
@@ -280,6 +293,17 @@ export default function Scena(props: Props) {
         ))}
         <Pronta onPronta={onPronta} />
       </Suspense>
+      <EffectComposer multisampling={4}>
+        <N8AO
+          aoRadius={0.45}
+          distanceFalloff={0.8}
+          intensity={2.4}
+          color="#140f0b"
+          halfRes
+          quality="medium"
+        />
+        <ToneMapping mode={ToneMappingMode.AGX} />
+      </EffectComposer>
       <Regia
         tappa={props.tappa}
         esplorazioneLibera={props.esplorazioneLibera}

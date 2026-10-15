@@ -64,7 +64,8 @@ export const TAPPE: Tappa[] = [
     id: 'libreria',
     sovratitolo: 'Librerie e pareti',
     titolo: 'Libreria a tutta parete',
-    testo: 'Moduli, ante basse e luce sotto ogni ripiano. Prova finiture e illuminazione.',
+    testo:
+      'Cinque moduli con ripiani spessi, fondo più scuro e luce sotto ogni ripiano. La venatura corre continua da un pezzo all’altro.',
     arredo: 1,
     finiture: ['rovere', 'noce', 'avorio', 'antracite'],
     led: true,
@@ -86,9 +87,11 @@ export const TAPPE: Tappa[] = [
     id: 'armadio',
     sovratitolo: 'Armadi',
     titolo: 'Parete armadio',
-    testo: 'Ante lisce a tutta altezza e prese verticali in bronzo.',
+    testo:
+      'Sei ante a tutta altezza con maniglie a barra in bronzo. Il vano aperto mostra l’interno: ripiano illuminato, appendiabiti e cassettiera.',
     arredo: 3,
     finiture: ['noce', 'rovere', 'avorio', 'antracite'],
+    led: true,
     immagine: `${BASE}/img/armadio.jpg`,
     alt: 'Parete armadio in noce',
   },
@@ -96,9 +99,11 @@ export const TAPPE: Tappa[] = [
     id: 'boiserie',
     sovratitolo: 'Boiserie',
     titolo: 'Boiserie a pannelli',
-    testo: 'Pannelli con cornici che disegnano la parete, con una consolle sospesa.',
+    testo:
+      'Pannelli bugnati con cornici modanate tagliate a 45°, zoccolo, fascia e cornicione. Applique in bronzo e consolle in pietra.',
     arredo: 4,
-    finiture: ['rovere', 'noce', 'avorio', 'antracite'],
+    finiture: ['avorio', 'rovere', 'noce', 'antracite'],
+    led: true,
     immagine: `${BASE}/img/boiserie.jpg`,
     alt: 'Boiserie in rovere a pannelli',
   },
@@ -110,7 +115,7 @@ export const ARREDI = [
   { file: `${BASE}/modelli/libreria.glb`, finitura: 'rovere' as IdFinitura },
   { file: `${BASE}/modelli/cucina.glb`, finitura: 'avorio' as IdFinitura },
   { file: `${BASE}/modelli/armadio.glb`, finitura: 'noce' as IdFinitura },
-  { file: `${BASE}/modelli/boiserie.glb`, finitura: 'rovere' as IdFinitura },
+  { file: `${BASE}/modelli/boiserie.glb`, finitura: 'avorio' as IdFinitura },
 ] as const;
 
 /** Distanza tra le "stanze" dello showroom, in metri. */
