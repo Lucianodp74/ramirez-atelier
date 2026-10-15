@@ -1,0 +1,1346 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ramirez Atelier — Proposta home (Fase B)</title>
+    <style>
+      @font-face {
+        font-family: Fraunces;
+        src: url(font/fraunces-latin.woff2) format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: Inter;
+        src: url(font/inter-latin.woff2) format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+
+      /* ---------- token (v. design-system.html) ---------- */
+      :root {
+        --avorio: #f6f1e9;
+        --pietra: #ede5d8;
+        --bianco-caldo: #fbf8f3;
+        --antracite: #1e1b18;
+        --noce: #5b3f2c;
+        --rovere: #b48a5a;
+        --bronzo: #7a5a32;
+        --bronzo-chiaro: #c9a46a;
+        --grigio: #5e564c;
+        --grigio-chiaro: #b9ae9f;
+        --linea: rgba(30, 27, 24, 0.12);
+        --linea-forte: rgba(30, 27, 24, 0.28);
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --serif: Fraunces, 'Iowan Old Style', Georgia, serif;
+        --sans: Inter, system-ui, sans-serif;
+        --max: 1320px;
+        --gutter: clamp(20px, 4vw, 40px);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 6rem;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        background: var(--avorio);
+        color: var(--antracite);
+        font: 16px/1.6 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+      }
+      a {
+        color: inherit;
+      }
+      .contenitore {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 0 var(--gutter);
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      :focus-visible {
+        outline: 2px solid var(--antracite);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      .scuro :focus-visible {
+        outline-color: var(--avorio);
+      }
+
+      /* tipografia */
+      .sovra {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--bronzo);
+        margin-bottom: 20px;
+      }
+      .sovra::before {
+        content: '';
+        width: 32px;
+        height: 1px;
+        background: currentColor;
+      }
+      .scuro .sovra {
+        color: var(--bronzo-chiaro);
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--serif);
+        font-weight: 300;
+        letter-spacing: -0.015em;
+        line-height: 1.06;
+      }
+      h2 {
+        font-size: clamp(2.3rem, 4.6vw, 3.6rem);
+        text-wrap: balance;
+      }
+      .corpo {
+        color: var(--grigio);
+        max-width: 34rem;
+      }
+      .scuro .corpo {
+        color: rgba(246, 241, 233, 0.78);
+      }
+
+      /* pulsanti: pressione 160ms scale(.97), ease-out deciso */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        height: 52px;
+        padding: 0 28px;
+        border-radius: 999px;
+        font: 500 14px var(--sans);
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition:
+          background-color 160ms var(--ease-out),
+          border-color 160ms var(--ease-out),
+          color 160ms var(--ease-out),
+          transform 160ms var(--ease-out);
+      }
+      .btn-pieno {
+        background: var(--antracite);
+        color: var(--avorio);
+      }
+      .btn-chiaro {
+        background: var(--avorio);
+        color: var(--antracite);
+      }
+      .btn-linea {
+        border-color: var(--linea-forte);
+        background: transparent;
+      }
+      .scuro .btn-linea {
+        border-color: rgba(246, 241, 233, 0.45);
+        color: var(--avorio);
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .btn-pieno:hover {
+          background: var(--noce);
+        }
+        .btn-chiaro:hover {
+          background: var(--pietra);
+        }
+        .btn-linea:hover {
+          border-color: var(--antracite);
+        }
+        .scuro .btn-linea:hover {
+          background: rgba(246, 241, 233, 0.1);
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .btn:active {
+          transform: scale(0.97);
+        }
+      }
+
+      /* intestazione */
+      .barra {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: color-mix(in srgb, var(--avorio) 92%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--linea);
+      }
+      .barra .contenitore {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 76px;
+        gap: 24px;
+      }
+      .marchio {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        font-family: var(--serif);
+        font-size: 17px;
+      }
+      .marchio img {
+        height: 38px;
+        width: auto;
+      }
+      .nav {
+        display: flex;
+        gap: 32px;
+        font-size: 14px;
+        color: var(--grigio);
+      }
+      .nav a {
+        text-decoration: none;
+        padding: 8px 0;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .nav a:hover {
+          color: var(--antracite);
+        }
+      }
+      @media (max-width: 1023px) {
+        .nav {
+          display: none;
+        }
+      }
+
+      /* hero video */
+      .hero {
+        position: relative;
+        background: var(--antracite);
+        color: var(--avorio);
+        overflow: hidden;
+      }
+      .hero-media {
+        position: absolute;
+        inset: 0;
+      }
+      .hero-media video,
+      .hero-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 60% 50%;
+      }
+      .hero-velo {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          rgba(30, 27, 24, 0.86) 0%,
+          rgba(30, 27, 24, 0.35) 45%,
+          rgba(30, 27, 24, 0) 70%
+        );
+      }
+      .hero .contenitore {
+        position: relative;
+        min-height: calc(100svh - 76px);
+        display: flex;
+        align-items: center;
+        padding-top: 96px;
+        padding-bottom: 96px;
+      }
+      .hero h1 {
+        font-size: clamp(2.9rem, 6.4vw, 5.6rem);
+        max-width: 13ch;
+      }
+      .hero h1 em {
+        display: block;
+        font-style: italic;
+        color: var(--bronzo-chiaro);
+      }
+      .hero .corpo {
+        margin-top: 28px;
+        font-size: 18px;
+      }
+      .azioni {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 40px;
+      }
+      .pausa {
+        position: absolute;
+        right: var(--gutter);
+        bottom: 28px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        background: rgba(30, 27, 24, 0.55);
+        color: var(--avorio);
+        border: 1px solid rgba(246, 241, 233, 0.35);
+        font: 500 12px var(--sans);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+      }
+      .pausa[hidden] {
+        display: none;
+      }
+      .didascalia-hero {
+        position: absolute;
+        left: var(--gutter);
+        bottom: 34px;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(246, 241, 233, 0.7);
+      }
+      @media (max-width: 767px) {
+        .hero-media {
+          position: relative;
+          aspect-ratio: 4/3;
+        }
+        .hero-media video,
+        .hero-media img {
+          object-position: 72% 50%;
+        }
+        .hero-velo {
+          background: linear-gradient(0deg, var(--antracite) 0%, rgba(30, 27, 24, 0) 45%);
+        }
+        .hero .contenitore {
+          min-height: 0;
+          padding-top: 8px;
+          padding-bottom: 56px;
+        }
+        .pausa {
+          top: calc(75vw - 60px);
+          bottom: auto;
+        }
+        .didascalia-hero {
+          display: none;
+        }
+      }
+
+      section {
+        padding: clamp(88px, 11vw, 140px) 0;
+      }
+      .chiaro2 {
+        background: var(--pietra);
+      }
+      .scuro {
+        background: var(--antracite);
+        color: var(--avorio);
+      }
+
+      /* manifesto */
+      .manifesto {
+        display: grid;
+        gap: 56px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1024px) {
+        .manifesto {
+          grid-template-columns: 1fr 1.1fr;
+          gap: 96px;
+        }
+      }
+      .pilastri {
+        display: grid;
+        gap: 32px;
+        grid-template-columns: 1fr;
+        align-self: end;
+      }
+      @media (min-width: 640px) {
+        .pilastri {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .pilastri div {
+        border-top: 1px solid var(--linea-forte);
+        padding-top: 20px;
+      }
+      .pilastri dt {
+        font-family: var(--serif);
+        font-size: 20px;
+      }
+      .pilastri dd {
+        margin-top: 10px;
+        font-size: 15px;
+        color: var(--grigio);
+      }
+
+      /* 3D con hotspot */
+      .studio {
+        display: grid;
+        gap: 32px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1024px) {
+        .studio {
+          grid-template-columns: 1.5fr 1fr;
+          gap: 56px;
+          align-items: center;
+        }
+      }
+      .vista {
+        position: relative;
+        aspect-ratio: 4/3;
+        border-radius: 24px;
+        overflow: hidden;
+        background: radial-gradient(120% 90% at 50% 40%, #3a332d 0%, #1e1b18 70%);
+      }
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        --poster-color: transparent;
+        background: transparent;
+      }
+      .punto {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        padding: 0;
+      }
+      .punto span {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--avorio);
+        box-shadow:
+          0 0 0 6px rgba(246, 241, 233, 0.28),
+          0 4px 14px rgba(0, 0, 0, 0.35);
+        transition:
+          transform 160ms var(--ease-out),
+          background-color 160ms var(--ease-out);
+      }
+      .punto[aria-pressed='true'] span {
+        background: var(--bronzo-chiaro);
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .punto[aria-pressed='true'] span {
+          transform: scale(1.15);
+        }
+      }
+      .punto[data-visible='false'] {
+        opacity: 0.25;
+      }
+      .etichetta-3d {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(246, 241, 233, 0.12);
+        color: var(--avorio);
+      }
+      .scheda {
+        border-top: 1px solid rgba(246, 241, 233, 0.25);
+        padding-top: 24px;
+        min-height: 220px;
+      }
+      .scheda h3 {
+        font-size: 2rem;
+      }
+      .scheda p {
+        margin-top: 12px;
+        color: rgba(246, 241, 233, 0.78);
+      }
+      .elenco-punti {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 28px;
+      }
+      .elenco-punti button {
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(246, 241, 233, 0.3);
+        background: transparent;
+        color: var(--avorio);
+        font: 14px var(--sans);
+        cursor: pointer;
+        transition:
+          background-color 160ms var(--ease-out),
+          border-color 160ms var(--ease-out),
+          transform 160ms var(--ease-out);
+      }
+      .elenco-punti button[aria-pressed='true'] {
+        background: var(--avorio);
+        color: var(--antracite);
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .elenco-punti button:active {
+          transform: scale(0.97);
+        }
+      }
+
+      /* lavorazioni */
+      .griglia-lav {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 768px) {
+        .griglia-lav {
+          grid-template-columns: repeat(6, 1fr);
+        }
+        .griglia-lav li:nth-child(-n + 2) {
+          grid-column: span 3;
+        }
+        .griglia-lav li {
+          grid-column: span 2;
+        }
+      }
+      .griglia-lav {
+        list-style: none;
+        padding: 0;
+      }
+      .carta {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--avorio);
+        border-radius: 20px;
+        overflow: hidden;
+        text-decoration: none;
+      }
+      .carta::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 24px 60px -28px rgba(30, 27, 24, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 200ms var(--ease-out);
+      }
+      .carta figure {
+        position: relative;
+        aspect-ratio: 4/3;
+        overflow: hidden;
+        margin: 0;
+      }
+      .griglia-lav li:nth-child(-n + 2) .carta figure {
+        aspect-ratio: 16/10;
+      }
+      .carta img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: scale 600ms var(--ease-out);
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .carta:hover::after {
+          opacity: 1;
+        }
+      }
+      @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        .carta:hover img {
+          scale: 1.02;
+        }
+      }
+      .carta div {
+        padding: 24px;
+      }
+      .carta h3 {
+        font-size: 1.6rem;
+      }
+      .carta p {
+        margin-top: 8px;
+        font-size: 14px;
+        color: var(--grigio);
+      }
+      .bollino {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        background: rgba(246, 241, 233, 0.9);
+        color: var(--grigio);
+        padding: 5px 10px;
+        border-radius: 999px;
+      }
+
+      /* progetti: reali vs render */
+      .schede-tab {
+        display: flex;
+        gap: 8px;
+        margin: 32px 0 28px;
+      }
+      .schede-tab button {
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 999px;
+        border: 1px solid rgba(246, 241, 233, 0.35);
+        background: transparent;
+        color: var(--avorio);
+        font: 14px var(--sans);
+        cursor: pointer;
+      }
+      .schede-tab button[aria-selected='true'] {
+        background: var(--avorio);
+        color: var(--antracite);
+      }
+      .galleria {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: 220px;
+        grid-auto-flow: dense;
+        list-style: none;
+        padding: 0;
+      }
+      @media (min-width: 1024px) {
+        .galleria {
+          grid-template-columns: repeat(4, 1fr);
+          grid-auto-rows: 300px;
+        }
+      }
+      .galleria li {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .galleria .ampio {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+      .galleria .alto {
+        grid-row: span 2;
+      }
+      .galleria .largo {
+        grid-column: span 2;
+      }
+      .galleria img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .galleria figcaption {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 40px 16px 12px;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .vuoto {
+        border: 1px dashed rgba(185, 174, 159, 0.6);
+        border-radius: 16px;
+        padding: 40px;
+        color: var(--grigio-chiaro);
+        max-width: 40rem;
+      }
+
+      /* fascia preventivatore */
+      .fascia {
+        display: grid;
+        gap: 32px;
+        grid-template-columns: 1fr;
+        align-items: center;
+        background: var(--noce);
+        color: var(--avorio);
+        border-radius: 28px;
+        padding: clamp(32px, 5vw, 64px);
+      }
+      @media (min-width: 1024px) {
+        .fascia {
+          grid-template-columns: 1.2fr 1fr;
+        }
+      }
+      .fascia img {
+        border-radius: 18px;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+      }
+
+      /* metodo */
+      .metodo {
+        display: grid;
+        gap: 40px;
+        grid-template-columns: 1fr;
+        list-style: none;
+        padding: 0;
+        counter-reset: fase;
+      }
+      @media (min-width: 640px) {
+        .metodo {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (min-width: 1024px) {
+        .metodo {
+          grid-template-columns: repeat(5, 1fr);
+          gap: 24px;
+        }
+      }
+      .metodo li {
+        border-top: 1px solid var(--linea-forte);
+        padding-top: 24px;
+        position: relative;
+      }
+      .metodo li::before {
+        counter-increment: fase;
+        content: counter(fase, decimal-leading-zero);
+        font: 300 3rem var(--serif);
+        color: var(--rovere);
+      }
+      .metodo h3 {
+        font: 500 18px var(--sans);
+        margin-top: 18px;
+      }
+      .metodo p {
+        margin-top: 8px;
+        font-size: 15px;
+        color: var(--grigio);
+      }
+
+      /* rivelazione allo scorrimento (solo superfici di presentazione) */
+      @media (prefers-reduced-motion: no-preference) {
+        .js .rivela {
+          clip-path: inset(0 0 100% 0);
+          transition: clip-path 600ms var(--ease-in-out);
+          transition-delay: calc(var(--i, 0) * 60ms);
+        }
+        .js .rivela[data-visible] {
+          clip-path: inset(0 0 0 0);
+        }
+      }
+
+      footer {
+        background: var(--pietra);
+        padding: 56px 0;
+        font-size: 13px;
+        color: var(--grigio);
+      }
+      footer .contenitore {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 32px;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      footer nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 12px;
+      }
+      footer nav a {
+        text-decoration: none;
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+      }
+      .nota-proposta {
+        background: var(--antracite);
+        color: var(--grigio-chiaro);
+        text-align: center;
+        font-size: 12px;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="nota-proposta">
+      Proposta visiva · Fase B · non è il sito pubblicato. Immagini e video sono render
+      dimostrativi.
+    </div>
+
+    <header class="barra">
+      <div class="contenitore">
+        <a class="marchio" href="#titolo"
+          ><img src="/logo-monogramma.png" alt="" width="666" height="487" />Ramirez Atelier</a
+        >
+        <nav class="nav" aria-label="Navigazione principale">
+          <a href="#materia">Materia</a><a href="#lavorazioni">Lavorazioni</a
+          ><a href="#progetti">Progetti</a><a href="#metodo">Metodo</a
+          ><a href="#contatti">Contatti</a>
+        </nav>
+        <a class="btn btn-pieno" href="/progetti">Richiedi un progetto</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- APERTURA: video Blender, una sola riproduzione, poi resta fermo sull'ultimo fotogramma -->
+      <section class="hero scuro" style="padding: 0" aria-labelledby="titolo">
+        <div class="hero-media">
+          <video
+            id="apertura"
+            muted
+            playsinline
+            preload="metadata"
+            poster="img/apertura-poster.jpg"
+            aria-hidden="true"
+          >
+            <source src="video/apertura.webm" type="video/webm" />
+            <source src="video/apertura.mp4" type="video/mp4" />
+          </video>
+          <div class="hero-velo" aria-hidden="true"></div>
+        </div>
+        <div class="contenitore">
+          <div>
+            <p class="sovra">Falegnameria artigiana · dal 1987</p>
+            <h1 id="titolo">Il legno prende forma. <em>Il tuo spazio diventa unico.</em></h1>
+            <p class="corpo">
+              Progettiamo e costruiamo arredi su misura nel nostro laboratorio di Borgagne di
+              Melendugno: cucine, armadi, boiserie e librerie pensati per una sola casa.
+            </p>
+            <div class="azioni">
+              <a class="btn btn-chiaro" href="#progetti">Scopri le realizzazioni</a>
+              <a class="btn btn-linea" href="/preventivatore">Configura il tuo progetto</a>
+            </div>
+          </div>
+        </div>
+        <button class="pausa" id="pausa" type="button" aria-pressed="false">Pausa</button>
+        <p class="didascalia-hero">
+          <em style="font-family: var(--serif); text-transform: none; letter-spacing: 0">STELLA</em>
+          · render del modello
+        </p>
+      </section>
+
+      <section aria-labelledby="t-manifesto">
+        <div class="contenitore manifesto">
+          <div>
+            <p class="sovra">L’atelier</p>
+            <h2 id="t-manifesto">
+              Ogni arredo nasce da un disegno, una misura e una materia scelta con cura.
+            </h2>
+          </div>
+          <dl class="pilastri">
+            <div>
+              <dt>Su misura</dt>
+              <dd>Nessun modulo standard: ogni pezzo segue le proporzioni del tuo spazio.</dd>
+            </div>
+            <div>
+              <dt>Materia</dt>
+              <dd>Legni, laccati, pietre e metalli scelti dal vero, campione per campione.</dd>
+            </div>
+            <div>
+              <dt>Precisione</dt>
+              <dd>Dettagli costruttivi e finiture curati in laboratorio, dall’inizio alla fine.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- MATERIA: STELLA in 3D con punti cliccabili -->
+      <section id="materia" class="scuro" aria-labelledby="t-materia">
+        <div class="contenitore">
+          <p class="sovra">Materia e dettagli</p>
+          <h2 id="t-materia" style="max-width: 18ch">Avvicinati. Ogni dettaglio ha una ragione.</h2>
+          <p class="corpo" style="margin-top: 16px; font-size: 13px">
+            Testi dei dettagli da validare con l’atelier.
+          </p>
+          <div class="studio" style="margin-top: 56px">
+            <div class="vista">
+              <model-viewer
+                id="stella"
+                src="modelli/madia-stella.glb"
+                poster="img/stella-dettaglio.jpg"
+                alt="Modello 3D della madia STELLA: ante in radica d’olivo, maniglie a stella in pietra, struttura in noce"
+                camera-controls
+                disable-zoom
+                touch-action="pan-y"
+                interaction-prompt="none"
+                loading="lazy"
+                reveal="auto"
+                camera-orbit="-18deg 76deg auto"
+                min-camera-orbit="-70deg 55deg auto"
+                max-camera-orbit="70deg 95deg auto"
+                environment-image="neutral"
+                tone-mapping="agx"
+                exposure="1.05"
+                shadow-intensity="1"
+                interpolation-decay="140"
+              >
+                <button
+                  class="punto"
+                  slot="hotspot-radica"
+                  data-punto="radica"
+                  data-position="1.22 0.62 0.72"
+                  data-normal="0 0 1"
+                  aria-pressed="false"
+                >
+                  <span></span><span class="sr">Radica d’olivo</span>
+                </button>
+                <button
+                  class="punto"
+                  slot="hotspot-stella"
+                  data-punto="stella"
+                  data-position="0.786 0.431 0.735"
+                  data-normal="0 0 1"
+                  aria-pressed="false"
+                >
+                  <span></span><span class="sr">Maniglia a stella in pietra</span>
+                </button>
+                <button
+                  class="punto"
+                  slot="hotspot-noce"
+                  data-punto="noce"
+                  data-position="1.912 0.45 0.5"
+                  data-normal="1 0 0"
+                  aria-pressed="false"
+                >
+                  <span></span><span class="sr">Struttura in noce</span>
+                </button>
+                <button
+                  class="punto"
+                  slot="hotspot-piano"
+                  data-punto="piano"
+                  data-position="0.5 0.766 0.5"
+                  data-normal="0 1 0"
+                  aria-pressed="false"
+                >
+                  <span></span><span class="sr">Piano</span>
+                </button>
+                <button
+                  class="punto"
+                  slot="hotspot-zoccolo"
+                  data-punto="zoccolo"
+                  data-position="1.0 0.05 0.64"
+                  data-normal="0 0 1"
+                  aria-pressed="false"
+                >
+                  <span></span><span class="sr">Zoccolo arretrato</span>
+                </button>
+              </model-viewer>
+              <span class="etichetta-3d" aria-hidden="true">Modello 3D · trascina per ruotare</span>
+            </div>
+            <div>
+              <div class="scheda" id="scheda" aria-live="polite">
+                <h3>Radica d’olivo</h3>
+                <p>
+                  Le quattro ante del fronte sono rivestite in radica d’olivo, dal disegno caldo e
+                  irregolare.
+                </p>
+              </div>
+              <div class="elenco-punti" role="group" aria-label="Dettagli della madia">
+                <button type="button" data-punto="radica" aria-pressed="true">
+                  Radica d’olivo
+                </button>
+                <button type="button" data-punto="stella" aria-pressed="false">
+                  Maniglia in pietra
+                </button>
+                <button type="button" data-punto="noce" aria-pressed="false">
+                  Struttura in noce
+                </button>
+                <button type="button" data-punto="piano" aria-pressed="false">Piano</button>
+                <button type="button" data-punto="zoccolo" aria-pressed="false">Zoccolo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="lavorazioni" class="chiaro2" aria-labelledby="t-lav">
+        <div class="contenitore">
+          <p class="sovra">Lavorazioni</p>
+          <h2 id="t-lav" style="max-width: 20ch; margin-bottom: 56px">
+            Cucine, living, armadi, librerie, boiserie.
+          </h2>
+          <ul class="griglia-lav">
+            <li>
+              <a class="carta" href="/progetti"
+                ><figure class="rivela">
+                  <img
+                    src="img/cucina.jpg"
+                    alt="Cucina laccata avorio con colonne a tutta altezza"
+                    loading="lazy"
+                  /><span class="bollino">Render dimostrativo</span>
+                </figure>
+                <div>
+                  <h3>Cucine su misura</h3>
+                  <p>Basi, colonne e piani progettati sulle misure reali della stanza.</p>
+                </div></a
+              >
+            </li>
+            <li>
+              <a class="carta" href="/progetti"
+                ><figure class="rivela">
+                  <img src="img/armadio.jpg" alt="Parete armadio in noce" loading="lazy" /><span
+                    class="bollino"
+                    >Render dimostrativo</span
+                  >
+                </figure>
+                <div>
+                  <h3>Armadi e cabine armadio</h3>
+                  <p>Pareti contenitive a tutta altezza, organizzate dentro come servono a te.</p>
+                </div></a
+              >
+            </li>
+            <li>
+              <a class="carta" href="/progetti"
+                ><figure class="rivela">
+                  <img
+                    src="img/boiserie.jpg"
+                    alt="Boiserie in rovere a pannelli"
+                    loading="lazy"
+                  /><span class="bollino">Render dimostrativo</span>
+                </figure>
+                <div>
+                  <h3>Boiserie</h3>
+                  <p>Rivestimenti che disegnano la parete.</p>
+                </div></a
+              >
+            </li>
+            <li>
+              <a class="carta" href="/progetti"
+                ><figure class="rivela">
+                  <img
+                    src="img/libreria.jpg"
+                    alt="Libreria in rovere con ripiani illuminati"
+                    loading="lazy"
+                  /><span class="bollino">Render dimostrativo</span>
+                </figure>
+                <div>
+                  <h3>Librerie e pareti</h3>
+                  <p>Moduli, vani e luci attorno ai tuoi oggetti.</p>
+                </div></a
+              >
+            </li>
+            <li>
+              <a class="carta" href="/progetti"
+                ><figure class="rivela">
+                  <img
+                    src="img/stella-dettaglio.jpg"
+                    alt="Maniglia a stella in pietra su radica"
+                    loading="lazy"
+                  /><span class="bollino">Render dimostrativo</span>
+                </figure>
+                <div>
+                  <h3>Arredi unici</h3>
+                  <p>Pezzi come la madia STELLA.</p>
+                </div></a
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="progetti" class="scuro" aria-labelledby="t-prog">
+        <div class="contenitore">
+          <p class="sovra">Progetti</p>
+          <h2 id="t-prog">Il dettaglio è il progetto.</h2>
+          <div class="schede-tab" role="tablist" aria-label="Tipo di immagini">
+            <button
+              role="tab"
+              id="tab-reali"
+              aria-controls="pan-reali"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Lavori realizzati
+            </button>
+            <button role="tab" id="tab-render" aria-controls="pan-render" aria-selected="true">
+              Render di studio
+            </button>
+          </div>
+          <div role="tabpanel" id="pan-reali" aria-labelledby="tab-reali" hidden>
+            <p class="vuoto">
+              Qui andranno le fotografie dei lavori consegnati da Ramirez Atelier. In attesa delle
+              foto, questa sezione resta vuota: nessuna immagine dimostrativa viene presentata come
+              lavoro reale.
+            </p>
+          </div>
+          <div role="tabpanel" id="pan-render" aria-labelledby="tab-render">
+            <ul class="galleria">
+              <li class="ampio rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img
+                    src="img/stella-panorama.jpg"
+                    alt="Madia STELLA nella luce di una finestra"
+                    loading="lazy"
+                  />
+                  <figcaption>STELLA · madia in radica d’olivo</figcaption>
+                </figure>
+              </li>
+              <li class="alto rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img
+                    src="img/libreria-dettaglio.jpg"
+                    alt="Dettaglio di libreria in noce"
+                    loading="lazy"
+                  />
+                  <figcaption>Libreria in noce</figcaption>
+                </figure>
+              </li>
+              <li class="alto rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img src="img/boiserie.jpg" alt="Boiserie in rovere" loading="lazy" />
+                  <figcaption>Boiserie in rovere</figcaption>
+                </figure>
+              </li>
+              <li class="largo rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img src="img/cucina.jpg" alt="Cucina laccata avorio" loading="lazy" />
+                  <figcaption>Cucina laccata</figcaption>
+                </figure>
+              </li>
+              <li class="rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img src="img/armadio.jpg" alt="Parete armadio in noce" loading="lazy" />
+                  <figcaption>Armadio in noce</figcaption>
+                </figure>
+              </li>
+              <li class="rivela">
+                <figure style="margin: 0; height: 100%">
+                  <img src="img/stella-dettaglio.jpg" alt="Maniglia a stella" loading="lazy" />
+                  <figcaption>STELLA · dettaglio</figcaption>
+                </figure>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="preventivatore" aria-labelledby="t-prev">
+        <div class="contenitore">
+          <div class="fascia scuro" style="background: var(--noce)">
+            <div>
+              <p class="sovra">Preventivatore</p>
+              <h2 id="t-prev" style="font-size: clamp(2rem, 3.6vw, 3rem)">
+                Componi la tua libreria e ricevi una stima indicativa.
+              </h2>
+              <p class="corpo" style="margin-top: 20px">
+                Moduli, misure e finiture, poi la stima calcolata sul nostro listino. Il progetto
+                vero lo definiamo insieme.
+              </p>
+              <div class="azioni">
+                <a class="btn btn-chiaro" href="/preventivatore">Apri il preventivatore</a
+                ><a class="btn btn-linea" href="/librerie">Sfoglia la collezione librerie</a>
+              </div>
+            </div>
+            <img src="img/libreria.jpg" alt="Libreria su misura in rovere" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <section id="metodo" class="chiaro2" aria-labelledby="t-metodo">
+        <div class="contenitore">
+          <p class="sovra">Metodo</p>
+          <h2 id="t-metodo" style="margin-bottom: 64px">
+            Dal primo incontro all’ultima regolazione.
+          </h2>
+          <ol class="metodo">
+            <li>
+              <h3>Ascolto</h3>
+              <p>Abitudini, oggetti da custodire, idee anche solo abbozzate.</p>
+            </li>
+            <li>
+              <h3>Progetto e misure</h3>
+              <p>Disegno e rilievo definiscono proporzioni e funzionamento.</p>
+            </li>
+            <li>
+              <h3>Materiali</h3>
+              <p>Legni, laccati, pietre e ferramenta scelti dal vero.</p>
+            </li>
+            <li>
+              <h3>Realizzazione</h3>
+              <p>Ogni pezzo prende forma e viene rifinito in laboratorio.</p>
+            </li>
+            <li>
+              <h3>Installazione</h3>
+              <p>Montaggio e regolazioni finali a casa tua.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="contatti" aria-labelledby="t-contatti">
+        <div class="contenitore manifesto">
+          <div>
+            <p class="sovra">Parliamone</p>
+            <h2 id="t-contatti" style="font-size: clamp(2.8rem, 6vw, 4.6rem)">
+              Raccontaci il tuo spazio.
+            </h2>
+            <p class="corpo" style="margin-top: 24px; font-size: 18px">
+              Misure, foto, ispirazioni: anche un’idea abbozzata è un buon punto di partenza.
+            </p>
+            <div class="azioni">
+              <a class="btn btn-pieno" href="/progetti">Richiedi un progetto</a
+              ><a class="btn btn-linea" href="mailto:info@ramirezatelier.it"
+                >info@ramirezatelier.it</a
+              >
+            </div>
+          </div>
+          <address
+            style="
+              align-self: end;
+              font: 300 1.6rem/1.35 var(--serif);
+              font-style: normal;
+              border-top: 1px solid var(--linea-forte);
+              padding-top: 24px;
+            "
+          >
+            <span class="sovra" style="font-family: var(--sans)">Laboratorio</span>Via S. Andrea,
+            Zona Artigianale<br />Borgagne di Melendugno, 73026
+          </address>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="contenitore">
+        <img
+          src="/logo-completo.png"
+          alt="Ramirez Atelier — Arredi su misura"
+          width="112"
+          style="height: auto"
+        />
+        <div style="display: grid; gap: 12px; justify-items: end">
+          <nav aria-label="Informazioni legali">
+            <a href="/privacy">Privacy</a><a href="/cookie-policy">Cookie Policy</a
+            ><a href="/termini-e-condizioni">Termini e condizioni</a
+            ><a href="/admin/login">Area riservata</a>
+          </nav>
+          <p>ITALDESIGN DI RAMIREZ ROBERTO · P.IVA 04951160755</p>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="js/model-viewer.min.js"></script>
+    <script>
+      document.documentElement.classList.add('js');
+      const ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // --- video di apertura: una riproduzione, pausa accessibile, mai con movimento ridotto, fermo fuori schermo
+      const video = document.getElementById('apertura');
+      const pausa = document.getElementById('pausa');
+      function aggiornaPulsante() {
+        const fermo = video.paused;
+        pausa.textContent = fermo ? (video.ended ? 'Rivedi' : 'Riproduci') : 'Pausa';
+        pausa.setAttribute('aria-pressed', String(fermo));
+      }
+      if (ridotto) {
+        pausa.hidden = true;
+      } else {
+        video.play().catch(() => {});
+        new IntersectionObserver(
+          ([v]) => {
+            if (!v.isIntersecting && !video.paused) video.pause();
+          },
+          { threshold: 0.2 },
+        ).observe(video);
+      }
+      pausa.addEventListener('click', () => {
+        if (video.paused) {
+          if (video.ended) video.currentTime = 0;
+          video.play();
+        } else video.pause();
+      });
+      ['play', 'pause', 'ended'].forEach((e) => video.addEventListener(e, aggiornaPulsante));
+
+      // --- punti di interesse sulla madia
+      // Testi descrittivi di ciò che il modello mostra: dettagli costruttivi da validare con l'atelier.
+      const SCHEDE = {
+        radica: [
+          'Radica d’olivo',
+          'Le quattro ante del fronte sono rivestite in radica d’olivo, dal disegno caldo e irregolare.',
+        ],
+        stella: [
+          'Maniglia a stella in pietra',
+          'Ogni anta ha una presa a forma di stella in pietra: è il segno che dà il nome alla madia.',
+        ],
+        noce: [
+          'Struttura in noce',
+          'Fianchi e cassa sono in noce, a contrasto con la radica del fronte.',
+        ],
+        piano: ['Piano', 'Il piano chiude la cassa con una linea netta, senza cornici.'],
+        zoccolo: [
+          'Zoccolo arretrato',
+          'Lo zoccolo scuro e rientrato fa sembrare la madia sospesa sul pavimento.',
+        ],
+      };
+      const viewer = document.getElementById('stella');
+      const scheda = document.getElementById('scheda');
+      function seleziona(id) {
+        scheda.innerHTML = `<h3>${SCHEDE[id][0]}</h3><p>${SCHEDE[id][1]}</p>`;
+        document
+          .querySelectorAll('[data-punto]')
+          .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.punto === id)));
+      }
+      document
+        .querySelectorAll('[data-punto]')
+        .forEach((b) => b.addEventListener('click', () => seleziona(b.dataset.punto)));
+
+      // --- schede "lavori reali / render"
+      const tabs = [...document.querySelectorAll('[role=tab]')];
+      tabs.forEach((t, i) => {
+        t.addEventListener('click', () => attiva(t));
+        t.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+            attiva(n);
+            n.focus();
+          }
+        });
+      });
+      function attiva(t) {
+        tabs.forEach((x) => {
+          const on = x === t;
+          x.setAttribute('aria-selected', on);
+          x.tabIndex = on ? 0 : -1;
+          document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+        });
+      }
+
+      // --- rivelazione allo scorrimento, una volta sola
+      const oss = new IntersectionObserver(
+        (es) =>
+          es.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.dataset.visible = '';
+              oss.unobserve(e.target);
+            }
+          }),
+        { rootMargin: '0px 0px -10% 0px' },
+      );
+      document
+        .querySelectorAll('.griglia-lav, .galleria')
+        .forEach((g) =>
+          g.querySelectorAll('.rivela').forEach((el, i) => el.style.setProperty('--i', i)),
+        );
+      document.querySelectorAll('.rivela').forEach((el) => oss.observe(el));
+    </script>
+  </body>
+</html>
