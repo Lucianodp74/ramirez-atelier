@@ -63,6 +63,17 @@ export type RigaCostoModulo = {
   manodopera: number;
   costoProduzione: number;
   prezzoIndicativo: number;
+  /**
+   * Destinazione degli importi già calcolati, per ripartirli sulle righe
+   * della BOM senza ricalcolarli: materiale e finitura della struttura e dei
+   * frontali, e le superfici strutturali su cui dividere la quota struttura.
+   * Lo schienale non ne fa parte: ha il suo importo in `retro`.
+   */
+  ripartizione: {
+    struttura: number;
+    frontali: number;
+    superfici: { fianchi: number; baseCielo: number; ripiani: number };
+  };
   distinta: {
     fianchi: number;
     base: number;
@@ -170,14 +181,13 @@ export function calcolaCostoModulo(
   // Lo schienale è tariffato separatamente come MDF da 6 mm (MAT-RETRO-M2):
   // non includerlo anche nel pannello strutturale.
   const superficieStruttura = (fianchiM2 + baseCieloM2 + ripianiM2) * (1 + sfrido);
-  const materiale =
-    superficieStruttura * tariffe.materialeEuroM2[modulo.materiale] +
-    frontaliM2 * (1 + sfrido) * tariffe.materialeEuroM2[materialeAnte];
-  const finitura =
-    (fianchiM2 + baseCieloM2 + ripianiM2) *
-      (1 + sfrido) *
-      tariffe.finituraEuroM2[finituraStruttura] +
-    frontaliM2 * (1 + sfrido) * tariffe.finituraEuroM2[finituraAnte];
+  const superficieFrontali = frontaliM2 * (1 + sfrido);
+  const materialeStruttura = superficieStruttura * tariffe.materialeEuroM2[modulo.materiale];
+  const materialeFrontali = superficieFrontali * tariffe.materialeEuroM2[materialeAnte];
+  const finituraDellaStruttura = superficieStruttura * tariffe.finituraEuroM2[finituraStruttura];
+  const finituraFrontali = superficieFrontali * tariffe.finituraEuroM2[finituraAnte];
+  const materiale = materialeStruttura + materialeFrontali;
+  const finitura = finituraDellaStruttura + finituraFrontali;
   const costoBordo = bordoMl * tariffe.bordoEuroMl;
   const costoRetro = retro * tariffe.retroEuroM2;
   if (
@@ -337,6 +347,11 @@ export function calcolaCostoModulo(
     ferramenta: euro(ferramenta),
     manodopera: euro(manodopera),
     costoProduzione,
+    ripartizione: {
+      struttura: euro(materialeStruttura + finituraDellaStruttura),
+      frontali: euro(materialeFrontali + finituraFrontali),
+      superfici: { fianchi: fianchiM2, baseCielo: baseCieloM2, ripiani: ripianiM2 },
+    },
     prezzoIndicativo: euro(costoProduzione * (1 + tariffe.ricaricoPercentuale / 100)),
     distinta: {
       fianchi: 2,
