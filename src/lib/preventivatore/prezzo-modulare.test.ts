@@ -3,8 +3,15 @@ import { calcolaCostoModulo, calcolaPreventivoModulare, TARIFFE_DEMO } from './p
 import type { ModuloConfigurato } from './moduli';
 
 const base: ModuloConfigurato = {
-  id: 'base-60', tipo: 'BASE', larghezzaCm: 60, altezzaCm: 80, profonditaCm: 60,
-  materiale: 'TRUCIOLARE', finitura: 'MELAMINICO', configurazione: '2_PORTE', ripiani: 1,
+  id: 'base-60',
+  tipo: 'BASE',
+  larghezzaCm: 60,
+  altezzaCm: 80,
+  profonditaCm: 60,
+  materiale: 'TRUCIOLARE',
+  finitura: 'MELAMINICO',
+  configurazione: '2_PORTE',
+  ripiani: 1,
 };
 
 describe('preventivatore modulare', () => {
@@ -29,14 +36,27 @@ describe('preventivatore modulare', () => {
     // Lo schienale (0,48 m²) è escluso dal truciolare e tariffato separatamente a 12 €/m².
     expect(riga.materiale).toBe(75.6);
     expect(riga.retro).toBe(5.76);
-    const schienale = riga.distinta.componenti.find((componente) => componente.codice === 'SCHIENALE');
+    const schienale = riga.distinta.componenti.find(
+      (componente) => componente.codice === 'SCHIENALE',
+    );
     expect(schienale?.note).toContain('Spessore tecnico 6 mm');
     expect(schienale?.voce).toBe('Schienale MDF 6 mm');
   });
 
   it('non aggiunge superficie frontale a un modulo aperto', () => {
-    const aperto = calcolaCostoModulo({ ...base, id: 'base-open', configurazione: 'APERTO', ripiani: 0 });
-    const struttura = calcolaCostoModulo({ ...base, id: 'base-structure', configurazione: 'APERTO', ripiani: 0, finitura: 'MELAMINICO' });
+    const aperto = calcolaCostoModulo({
+      ...base,
+      id: 'base-open',
+      configurazione: 'APERTO',
+      ripiani: 0,
+    });
+    const struttura = calcolaCostoModulo({
+      ...base,
+      id: 'base-structure',
+      configurazione: 'APERTO',
+      ripiani: 0,
+      finitura: 'MELAMINICO',
+    });
     expect(aperto.distinta.ante).toBe(0);
     expect(aperto.distinta.cassetti).toBe(0);
     expect(aperto.superficieM2).toBe(struttura.superficieM2);
@@ -76,8 +96,10 @@ describe('preventivatore modulare', () => {
     const riga = calcolaCostoModulo({ ...base, id: 'mix-1', configurazione: 'PORTE_CASSETTI' });
     expect(riga.distinta.ante).toBe(2);
     expect(riga.distinta.cassetti).toBe(2);
-    expect(riga.distinta.componenti.filter(c => c.codice === 'ANTA')).toHaveLength(1);
-    expect(riga.distinta.componenti.filter(c => c.codice === 'FRONTALE-CASSETTO')).toHaveLength(1);
+    expect(riga.distinta.componenti.filter((c) => c.codice === 'ANTA')).toHaveLength(1);
+    expect(riga.distinta.componenti.filter((c) => c.codice === 'FRONTALE-CASSETTO')).toHaveLength(
+      1,
+    );
   });
 
   it('somma più moduli e applica il ricarico una sola volta', () => {
@@ -86,7 +108,9 @@ describe('preventivatore modulare', () => {
     expect(preventivo.errori).toEqual([]);
     expect(preventivo.righe).toHaveLength(2);
     expect(preventivo.costoProduzione).toBe(
-      Math.round((preventivo.righe[0].costoProduzione + preventivo.righe[1].costoProduzione) * 100) / 100,
+      Math.round(
+        (preventivo.righe[0].costoProduzione + preventivo.righe[1].costoProduzione) * 100,
+      ) / 100,
     );
     expect(preventivo.prezzoIndicativo).toBe(
       Math.round(preventivo.costoProduzione * 1.35 * 100) / 100,
@@ -94,14 +118,32 @@ describe('preventivatore modulare', () => {
   });
 
   it('rifiuta dimensioni fuori dai limiti del modulo', () => {
-    expect(() => calcolaCostoModulo({ ...base, larghezzaCm: 10 })).toThrow('larghezza fuori limite');
+    expect(() => calcolaCostoModulo({ ...base, larghezzaCm: 10 })).toThrow(
+      'larghezza fuori limite',
+    );
   });
 
   it('applica il sistema scorrevole una sola volta a un armadio composto da più moduli e mantiene il ricarico configurato', () => {
     const tariffe = { ...TARIFFE_DEMO, ferramentaPerScorrevole: 700, ricaricoPercentuale: 40 };
     const moduliScorrevoli: ModuloConfigurato[] = [
-      { ...base, id: 'colonna-scorrevole-1', tipo: 'COLONNA', larghezzaCm: 60, altezzaCm: 200, profonditaCm: 60, configurazione: 'ANTE_SCORREVOLI' },
-      { ...base, id: 'colonna-scorrevole-2', tipo: 'COLONNA', larghezzaCm: 60, altezzaCm: 200, profonditaCm: 60, configurazione: 'ANTE_SCORREVOLI' },
+      {
+        ...base,
+        id: 'colonna-scorrevole-1',
+        tipo: 'COLONNA',
+        larghezzaCm: 60,
+        altezzaCm: 200,
+        profonditaCm: 60,
+        configurazione: 'ANTE_SCORREVOLI',
+      },
+      {
+        ...base,
+        id: 'colonna-scorrevole-2',
+        tipo: 'COLONNA',
+        larghezzaCm: 60,
+        altezzaCm: 200,
+        profonditaCm: 60,
+        configurazione: 'ANTE_SCORREVOLI',
+      },
     ];
 
     const preventivo = calcolaPreventivoModulare(moduliScorrevoli, tariffe);
@@ -109,7 +151,11 @@ describe('preventivatore modulare', () => {
     expect(preventivo.errori).toEqual([]);
     expect(preventivo.righe.map((riga) => riga.ferramenta)).toEqual([700, 0]);
     expect(preventivo.righe.reduce((somma, riga) => somma + riga.ferramenta, 0)).toBe(700);
-    expect(preventivo.prezzoIndicativo).toBe(Math.round(preventivo.costoProduzione * 1.4 * 100) / 100);
-    expect(preventivo.prezzoFalegname).toBe(Math.round((preventivo.prezzoIndicativo / 1.4) * 100) / 100);
+    expect(preventivo.prezzoIndicativo).toBe(
+      Math.round(preventivo.costoProduzione * 1.4 * 100) / 100,
+    );
+    expect(preventivo.prezzoFalegname).toBe(
+      Math.round((preventivo.prezzoIndicativo / 1.4) * 100) / 100,
+    );
   });
 });
