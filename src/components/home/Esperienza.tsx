@@ -26,10 +26,10 @@ html{scroll-padding-top:4.5rem;overflow-anchor:none}
 @media (prefers-reduced-motion:reduce){.scheda-tappa{transition:opacity 200ms ease}@starting-style{.scheda-tappa{transform:none}}}
 `;
 
+// three.js non supporta più WebGL1: senza WebGL2 resta l'immagine di ripiego.
 function webglDisponibile() {
   try {
-    const c = document.createElement('canvas');
-    return Boolean(c.getContext('webgl2') ?? c.getContext('webgl'));
+    return Boolean(document.createElement('canvas').getContext('webgl2'));
   } catch {
     return false;
   }
