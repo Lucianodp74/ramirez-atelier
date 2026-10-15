@@ -99,6 +99,10 @@ export async function salvaRichiestaPreventivatore(
       })
     : null;
 
+  // BOM iniziale calcolata prima di scrivere qualunque dato: se non può essere
+  // coerente con il costo di produzione, la richiesta non viene salvata affatto.
+  const costiBom = preventivo.righe.map((riga) => costiRigheBomIniziale(riga));
+
   const nuova = await db.$transaction(async (tx) => {
     const richiesta = await tx.richiestaProgetto.create({
       data: {
@@ -137,7 +141,7 @@ export async function salvaRichiestaPreventivatore(
       if (!modulo) continue;
       const descrizione = `${modulo.tipo} ${modulo.larghezzaCm}×${modulo.altezzaCm}×${modulo.profonditaCm} cm · ${modulo.materiale} · ${modulo.finitura}`;
       // Importi del motore ripartiti sui componenti: nessun prezzo ricalcolato qui.
-      const costi = new Map(costiRigheBomIniziale(riga).map((costo) => [costo.codice, costo]));
+      const costi = new Map(costiBom[indice].map((costo) => [costo.codice, costo]));
 
       const righe = riga.distinta.componenti.map((item) => {
         const costo = costi.get(item.codice);
