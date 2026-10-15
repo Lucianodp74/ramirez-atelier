@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ArrowRight, Move3d, Pause, Play, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BASE, FINITURE, TAPPE, type IdFinitura } from './contenuti';
+import type { AreaLibera } from './Scena';
 
 // three.js e React Three Fiber arrivano solo quando la visita sta per entrare nello schermo
 const Scena = dynamic(() => import('./Scena'), { ssr: false });
@@ -158,6 +159,36 @@ export function Esperienza() {
   const [montata, setMontata] = useState(false);
   const [attiva, setAttiva] = useState(false);
   const [pronta, setPronta] = useState(false);
+  const testata = useRef<HTMLElement>(null);
+  const palco = useRef<HTMLDivElement>(null);
+  const scheda = useRef<HTMLDivElement>(null);
+  const [areaLibera, setAreaLibera] = useState<AreaLibera | null>(null);
+
+  // su schermo stretto la scheda sta in basso: la scena inquadra l'arredo nello spazio sopra
+  useEffect(() => {
+    const misura = () => {
+      const p = palco.current;
+      const sc = scheda.current;
+      if (!p || !sc || window.matchMedia('(min-width: 768px)').matches) {
+        setAreaLibera(null);
+        return;
+      }
+      const H = p.clientHeight || 1;
+      const alto = (testata.current?.offsetHeight ?? 0) / H;
+      const basso = (sc.getBoundingClientRect().top - p.getBoundingClientRect().top) / H;
+      const arrotonda = (v: number) => Math.round(v * 100) / 100;
+      setAreaLibera((prima) =>
+        prima && prima.alto === arrotonda(alto) && prima.basso === arrotonda(basso)
+          ? prima
+          : { alto: arrotonda(alto), basso: arrotonda(Math.max(basso, alto + 0.25)) },
+      );
+    };
+    misura();
+    const osservatore = new ResizeObserver(misura);
+    if (palco.current) osservatore.observe(palco.current);
+    if (scheda.current) osservatore.observe(scheda.current);
+    return () => osservatore.disconnect();
+  }, []);
 
   useEffect(() => {
     setRidotto(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -207,7 +238,10 @@ export function Esperienza() {
 
   return (
     <div className="bg-[#F6F1E9] text-[#1E1B18] antialiased">
-      <header className="sticky top-0 z-40 border-b border-[#1E1B18]/10 bg-[#F6F1E9]/92 backdrop-blur-md">
+      <header
+        ref={testata}
+        className="sticky top-0 z-40 border-b border-[#1E1B18]/10 bg-[#F6F1E9]/92 backdrop-blur-md"
+      >
         <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between gap-4 px-5 sm:h-[72px] sm:px-10">
           <Link
             href="/"
@@ -246,7 +280,7 @@ export function Esperienza() {
           className="relative"
           style={{ height: `${TAPPE.length * 100}svh` }}
         >
-          <div className="sticky top-0 h-svh overflow-hidden">
+          <div ref={palco} className="sticky top-0 h-svh overflow-hidden">
             {webgl === false ? (
               <Image
                 key={t.id}
@@ -275,6 +309,7 @@ export function Esperienza() {
                       movimentoRidotto={ridotto}
                       attiva={attiva}
                       onPronta={onPronta}
+                      areaLibera={areaLibera}
                     />
                   </div>
                 )}
@@ -290,64 +325,81 @@ export function Esperienza() {
             )}
 
             {/* scheda del capitolo */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-8 md:inset-y-0 md:left-0 md:right-auto md:flex md:w-[30rem] md:items-end lg:p-10">
-              <div className="pointer-events-auto rounded-[1.25rem] bg-[#F6F1E9]/95 p-6 shadow-[0_30px_80px_-30px_rgba(30,27,24,0.5)] backdrop-blur sm:p-7">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 sm:p-8 md:inset-y-0 md:left-0 md:right-auto md:flex md:w-[30rem] md:items-end lg:p-10">
+              <div
+                ref={scheda}
+                className="pointer-events-auto rounded-[1.25rem] bg-[#F6F1E9]/95 p-5 shadow-[0_30px_80px_-30px_rgba(30,27,24,0.5)] backdrop-blur sm:p-7"
+              >
                 {/* solo il contenuto si rinnova a ogni tappa: i pulsanti restano, il focus non si perde */}
                 <div key={t.id} className="scheda-tappa" aria-live="polite">
-                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#7A5A32]">
+                  <p className="text-[0.7rem] font-medium uppercase tracking-[0.22em] text-[#7A5A32] sm:text-xs">
                     {String(tappa + 1).padStart(2, '0')} / {String(TAPPE.length).padStart(2, '0')} ·{' '}
                     {t.sovratitolo}
                   </p>
-                  <h2 className="mt-3 font-serif text-3xl font-light leading-tight sm:text-4xl">
+                  <h2 className="mt-2 font-serif text-[1.65rem] font-light leading-tight sm:mt-3 sm:text-4xl">
                     {t.titolo}
                   </h2>
-                  <p className="mt-3 text-[0.95rem] leading-relaxed text-[#5E564C]">{t.testo}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[#5E564C] sm:mt-3 sm:text-[0.95rem]">
+                    {t.testo}
+                  </p>
 
-                  {t.finiture && t.arredo !== null && webgl && (
-                    <fieldset className="mt-5">
-                      <legend className="mb-2 text-xs uppercase tracking-[0.16em] text-[#5E564C]">
-                        Finitura
-                      </legend>
-                      <div className="flex flex-wrap gap-2">
-                        {t.finiture.map((f) => {
-                          const attivo = (finituraAttiva ?? t.finiture![0]) === f;
-                          return (
-                            <button
-                              key={f}
-                              type="button"
-                              aria-pressed={attivo}
-                              onClick={() =>
-                                setFiniture((p) => ({ ...p, [t.arredo as number]: f }))
-                              }
-                              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm ${premi} ${focusChiaro} ${attivo ? 'border-[#1E1B18] bg-[#1E1B18] text-[#F6F1E9]' : 'border-[#1E1B18]/25 hover:border-[#1E1B18]'}`}
-                            >
-                              <span
-                                aria-hidden="true"
-                                className="size-4 rounded-full border border-black/10"
-                                style={{ background: FINITURE[f].campione }}
-                              />
-                              {FINITURE[f].nome}
-                            </button>
-                          );
-                        })}
+                  {(t.finiture || t.led) && t.arredo !== null && webgl && (
+                    <div className="mt-4 sm:mt-5">
+                      <div className="flex min-h-11 items-center justify-between gap-4">
+                        <p
+                          id={`finitura-${t.id}`}
+                          className="text-xs uppercase tracking-[0.16em] text-[#5E564C]"
+                        >
+                          {t.finiture ? 'Finitura' : ''}
+                        </p>
+                        {t.led && (
+                          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                            Luce LED
+                            <input
+                              type="checkbox"
+                              role="switch"
+                              checked={led}
+                              onChange={(e) => setLed(e.target.checked)}
+                              className={`size-5 accent-[#7A5A32] ${focusChiaro}`}
+                            />
+                          </label>
+                        )}
                       </div>
-                    </fieldset>
-                  )}
-                  {t.led && webgl && (
-                    <label className="mt-4 flex min-h-11 cursor-pointer items-center justify-between gap-4 text-sm">
-                      Luce LED
-                      <input
-                        type="checkbox"
-                        role="switch"
-                        checked={led}
-                        onChange={(e) => setLed(e.target.checked)}
-                        className={`size-5 accent-[#7A5A32] ${focusChiaro}`}
-                      />
-                    </label>
+                      {t.finiture && (
+                        // su mobile una sola riga che scorre di lato; da tablet in su va a capo
+                        <div
+                          role="group"
+                          aria-labelledby={`finitura-${t.id}`}
+                          className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+                        >
+                          {t.finiture.map((f) => {
+                            const attivo = (finituraAttiva ?? t.finiture![0]) === f;
+                            return (
+                              <button
+                                key={f}
+                                type="button"
+                                aria-pressed={attivo}
+                                onClick={() =>
+                                  setFiniture((p) => ({ ...p, [t.arredo as number]: f }))
+                                }
+                                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm ${premi} ${focusChiaro} ${attivo ? 'border-[#1E1B18] bg-[#1E1B18] text-[#F6F1E9]' : 'border-[#1E1B18]/25 hover:border-[#1E1B18]'}`}
+                              >
+                                <span
+                                  aria-hidden="true"
+                                  className="size-4 rounded-full border border-black/10"
+                                  style={{ background: FINITURE[f].campione }}
+                                />
+                                {FINITURE[f].nome}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
-                <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#1E1B18]/10 pt-5">
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#1E1B18]/10 pt-4 sm:mt-6 sm:pt-5">
                   <div className="flex gap-2">
                     <button
                       type="button"
