@@ -20,7 +20,24 @@ type Props = {
   movimentoRidotto: boolean;
   attiva: boolean;
   onPronta: () => void;
+  /** Su schermo verticale: fascia libera sopra la scheda, in frazioni dell'altezza (0 = alto). */
+  areaLibera: AreaLibera | null;
 };
+
+export type AreaLibera = { alto: number; basso: number };
+
+// ingombro di ogni arredo (larghezza, altezza, profondità del centro in metri)
+const MISURE: [number, number, number][] = [
+  [1.9, 0.8, 0.1],
+  [3.0, 2.75, -0.1],
+  [4.4, 2.6, 1.15],
+  [3.0, 2.7, 0.2],
+  [3.25, 2.82, -0.25],
+];
+const FOV = 38;
+const FOV_VERTICALE = 55;
+// direzione di osservazione su schermo verticale: un po' da sinistra e dall'alto
+const DIREZIONE_VERTICALE = new THREE.Vector3(-0.18, 0.16, 1).normalize();
 
 /** Inquadratura di ogni arredo: posizione della camera e punto guardato (metri). */
 function posa(tappa: number | null): [THREE.Vector3, THREE.Vector3] {
@@ -36,6 +53,36 @@ function posa(tappa: number | null): [THREE.Vector3, THREE.Vector3] {
   if (tappa === 2)
     return [new THREE.Vector3(x - 2.6, 2.1, 7.4), new THREE.Vector3(x - 0.8, 1.0, 0.6)];
   return [new THREE.Vector3(x - 2.0, 1.65, 6.0), new THREE.Vector3(x - 0.75, 1.3, PARETE_Z)];
+}
+
+/**
+ * Su schermo verticale la scheda copre la parte bassa: l'arredo va centrato nella fascia libera
+ * e intero in larghezza. Lo spostamento usa setViewOffset (proiezione decentrata, nessuna
+ * deformazione); la distanza è quella che fa stare l'arredo nella fascia.
+ */
+function posaVerticale(
+  tappa: number | null,
+  larghezza: number,
+  altezza: number,
+  area: AreaLibera,
+): [THREE.Vector3, THREE.Vector3] {
+  const s = scalaVista(area);
+  const pxPerTan = (s * altezza) / (2 * Math.tan(THREE.MathUtils.degToRad(FOV_VERTICALE / 2)));
+  const fascia = (area.basso - area.alto) * altezza;
+  if (tappa === null) {
+    // vista d'insieme lungo la fila delle nicchie, come un corridoio
+    return [new THREE.Vector3(-3.2, 2.7, 6.2), new THREE.Vector3(2.2 * PASSO, 0.9, -0.4)];
+  }
+  const [w, h, zc] = MISURE[tappa];
+  const d = Math.max((w * pxPerTan) / (0.86 * larghezza), (h * pxPerTan) / (0.84 * fascia));
+  const punto = new THREE.Vector3(tappa * PASSO, h / 2, zc);
+  return [punto.clone().addScaledVector(DIREZIONE_VERTICALE, d), punto];
+}
+
+/** Fattore della vista virtuale che porta il centro della proiezione nella fascia libera. */
+function scalaVista(area: AreaLibera) {
+  const cy = (area.alto + area.basso) / 2;
+  return Math.max(1, 2 * (1 - cy), 2 * cy);
 }
 
 function Arredo({
@@ -194,9 +241,21 @@ function Regia({
   tappa,
   esplorazioneLibera,
   movimentoRidotto,
-}: Pick<Props, 'tappa' | 'esplorazioneLibera' | 'movimentoRidotto'>) {
-  const { camera } = useThree();
+  areaLibera,
+}: Pick<Props, 'tappa' | 'esplorazioneLibera' | 'movimentoRidotto' | 'areaLibera'>) {
+  const camera = useThree((st) => st.camera) as THREE.PerspectiveCamera;
+  const size = useThree((st) => st.size);
   const guardato = useRef(posa(tappa)[1].clone());
+  // centro attuale della proiezione (frazione d'altezza): segue la scheda con morbidezza
+  const centro = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (areaLibera) return;
+    centro.current = null;
+    camera.clearViewOffset();
+    camera.fov = FOV;
+    camera.updateProjectionMatrix();
+  }, [areaLibera, camera]);
   const controlli = useRef<ComponentRef<typeof OrbitControls>>(null);
 
   useEffect(() => {
@@ -207,10 +266,22 @@ function Regia({
   }, [esplorazioneLibera]);
 
   useFrame((_, delta) => {
-    if (esplorazioneLibera) return;
-    const [pos, punto] = posa(tappa);
     // smorzamento esponenziale: interrompibile, riparte dallo stato attuale
     const k = movimentoRidotto ? 1 : 1 - Math.exp(-Math.min(delta, 0.05) * 2.4);
+    if (areaLibera) {
+      const meta = (areaLibera.alto + areaLibera.basso) / 2;
+      const c = centro.current === null ? meta : centro.current + (meta - centro.current) * k;
+      centro.current = c;
+      // ricalcolata a ogni fotogramma: segue anche rotazioni e ridimensionamenti
+      const s = scalaVista({ alto: c, basso: c });
+      const { width: W, height: H } = size;
+      camera.fov = FOV_VERTICALE;
+      camera.setViewOffset(s * W, s * H, ((s - 1) * W) / 2, (s * H) / 2 - c * H, W, H);
+    }
+    if (esplorazioneLibera) return;
+    const [pos, punto] = areaLibera
+      ? posaVerticale(tappa, size.width, size.height, areaLibera)
+      : posa(tappa);
     camera.position.lerp(pos, k);
     guardato.current.lerp(punto, k);
     camera.lookAt(guardato.current);
@@ -237,7 +308,7 @@ export default function Scena(props: Props) {
       shadows
       dpr={[1, 1.75]}
       frameloop={props.attiva ? 'always' : 'never'}
-      camera={{ position: pos.toArray(), fov: 38, near: 0.1, far: 80 }}
+      camera={{ position: pos.toArray(), fov: FOV, near: 0.1, far: 80 }}
       gl={{ antialias: true, toneMapping: THREE.AgXToneMapping, toneMappingExposure: 1.0 }}
       onCreated={({ gl }) => {
         gl.domElement.setAttribute('role', 'img');
@@ -248,7 +319,8 @@ export default function Scena(props: Props) {
       }}
       style={{ background: SFONDO }}
     >
-      <fog attach="fog" args={[SFONDO, 12, 30]} />
+      {/* in verticale la camera sta più indietro: la nebbia parte più lontano */}
+      <fog attach="fog" args={props.areaLibera ? [SFONDO, 18, 40] : [SFONDO, 12, 30]} />
       <hemisphereLight args={['#fff1e0', '#3a2f26', 0.12]} />
       <directionalLight
         position={[-7, 8, 7]}
@@ -317,6 +389,7 @@ export default function Scena(props: Props) {
         tappa={props.tappa}
         esplorazioneLibera={props.esplorazioneLibera}
         movimentoRidotto={props.movimentoRidotto}
+        areaLibera={props.areaLibera}
       />
     </Canvas>
   );
