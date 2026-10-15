@@ -65,7 +65,7 @@ export const TAPPE: Tappa[] = [
     sovratitolo: 'Librerie e pareti',
     titolo: 'Libreria a tutta parete',
     testo:
-      'Cinque moduli con ripiani spessi, fondo più scuro e luce sotto ogni ripiano. La venatura corre continua da un pezzo all’altro.',
+      'Cinque moduli con ripiani spessi, cornice superiore e luce sotto ogni ripiano. La venatura corre continua da un pezzo all’altro.',
     arredo: 1,
     finiture: ['rovere', 'noce', 'avorio', 'antracite'],
     led: true,
@@ -101,7 +101,7 @@ export const TAPPE: Tappa[] = [
     sovratitolo: 'Boiserie',
     titolo: 'Boiserie a pannelli',
     testo:
-      'Pannelli bugnati con cornici modanate tagliate a 45°, zoccolo, fascia e cornicione, con applique in bronzo.',
+      'Pannelli bugnati con cornici a doppio gradino tagliate a 45°, zoccolo, fascia e cornicione a più livelli, con applique in bronzo.',
     arredo: 4,
     finiture: ['avorio', 'rovere', 'noce', 'antracite'],
     led: true,

@@ -47,7 +47,7 @@ function Arredo({
   finitura: IdFinitura | null;
   led: boolean;
 }) {
-  const { scene } = useGLTF(ARREDI[indice].file);
+  const { scene } = useGLTF(ARREDI[indice].file, false, true);
   const [rovere, noce, rovereN, noceN] = useTexture([
     `${BASE}/texture/rovere.jpg`,
     `${BASE}/texture/noce.jpg`,
@@ -177,7 +177,7 @@ function Faretto({ x }: { x: number }) {
     <>
       <primitive object={bersaglio} />
       <spotLight
-        position={[x, 3.6, 2.2]}
+        position={[x - 1.7, 3.6, 2.4]}
         target={bersaglio}
         angle={0.6}
         penumbra={0.85}
@@ -327,4 +327,5 @@ function Pronta({ onPronta }: { onPronta: () => void }) {
   return null;
 }
 
-for (const a of ARREDI) useGLTF.preload(a.file);
+// modelli compressi con meshopt (decoder incluso in three-stdlib); Draco disattivato: userebbe un CDN esterno
+for (const a of ARREDI) useGLTF.preload(a.file, false, true);
