@@ -63,6 +63,7 @@ function righeBomSalvate() {
     .filter((inserimento) => inserimento.sql.includes('INSERT INTO "bom_riga"'))
     .map(({ valori }) => ({
       codice: valori[4] as string,
+      materiale: valori[8] as string,
       quantita: valori[7] as number,
       costoUnitario: valori[10] as number,
     }));
@@ -91,8 +92,8 @@ describe('salvaRichiestaPreventivatore — BOM iniziale coerente con il costo', 
     expect(totaleSalvato(righe)).toBe(790);
     expect(stima.costoProduzione).toBe(790);
     expect(righe.filter((r) => r.codice === 'SCHIENALE')).toEqual([
-      { codice: 'SCHIENALE', quantita: 1, costoUnitario: 23.76 },
-      { codice: 'SCHIENALE', quantita: 1, costoUnitario: 23.76 },
+      { codice: 'SCHIENALE', materiale: 'MDF', quantita: 1, costoUnitario: 23.76 },
+      { codice: 'SCHIENALE', materiale: 'MDF', quantita: 1, costoUnitario: 23.76 },
     ]);
     // Nessuna riga di frontali per moduli aperti, nessuna riga senza costo.
     expect(righe.some((r) => r.codice === 'ANTA' || r.codice === 'FRONTALE-CASSETTO')).toBe(false);
