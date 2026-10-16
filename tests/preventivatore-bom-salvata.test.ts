@@ -93,7 +93,7 @@ describe('salvaRichiestaPreventivatore — BOM iniziale coerente con il costo', 
     expect(totaleSalvato(righe)).toBe(790);
     expect(stima.costoProduzione).toBe(790);
     expect(righe.filter((r) => r.codice === 'SCHIENALE')).toEqual([
-      { codice: 'SCHIENALE', materiale: 'MDF', quantita: 1, costoUnitario: 23.76 },
+      { codice: 'SCHIENALE', materiale: 'MDF', lavorazione: 'MELAMINICO', quantita: 1, costoUnitario: 23.76 },
       { codice: 'SCHIENALE', materiale: 'MDF', quantita: 1, costoUnitario: 23.76 },
     ]);
     // Nessuna riga di frontali per moduli aperti, nessuna riga senza costo.
