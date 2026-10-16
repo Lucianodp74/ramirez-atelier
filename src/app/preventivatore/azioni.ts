@@ -173,7 +173,7 @@ export async function salvaRichiestaPreventivatore(
 
       for (const [posizione, item] of righe.entries()) {
         if (item.quantita <= 0 || item.costoUnitario <= 0) continue;
-        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + posizione}, ${item.categoria}, ${item.codice}, ${item.descrizione}, ${item.unita}, ${item.quantita}, ${modulo.materiale}, ${modulo.finitura}, ${item.costoUnitario}, ${item.note}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+        await tx.$executeRaw`INSERT INTO "bom_riga" ("id", "bomId", "ordinamento", "categoria", "codice", "descrizione", "unita", "quantita", "materiale", "lavorazione", "costoUnitario", "note", "createdAt", "updatedAt") VALUES (${crypto.randomUUID()}, ${bomId}, ${indice * 100 + posizione}, ${item.categoria}, ${item.codice}, ${item.descrizione}, ${item.unita}, ${item.quantita}, ${item.codice === 'SCHIENALE' ? 'MDF' : modulo.materiale}, ${modulo.finitura}, ${item.costoUnitario}, ${item.note}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
       }
     }
 
