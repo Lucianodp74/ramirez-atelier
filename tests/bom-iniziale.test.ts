@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { moduliPerPreventivatore } from '@/lib/catalogo-librerie/catalogo';
+import { totaleBom as totaleBomConvenzione } from '@/lib/bom-totali';
 import { costiRigheBomIniziale } from '@/lib/preventivatore/bom-iniziale';
 import { CATALOGO_MODULI, type ModuloConfigurato } from '@/lib/preventivatore/moduli';
 import {
@@ -33,8 +34,8 @@ const LISTINO: TariffePreventivatore = {
 };
 
 const somma = (valori: number[]) => Math.round(valori.reduce((s, v) => s + v * 100, 0)) / 100;
-const totaleBom = (riga: RigaCostoModulo) =>
-  somma(costiRigheBomIniziale(riga).map((r) => r.totale));
+/** Totale della BOM del modulo come lo ricavano i consumatori (`@/lib/bom-totali`). */
+const totaleBom = (riga: RigaCostoModulo) => totaleBomConvenzione(costiRigheBomIniziale(riga));
 const rigaBom = (riga: RigaCostoModulo, codice: string) =>
   costiRigheBomIniziale(riga).find((r) => r.codice === codice);
 const totaleCodici = (riga: RigaCostoModulo, codici: string[]) =>

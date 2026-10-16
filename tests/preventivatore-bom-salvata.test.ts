@@ -54,6 +54,7 @@ vi.mock('@/server/services/preventivatore-listino-service', () => ({
 
 import { salvaRichiestaPreventivatore } from '@/app/preventivatore/azioni';
 import { moduliPerPreventivatore } from '@/lib/catalogo-librerie/catalogo';
+import { totaleBom } from '@/lib/bom-totali';
 import type { ModuloConfigurato } from '@/lib/preventivatore/moduli';
 
 /** Righe BOM scritte: nell'INSERT quantità e costo unitario sono l'8° e l'11° valore. */
@@ -66,8 +67,8 @@ function righeBomSalvate() {
       costoUnitario: valori[10] as number,
     }));
 }
-const totaleSalvato = (righe: ReturnType<typeof righeBomSalvate>) =>
-  Math.round(righe.reduce((s, r) => s + Math.round(r.quantita * r.costoUnitario * 100), 0)) / 100;
+/** Totale come lo ricavano i consumatori della BOM: somma dei totali di riga arrotondati. */
+const totaleSalvato = (righe: ReturnType<typeof righeBomSalvate>) => totaleBom(righe);
 
 async function salva(moduli: ModuloConfigurato[]) {
   return salvaRichiestaPreventivatore(moduli, { nome: 'Mario Rossi', email: 'mario@example.com' });

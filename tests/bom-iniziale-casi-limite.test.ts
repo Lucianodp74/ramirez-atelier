@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { totaleRigaBomInCentesimi } from '@/lib/bom-totali';
 import { costiRigheBomIniziale, ErroreBomIniziale } from '@/lib/preventivatore/bom-iniziale';
 import { CATALOGO_MODULI, type ModuloConfigurato } from '@/lib/preventivatore/moduli';
 import {
@@ -53,9 +54,9 @@ function persisti(righe: ReturnType<typeof costiRigheBomIniziale>) {
     costoSalvato: Math.round(riga.costoUnitario * 100) / 100,
   }));
 }
-/** Totale in centesimi come lo ricava la BOM dai valori salvati. */
+/** Totale in centesimi come lo ricavano i consumatori della BOM dai valori salvati. */
 const totaleSalvato = (righe: ReturnType<typeof persisti>) =>
-  righe.reduce((s, r) => s + Math.round(r.costoSalvato * r.quantitaSalvata * 100), 0);
+  righe.reduce((s, r) => s + totaleRigaBomInCentesimi(r.quantitaSalvata, r.costoSalvato), 0);
 
 /** Moduli di ogni tipo e configurazione, con misure frazionarie e fino a 20 ripiani. */
 function moduliDiProva(): ModuloConfigurato[] {

@@ -5,13 +5,15 @@ import { dettaglioBomAdmin } from '@/server/services/bom-admin-service';
 import { ultimoPreventivoBom } from '@/server/services/bom-preventivo-service';
 import { PreventivoSummary } from './preventivo-summary';
 import { confermaBomAzione } from './azioni';
+import { totaleBom } from '@/lib/bom-totali';
 
 export default async function BomAdminDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
   const bom = await dettaglioBomAdmin(contesto.tenantId, id);
   if (!bom) notFound();
-  const costoProduzione = bom.righe.reduce((totale, riga) => totale + (riga.costoUnitario ?? 0) * riga.quantita, 0);
+  // Convenzione della BOM: somma dei totali di riga arrotondati al centesimo.
+  const costoProduzione = totaleBom(bom.righe.map((riga) => ({ quantita: riga.quantita, costoUnitario: riga.costoUnitario ?? 0 })));
   const preventivoSalvato = await ultimoPreventivoBom(contesto.tenantId, id);
   const bomCompleta = bom.righe.length > 0 && bom.righe.every((riga) => riga.costoUnitario != null);
 

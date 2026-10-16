@@ -10,6 +10,7 @@ import {
 import { cambiaStatoCommessaAzione } from '@/app/admin/commesse-azioni';
 import { AvanzamentoCommessa } from '@/components/admin/AvanzamentoCommessa';
 import { AvanzamentoRigaProduzione } from '@/components/admin/AvanzamentoRigaProduzione';
+import { totaleBom, totaleRigaBom } from '@/lib/bom-totali';
 import { DatiOperativiCommessa } from '@/components/admin/DatiOperativiCommessa';
 import { RiepilogoOfficinaCommessa } from '@/components/admin/RiepilogoOfficinaCommessa';
 
@@ -40,9 +41,9 @@ export default async function CommessaDetailPage({
   if (!commessa) notFound();
 
   const prossimi = prossimiStatiCommessa(commessa.stato);
-  const costoSnapshot = commessa.righe.reduce(
-    (totale, riga) => totale + (riga.costoUnitario ?? 0) * riga.quantita,
-    0,
+  // Convenzione della BOM: somma dei totali di riga arrotondati al centesimo.
+  const costoSnapshot = totaleBom(
+    commessa.righe.map((riga) => ({ quantita: riga.quantita, costoUnitario: riga.costoUnitario ?? 0 })),
   );
   const datiOperativiBloccati = ['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa.stato);
   const righeModificabili = commessa.stato === 'IN_PRODUZIONE';
@@ -140,7 +141,9 @@ export default async function CommessaDetailPage({
                         <td className="p-3">{riga.lavorazione ?? '—'}</td>
                         <td className="p-3 text-right">{riga.quantita} {riga.unita}</td>
                         <td className="p-3 text-right">
-                          {riga.costoUnitario == null ? '—' : EURO.format(riga.costoUnitario * riga.quantita)}
+                          {riga.costoUnitario == null
+                            ? '—'
+                            : EURO.format(totaleRigaBom(riga.quantita, riga.costoUnitario))}
                         </td>
                         <td className="p-3 align-top">
                           <AvanzamentoRigaProduzione

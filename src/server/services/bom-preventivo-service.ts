@@ -1,6 +1,7 @@
 import { dettaglioBom } from '@/server/services/bom-service';
 import { db } from '@/server/db';
 import { calcolaPrezzoBom, type BomPrezzoInput, type BomPrezzoSummary } from '@/server/services/bom-pricing-service';
+import { totaleBom, totaleRigaBom } from '@/lib/bom-totali';
 
 export type PreventivoBomSnapshot = {
   bomId: string;
@@ -27,9 +28,10 @@ export async function preparaSnapshotPreventivoBom(tenantId: string, bomId: stri
   const bom = await dettaglioBom(tenantId, bomId);
   if (!bom) return null;
   if (bom.stato === 'BOZZA') throw new Error('La BOM deve essere confermata prima di generare un preventivo.');
-  const righe = bom.righe.map((riga) => ({ id: riga.id, categoria: riga.categoria, codice: riga.codice, descrizione: riga.descrizione, unita: riga.unita, quantita: riga.quantita, costoUnitario: riga.costoUnitario, totaleCosto: riga.costoUnitario === null ? null : riga.quantita * riga.costoUnitario }));
+  const righe = bom.righe.map((riga) => ({ id: riga.id, categoria: riga.categoria, codice: riga.codice, descrizione: riga.descrizione, unita: riga.unita, quantita: riga.quantita, costoUnitario: riga.costoUnitario, totaleCosto: riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario) ? null : totaleRigaBom(riga.quantita, riga.costoUnitario) }));
   if (righe.some((riga) => riga.costoUnitario === null || !Number.isFinite(riga.costoUnitario))) throw new Error('Tutte le righe BOM devono avere un costo unitario prima del preventivo.');
-  const costoProduzione = righe.reduce((totale, riga) => totale + (riga.totaleCosto ?? 0), 0);
+  // Convenzione della BOM: somma dei totali di riga arrotondati al centesimo.
+  const costoProduzione = totaleBom(righe.map((riga) => ({ quantita: riga.quantita, costoUnitario: riga.costoUnitario as number })));
   return { bomId: bom.id, richiestaId: bom.richiestaId, versioneBom: bom.versione, statoBom: bom.stato, costoProduzione, prezzo: calcolaPrezzoBom(costoProduzione, pricing), righe };
 }
 

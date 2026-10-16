@@ -1,3 +1,4 @@
+import { totaleRigaBomInCentesimi } from '@/lib/bom-totali';
 import type { ComponenteDistinta, RigaCostoModulo } from './prezzo-modulare';
 
 /**
@@ -14,12 +15,15 @@ import type { ComponenteDistinta, RigaCostoModulo } from './prezzo-modulare';
  *  - bordatura, ferramenta, manodopera: gli importi del motore.
  *
  * Il costo unitario viene salvato in centesimi (DECIMAL(12,2), >= 0), la
- * quantità con tre decimali (DECIMAL(12,3), > 0), e la BOM calcola il totale
- * di riga come costo unitario × quantità. Lo scarto di arrotondamento che ne
- * deriva viene assorbito da una sola riga con quantità 1, scelta in modo che
- * il suo costo resti valido: la somma delle righe coincide al centesimo con
- * il costo di produzione del modulo. Se nessuna riga può farlo, la funzione
- * lancia `ErroreBomIniziale`: meglio nessuna BOM che una BOM incoerente.
+ * quantità con tre decimali (DECIMAL(12,3), > 0). I totali seguono la
+ * convenzione della BOM (`@/lib/bom-totali`): totale di riga = quantità ×
+ * costo unitario arrotondato al centesimo, totale della BOM = somma dei
+ * totali di riga. Lo scarto di arrotondamento viene assorbito da una sola
+ * riga con quantità 1, scelta in modo che il suo costo resti valido: il
+ * totale della BOM coincide al centesimo con il costo di produzione del
+ * modulo. Quantità e costi unitari restano quelli della ripartizione. Se
+ * nessuna riga può farlo, la funzione lancia `ErroreBomIniziale`: meglio
+ * nessuna BOM che una BOM incoerente.
  */
 export interface CostoRigaBom {
   codice: string;
@@ -43,9 +47,9 @@ const prioritaCompensazione = (codice: string) =>
 const centesimi = (valore: number) => Math.round(valore * 100);
 /** La quantità è salvata con tre decimali (DECIMAL(12,3)). */
 const quantitaSalvata = (quantita: number) => Math.round(quantita * 1000) / 1000;
-/** Totale di riga in centesimi, come lo calcola la BOM dai valori salvati. */
+/** Totale di riga in centesimi, con la stessa funzione di chi legge la BOM. */
 const totaleInCentesimi = (riga: { quantita: number; costoUnitario: number }) =>
-  centesimi(riga.costoUnitario * riga.quantita);
+  totaleRigaBomInCentesimi(riga.quantita, riga.costoUnitario);
 
 function importoComponente(componente: ComponenteDistinta, riga: RigaCostoModulo): number {
   const { struttura, frontali, superfici } = riga.ripartizione;

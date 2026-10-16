@@ -1,5 +1,6 @@
 import { db } from '@/server/db';
 import { STATI_OPERATIVI } from '@/lib/workflow';
+import { totaleRigaBomInCentesimi } from '@/lib/bom-totali';
 
 export interface FiltriKpi {
   dataDa?: string;
@@ -40,6 +41,8 @@ type RigaCostoKpi = { commessaId: string; quantita: number; costoUnitario: numbe
  * Una riga senza costo non deve far apparire completo un totale parziale.
  */
 export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<string, number> {
+  // Totali in centesimi, secondo la convenzione della BOM (totali di riga
+  // arrotondati); convertiti in euro alla fine.
   const totali = new Map<string, number>();
   const incomplete = new Set<string>();
 
@@ -53,7 +56,7 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
       incomplete.add(riga.commessaId);
       continue;
     }
-    const subtotale = quantita * costo;
+    const subtotale = totaleRigaBomInCentesimi(quantita, costo);
     const totaleAggiornato = (totali.get(riga.commessaId) ?? 0) + subtotale;
     if (!Number.isFinite(subtotale) || !Number.isFinite(totaleAggiornato)) {
       incomplete.add(riga.commessaId);
@@ -63,7 +66,7 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
   }
 
   for (const commessaId of incomplete) totali.delete(commessaId);
-  return totali;
+  return new Map([...totali].map(([commessaId, centesimi]) => [commessaId, centesimi / 100]));
 }
 
 export type ConsegnaKpi = { consegnataIl: Date | string | null; dataPrevistaConsegna: Date | string | null };
