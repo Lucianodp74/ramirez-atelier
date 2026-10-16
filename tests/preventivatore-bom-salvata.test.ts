@@ -64,6 +64,7 @@ function righeBomSalvate() {
     .map(({ valori }) => ({
       codice: valori[4] as string,
       materiale: valori[8] as string,
+      lavorazione: valori[9] as string,
       quantita: valori[7] as number,
       costoUnitario: valori[10] as number,
     }));
@@ -101,6 +102,35 @@ describe('salvaRichiestaPreventivatore — BOM iniziale coerente con il costo', 
     // Al browser torna solo il prezzo indicativo.
     expect(risposta.prezzoIndicativo).toBe(1106);
     expect(JSON.stringify(risposta)).not.toMatch(/costoProduzione|prezzoFalegname/);
+  });
+
+
+  it('salva materiale e finitura distinti per struttura e frontali', async () => {
+    const modulo: ModuloConfigurato = {
+      id: 'fronte-1',
+      tipo: 'BASE',
+      larghezzaCm: 80,
+      altezzaCm: 90,
+      profonditaCm: 60,
+      materiale: 'TRUCIOLARE',
+      materialeAnte: 'MDF',
+      finitura: 'MELAMINICO',
+      finituraStruttura: 'LAMINATO',
+      finituraAnte: 'LACCATO',
+      configurazione: '2_PORTE',
+      ripiani: 1,
+    };
+
+    await salva([modulo]);
+    const righe = righeBomSalvate();
+    expect(righe.find((r) => r.codice === 'PANNELLO-FIANCO')).toMatchObject({
+      materiale: 'TRUCIOLARE',
+      lavorazione: 'LAMINATO',
+    });
+    expect(righe.find((r) => r.codice === 'ANTA')).toMatchObject({
+      materiale: 'MDF',
+      lavorazione: 'LACCATO',
+    });
   });
 
   it('moduli con frontali e armadio scorrevole: totale salvato uguale al costo di produzione', async () => {
