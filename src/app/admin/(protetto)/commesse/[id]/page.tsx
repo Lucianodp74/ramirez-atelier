@@ -30,11 +30,7 @@ const LABEL_PROSSIMO: Record<StatoCommessa, string> = {
   ANNULLATA: 'Annulla commessa',
 };
 
-export default async function CommessaDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function CommessaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const contesto = await richiediContesto({ modulo: 'richieste', azione: 'leggi' });
   const commessa = await dettaglioCommessa(contesto.tenantId, id);
@@ -43,11 +39,16 @@ export default async function CommessaDetailPage({
   const prossimi = prossimiStatiCommessa(commessa.stato);
   // Convenzione della BOM: somma dei totali di riga arrotondati al centesimo.
   const costoSnapshot = totaleBom(
-    commessa.righe.map((riga) => ({ quantita: riga.quantita, costoUnitario: riga.costoUnitario ?? 0 })),
+    commessa.righe.map((riga) => ({
+      quantita: riga.quantita,
+      costoUnitario: riga.costoUnitario ?? 0,
+    })),
   );
   const datiOperativiBloccati = ['CONSEGNATA', 'CHIUSA', 'ANNULLATA'].includes(commessa.stato);
   const righeModificabili = commessa.stato === 'IN_PRODUZIONE';
-  const righeIncomplete = commessa.righe.filter((riga) => riga.statoLavorazione !== 'COMPLETATA').length;
+  const righeIncomplete = commessa.righe.filter(
+    (riga) => riga.statoLavorazione !== 'COMPLETATA',
+  ).length;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -58,7 +59,9 @@ export default async function CommessaDetailPage({
       <div className="mb-8 mt-3 flex flex-wrap items-start justify-between gap-5">
         <div>
           <p className="text-sm text-muted-foreground">{commessa.numero}</p>
-          <h1 className="text-3xl font-semibold tracking-tight">{commessa.clienteNome ?? 'Cliente senza nome'}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {commessa.clienteNome ?? 'Cliente senza nome'}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">{commessa.tipoProgettoNome}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -72,7 +75,11 @@ export default async function CommessaDetailPage({
                 <button
                   type="submit"
                   disabled={bloccaPronta}
-                  title={bloccaPronta ? `Completa prima le ${righeIncomplete} righe di produzione ancora aperte.` : undefined}
+                  title={
+                    bloccaPronta
+                      ? `Completa prima le ${righeIncomplete} righe di produzione ancora aperte.`
+                      : undefined
+                  }
                   className={`rounded-md px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${stato === 'ANNULLATA' ? 'border' : 'bg-primary text-primary-foreground'}`}
                 >
                   {LABEL_PROSSIMO[stato]}
@@ -102,7 +109,9 @@ export default async function CommessaDetailPage({
             <div className="border-b p-5">
               <h2 className="font-semibold">Distinta operativa</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Snapshot della BOM {commessa.fonteBomVersione ? `v${commessa.fonteBomVersione}` : ''}. Le modifiche future alla BOM non alterano questa commessa.
+                Snapshot della BOM{' '}
+                {commessa.fonteBomVersione ? `v${commessa.fonteBomVersione}` : ''}. Le modifiche
+                future alla BOM non alterano questa commessa.
               </p>
               {commessa.righe.length > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -139,7 +148,9 @@ export default async function CommessaDetailPage({
                         <td className="p-3 font-medium">{riga.descrizione}</td>
                         <td className="p-3">{riga.materiale ?? '—'}</td>
                         <td className="p-3">{riga.lavorazione ?? '—'}</td>
-                        <td className="p-3 text-right">{riga.quantita} {riga.unita}</td>
+                        <td className="p-3 text-right">
+                          {riga.quantita} {riga.unita}
+                        </td>
                         <td className="p-3 text-right">
                           {riga.costoUnitario == null
                             ? '—'
@@ -181,10 +192,27 @@ export default async function CommessaDetailPage({
           <section className="rounded-lg border bg-card p-5">
             <h2 className="font-semibold">Contatti cliente</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div><p className="text-xs text-muted-foreground">Nome</p><p className="text-sm">{commessa.clienteNome ?? '—'}</p></div>
-              <div><p className="text-xs text-muted-foreground">Email</p><p className="text-sm">{commessa.clienteEmail ?? '—'}</p></div>
-              <div><p className="text-xs text-muted-foreground">Telefono</p><p className="text-sm">{commessa.clienteTelefono ?? '—'}</p></div>
-              <div><p className="text-xs text-muted-foreground">Richiesta origine</p><Link href={`/admin/richieste/${commessa.richiestaId}`} className="text-sm underline">Apri richiesta</Link></div>
+              <div>
+                <p className="text-xs text-muted-foreground">Nome</p>
+                <p className="text-sm">{commessa.clienteNome ?? '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-sm">{commessa.clienteEmail ?? '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Telefono</p>
+                <p className="text-sm">{commessa.clienteTelefono ?? '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Richiesta origine</p>
+                <Link
+                  href={`/admin/richieste/${commessa.richiestaId}`}
+                  className="text-sm underline"
+                >
+                  Apri richiesta
+                </Link>
+              </div>
             </div>
           </section>
         </div>
@@ -193,26 +221,53 @@ export default async function CommessaDetailPage({
           <section className="rounded-lg border bg-card p-5">
             <h2 className="font-semibold">Stato operativo</h2>
             <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Creata</dt><dd>{commessa.createdAt.toLocaleDateString('it-IT')}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Avviata</dt><dd>{commessa.avviataIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Pronta</dt><dd>{commessa.prontaIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Consegnata</dt><dd>{commessa.consegnataIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Chiusa</dt><dd>{commessa.chiusaIl?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
-              <div className="flex justify-between gap-3 border-t pt-3"><dt className="text-muted-foreground">Consegna prevista</dt><dd className="font-medium">{commessa.dataPrevistaConsegna?.toLocaleDateString('it-IT') ?? '—'}</dd></div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Creata</dt>
+                <dd>{commessa.createdAt.toLocaleDateString('it-IT')}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Avviata</dt>
+                <dd>{commessa.avviataIl?.toLocaleDateString('it-IT') ?? '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Pronta</dt>
+                <dd>{commessa.prontaIl?.toLocaleDateString('it-IT') ?? '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Consegnata</dt>
+                <dd>{commessa.consegnataIl?.toLocaleDateString('it-IT') ?? '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Chiusa</dt>
+                <dd>{commessa.chiusaIl?.toLocaleDateString('it-IT') ?? '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3 border-t pt-3">
+                <dt className="text-muted-foreground">Consegna prevista</dt>
+                <dd className="font-medium">
+                  {commessa.dataPrevistaConsegna?.toLocaleDateString('it-IT') ?? '—'}
+                </dd>
+              </div>
             </dl>
           </section>
 
           <section className="rounded-lg border bg-card p-5">
             <h2 className="font-semibold">Snapshot economico</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Costo della distinta congelata nella commessa.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Costo della distinta congelata nella commessa.
+            </p>
             <p className="mt-4 text-2xl font-semibold">{EURO.format(costoSnapshot)}</p>
           </section>
 
           {commessa.fonteBomId && (
             <section className="rounded-lg border bg-card p-5">
               <h2 className="font-semibold">Origine</h2>
-              <p className="mt-2 text-sm text-muted-foreground">BOM confermata v{commessa.fonteBomVersione}</p>
-              <Link href={`/admin/bom/${commessa.fonteBomId}`} className="mt-3 inline-block text-sm underline">
+              <p className="mt-2 text-sm text-muted-foreground">
+                BOM confermata v{commessa.fonteBomVersione}
+              </p>
+              <Link
+                href={`/admin/bom/${commessa.fonteBomId}`}
+                className="mt-3 inline-block text-sm underline"
+              >
                 Apri BOM originale
               </Link>
             </section>
