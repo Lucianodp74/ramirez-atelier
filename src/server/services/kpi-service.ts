@@ -1,5 +1,6 @@
 import { db } from '@/server/db';
 import { STATI_OPERATIVI } from '@/lib/workflow';
+import { totaleRigaBomInCentesimi } from '@/lib/bom-totali';
 
 export interface FiltriKpi {
   dataDa?: string;
@@ -28,7 +29,12 @@ export interface RiepilogoKpi {
     costoProduzioneDisponibile: boolean;
     costoProduzioneCampione: number;
     tempoMedioProduzioneGiorni: { valore: number; disponibile: boolean; campione: number };
-    puntualitaConsegne: { percentuale: number; puntuali: number; campione: number; disponibile: boolean };
+    puntualitaConsegne: {
+      percentuale: number;
+      puntuali: number;
+      campione: number;
+      disponibile: boolean;
+    };
     margineLordo: { totale: number; medio: number; disponibile: boolean; campione: number };
   };
 }
@@ -40,6 +46,8 @@ type RigaCostoKpi = { commessaId: string; quantita: number; costoUnitario: numbe
  * Una riga senza costo non deve far apparire completo un totale parziale.
  */
 export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<string, number> {
+  // Totali in centesimi, secondo la convenzione della BOM (totali di riga
+  // arrotondati); convertiti in euro alla fine.
   const totali = new Map<string, number>();
   const incomplete = new Set<string>();
 
@@ -48,12 +56,11 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
     const costo = riga.costoUnitario == null ? NaN : Number(riga.costoUnitario);
     // Quantità positive e costi unitari non negativi sono necessari per
     // considerare attendibile lo snapshot economico della commessa.
-    if (!Number.isFinite(quantita) || quantita <= 0 ||
-        !Number.isFinite(costo) || costo < 0) {
+    if (!Number.isFinite(quantita) || quantita <= 0 || !Number.isFinite(costo) || costo < 0) {
       incomplete.add(riga.commessaId);
       continue;
     }
-    const subtotale = quantita * costo;
+    const subtotale = totaleRigaBomInCentesimi(quantita, costo);
     const totaleAggiornato = (totali.get(riga.commessaId) ?? 0) + subtotale;
     if (!Number.isFinite(subtotale) || !Number.isFinite(totaleAggiornato)) {
       incomplete.add(riga.commessaId);
@@ -63,20 +70,25 @@ export function calcolaCostiCompletiPerCommessa(righe: RigaCostoKpi[]): Map<stri
   }
 
   for (const commessaId of incomplete) totali.delete(commessaId);
-  return totali;
+  return new Map([...totali].map(([commessaId, centesimi]) => [commessaId, centesimi / 100]));
 }
 
-export type ConsegnaKpi = { consegnataIl: Date | string | null; dataPrevistaConsegna: Date | string | null };
+export type ConsegnaKpi = {
+  consegnataIl: Date | string | null;
+  dataPrevistaConsegna: Date | string | null;
+};
 
 /** Misura la puntualità solo sulle consegne con entrambe le date disponibili. */
 export function calcolaPuntualitaConsegne(consegne: ConsegnaKpi[]) {
   const valide = consegne.filter((c) => {
     if (c.consegnataIl == null || c.dataPrevistaConsegna == null) return false;
-    return Number.isFinite(new Date(c.consegnataIl).getTime()) &&
-      Number.isFinite(new Date(c.dataPrevistaConsegna).getTime());
+    return (
+      Number.isFinite(new Date(c.consegnataIl).getTime()) &&
+      Number.isFinite(new Date(c.dataPrevistaConsegna).getTime())
+    );
   });
-  const puntuali = valide.filter((c) =>
-    new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime()
+  const puntuali = valide.filter(
+    (c) => new Date(c.consegnataIl!).getTime() <= new Date(c.dataPrevistaConsegna!).getTime(),
   ).length;
   return {
     percentuale: valide.length > 0 ? Math.round((puntuali / valide.length) * 1000) / 10 : 0,
@@ -91,9 +103,17 @@ export function calcolaPuntualitaConsegne(consegne: ConsegnaKpi[]) {
  * e un costo di produzione completo. Non usa stime indicative né rilegge il listino.
  * Il margine può essere negativo: anche una perdita deve restare visibile.
  */
-export function calcolaMargineLordo(imponibile: unknown, costoProduzione: number | undefined): number | null {
+export function calcolaMargineLordo(
+  imponibile: unknown,
+  costoProduzione: number | undefined,
+): number | null {
   if (typeof imponibile !== 'number' || !Number.isFinite(imponibile) || imponibile < 0) return null;
-  if (typeof costoProduzione !== 'number' || !Number.isFinite(costoProduzione) || costoProduzione < 0) return null;
+  if (
+    typeof costoProduzione !== 'number' ||
+    !Number.isFinite(costoProduzione) ||
+    costoProduzione < 0
+  )
+    return null;
   return imponibile - costoProduzione;
 }
 
@@ -267,15 +287,17 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
   // commerciale realmente salvato sulla richiesta/BOM e l'imponibile, quindi
   // esclude l'IVA. La stima indicativa del Preventivatore non viene trattata
   // come prezzo di vendita definitivo.
-  const commesse = await db.$queryRaw<Array<{
-    id: string;
-    stato: string;
-    avviataIl: Date | null;
-    prontaIl: Date | null;
-    consegnataIl: Date | null;
-    dataPrevistaConsegna: Date | null;
-    datiEstensione: unknown;
-  }>>`
+  const commesse = await db.$queryRaw<
+    Array<{
+      id: string;
+      stato: string;
+      avviataIl: Date | null;
+      prontaIl: Date | null;
+      consegnataIl: Date | null;
+      dataPrevistaConsegna: Date | null;
+      datiEstensione: unknown;
+    }>
+  >`
     SELECT c."id", c."stato", c."avviataIl", c."prontaIl", c."consegnataIl",
            c."dataPrevistaConsegna", r."datiEstensione"
     FROM "commessa" c
@@ -285,7 +307,9 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
       AND (${dataAEsclusiva}::timestamp IS NULL OR c."createdAt" < ${dataAEsclusiva})
   `;
 
-  const righeCommessa = await db.$queryRaw<Array<{ commessaId: string; quantita: number; costoUnitario: number | null }>>`
+  const righeCommessa = await db.$queryRaw<
+    Array<{ commessaId: string; quantita: number; costoUnitario: number | null }>
+  >`
     SELECT cr."commessaId", cr."quantita"::float8 AS "quantita", cr."costoUnitario"::float8 AS "costoUnitario"
     FROM "commessa_riga_produzione" cr
     JOIN "commessa" c ON c."id" = cr."commessaId"
@@ -295,7 +319,10 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
   `;
   const costiPerCommessa = calcolaCostiCompletiPerCommessa(righeCommessa);
 
-  const costoProduzioneTotale = commesse.reduce((totale, c) => totale + (costiPerCommessa.get(c.id) ?? 0), 0);
+  const costoProduzioneTotale = commesse.reduce(
+    (totale, c) => totale + (costiPerCommessa.get(c.id) ?? 0),
+    0,
+  );
   const commesseConCosto = commesse.filter((c) => costiPerCommessa.has(c.id));
   const tempoProduzione = commesse
     .filter((c) => c.avviataIl && c.prontaIl)
@@ -305,7 +332,13 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
 
   const margini: number[] = [];
   for (const commessa of commesse) {
-    if (!costiPerCommessa.has(commessa.id) || !commessa.datiEstensione || typeof commessa.datiEstensione !== 'object' || Array.isArray(commessa.datiEstensione)) continue;
+    if (
+      !costiPerCommessa.has(commessa.id) ||
+      !commessa.datiEstensione ||
+      typeof commessa.datiEstensione !== 'object' ||
+      Array.isArray(commessa.datiEstensione)
+    )
+      continue;
     const estensione = commessa.datiEstensione as Record<string, unknown>;
     const preventivo = estensione.preventivo;
     if (!preventivo || typeof preventivo !== 'object' || Array.isArray(preventivo)) continue;
@@ -319,14 +352,21 @@ export async function calcolaKpi(tenantId: string, filtri: FiltriKpi = {}): Prom
 
   const produzione = {
     commesseTotali: commesse.length,
-    commesseAperte: commesse.filter((c) => ['DA_AVVIARE', 'IN_PRODUZIONE', 'PRONTA'].includes(c.stato)).length,
+    commesseAperte: commesse.filter((c) =>
+      ['DA_AVVIARE', 'IN_PRODUZIONE', 'PRONTA'].includes(c.stato),
+    ).length,
     commesseChiuse: commesse.filter((c) => c.stato === 'CHIUSA').length,
     costoProduzioneTotale,
-    costoProduzioneMedio: commesseConCosto.length > 0 ? costoProduzioneTotale / commesseConCosto.length : 0,
+    costoProduzioneMedio:
+      commesseConCosto.length > 0 ? costoProduzioneTotale / commesseConCosto.length : 0,
     costoProduzioneDisponibile: commesseConCosto.length > 0,
     costoProduzioneCampione: commesseConCosto.length,
     tempoMedioProduzioneGiorni: {
-      valore: tempoProduzione.length > 0 ? Math.round((tempoProduzione.reduce((a, b) => a + b, 0) / tempoProduzione.length) * 10) / 10 : 0,
+      valore:
+        tempoProduzione.length > 0
+          ? Math.round((tempoProduzione.reduce((a, b) => a + b, 0) / tempoProduzione.length) * 10) /
+            10
+          : 0,
       disponibile: tempoProduzione.length > 0,
       campione: tempoProduzione.length,
     },
