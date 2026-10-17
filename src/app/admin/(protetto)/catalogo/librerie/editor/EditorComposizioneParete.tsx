@@ -104,11 +104,7 @@ export function EditorComposizioneParete() {
     }));
   }
 
-  function cambiaTipoVano(
-    colonnaIndice: number,
-    vanoIndice: number,
-    tipo: TipoVano,
-  ) {
+  function cambiaTipoVano(colonnaIndice: number, vanoIndice: number, tipo: TipoVano) {
     aggiornaVano(colonnaIndice, vanoIndice, (vano) => {
       if (tipo === 'CASSETTI') {
         return { tipo, altezzaCm: vano.altezzaCm, cassetti: 3 };
@@ -129,11 +125,7 @@ export function EditorComposizioneParete() {
     });
   }
 
-  function spostaVano(
-    colonnaIndice: number,
-    vanoIndice: number,
-    direzione: -1 | 1,
-  ) {
+  function spostaVano(colonnaIndice: number, vanoIndice: number, direzione: -1 | 1) {
     aggiornaColonna(colonnaIndice, (colonna) => {
       const vani = [...colonna.vani];
       const destinazione = vanoIndice + direzione;
