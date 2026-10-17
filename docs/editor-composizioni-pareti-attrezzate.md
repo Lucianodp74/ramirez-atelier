@@ -13,6 +13,8 @@ L'editor è deliberatamente senza persistenza: permette di modificare una compos
 - Modifica di larghezza colonna, altezza vano, profondità, ripiani, ante e numero di cassetti.
 - Selezione di schienale, materiale e finitura a partire dalle opzioni del catalogo Preventivatore.
 - Ingombro complessivo, riepilogo elementi, errori di validazione e copia JSON.
+- Il codice proposto deve rispettare `LIB-XXX-NN`; la copia è disabilitata se il formato è errato o il codice coincide con un modello già presente nel catalogo corrente.
+- Il JSON esportato include l'esito e gli errori della validazione del Preventivatore, oltre a un'avvertenza esplicita sui limiti produttivi.
 - Nessuna variazione di listino, motore prezzi, BOM, schema Prisma o stato di pubblicazione.
 
 ## Vincoli e verifiche
@@ -20,6 +22,7 @@ L'editor è deliberatamente senza persistenza: permette di modificare una compos
 - Riutilizzare `ComposizioneLibreria`, `moduliPreventivatoreDa`, `validaComposizione` e `CATALOGO_MODULI`.
 - Nessun dato di costo interno è mostrato nell'editor.
 - Non dichiarare una composizione pronta per la produzione sulla sola base della validazione del Preventivatore.
+- La validazione esportata è una fotografia del controllo strutturale corrente, non una certificazione tecnica; una bozza con errori resta esportabile solo se il codice proposto è valido, e gli errori sono inclusi nel JSON.
 - Nessuna modifica a `main`, merge o deploy di produzione senza approvazione esplicita.
 - Prima della review verificare type-check, lint, test pertinenti, formattazione, build e protezione della route.
 
