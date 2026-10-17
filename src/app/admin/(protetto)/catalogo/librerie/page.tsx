@@ -43,9 +43,16 @@ export default async function CatalogoLibreriePage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 p-4">
         <div>
           <p className="font-medium">Componi una nuova parete</p>
-          <p className="text-sm text-muted-foreground">Crea una variante da una bozza, verifica le misure ed esporta il JSON da revisionare.</p>
+          <p className="text-sm text-muted-foreground">
+            Crea una variante da una bozza, verifica le misure ed esporta il JSON da revisionare.
+          </p>
         </div>
-        <Link href="/admin/catalogo/librerie/editor" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">Apri editor</Link>
+        <Link
+          href="/admin/catalogo/librerie/editor"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          Apri editor
+        </Link>
       </div>
 
       <div className="space-y-3">
