@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -184,7 +184,10 @@ export function EditorComposizioneParete() {
             value={codice}
             onChange={(event) =>
               setCodice(
-                event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 20),
+                event.target.value
+                  .toUpperCase()
+                  .replace(/[^A-Z0-9-]/g, '')
+                  .slice(0, 20),
               )
             }
             maxLength={20}
