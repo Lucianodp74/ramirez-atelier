@@ -1,33 +1,27 @@
 # Editor interno per composizioni di pareti attrezzate — fase 1
 
-## Obiettivo
+## Stato implementazione
 
-Aggiungere un editor interno che consenta di comporre e verificare modelli di parete usando il catalogo librerie e il Preventivatore già esistenti, senza introdurre un secondo catalogo, un secondo motore prezzi o una migrazione database.
+La prima interfaccia è disponibile nell'area operativa a `/admin/catalogo/librerie/editor`, raggiungibile dal Catalogo Librerie. L'accesso ripete il controllo `richiediContesto({ modulo: 'catalogo', azione: 'leggi' })`.
 
-## Perimetro della prima iterazione
+L'editor è deliberatamente senza persistenza: permette di modificare una composizione in memoria e copiare il JSON risultante, ma non scrive nel database né modifica direttamente il catalogo in codice. Il JSON esportato è una bozza dimostrativa e deve essere revisionato prima di essere aggiunto al catalogo.
+
+## Funzioni incluse
+
+- Partenza da uno dei modelli `BOZZA` esistenti.
+- Aggiunta, rimozione e riordino di colonne e vani.
+- Modifica di larghezza colonna, altezza vano, profondità, ripiani, ante e numero di cassetti.
+- Selezione di schienale, materiale e finitura a partire dalle opzioni del catalogo Preventivatore.
+- Ingombro complessivo, riepilogo elementi, errori di validazione e copia JSON.
+- Nessuna variazione di listino, motore prezzi, BOM, schema Prisma o stato di pubblicazione.
+
+## Vincoli e verifiche
 
 - Riutilizzare `ComposizioneLibreria`, `moduliPreventivatoreDa`, `validaComposizione` e `CATALOGO_MODULI`.
-- Consentire di partire da un modello esistente in stato `BOZZA`.
-- Modificare colonne e vani ordinati dal basso verso l'alto, con larghezze, altezze, profondità, ripiani, ante e cassetti.
-- Mostrare ingombro complessivo, riepilogo degli elementi ed errori di validazione.
-- Generare una rappresentazione della composizione riutilizzabile nel catalogo in codice.
-- Mantenere l'editor esclusivamente nell'area autenticata; nessuna composizione diventa pubblica automaticamente.
-
-## Vincoli
-
-- Non cambiare prezzi, listino, regole commerciali, BOM o schema Prisma.
-- Non approvare automaticamente modelli dimostrativi.
-- Nessun dato di costo interno deve essere mostrato a utenti pubblici.
+- Nessun dato di costo interno è mostrato nell'editor.
 - Non dichiarare una composizione pronta per la produzione sulla sola base della validazione del Preventivatore.
-- Nessuna modifica a `main`, merge o deploy senza approvazione esplicita.
-
-## Verifiche necessarie
-
-1. Test unitari per aggiunta/rimozione e riordino di colonne e vani, identificativi univoci e composizioni vuote.
-2. Test di validazione per limiti dimensionali, tipi di vano e combinazioni di ante/cassetti/ripiani.
-3. Test di regressione: traduzione nei `ModuloConfigurato[]` e motore prezzi invariati.
-4. Verifica che bozze e anteprime restino protette dall'autenticazione e non siano accessibili al pubblico.
-5. Type-check, lint, test pertinenti, formattazione e build in CI prima della review.
+- Nessuna modifica a `main`, merge o deploy di produzione senza approvazione esplicita.
+- Prima della review verificare type-check, lint, test pertinenti, formattazione, build e protezione della route.
 
 ## Blocco prima dell'uso produttivo
 
@@ -39,7 +33,3 @@ Prima di approvare modelli reali, Ramirez Atelier deve confermare: fianchi condi
 - CAD/CAM, nesting, esportazione per macchine, editor 3D.
 - Pubblicazione di modelli reali o uso di fotografie non approvate.
 - Modifica dei prezzi o delle condizioni commerciali.
-
-## Criterio di completamento
-
-L'editor è accettabile quando permette di preparare una composizione valida e riproducibile, senza cambiare le stime o i flussi esistenti, e i test automatici dimostrano che la conversione usa ancora il Preventivatore esistente.
