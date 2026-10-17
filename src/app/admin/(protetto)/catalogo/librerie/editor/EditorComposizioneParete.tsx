@@ -622,7 +622,7 @@ export function EditorComposizioneParete() {
             </p>
             {errori.length > 0 && (
               <p role="alert" className="mt-2 text-sm text-destructive">
-                La bozza contiene {errori.length} errori di validazione. L'esito e l'elenco sono
+                La bozza contiene {errori.length} errori di validazione. L&apos;esito e l&apos;elenco sono
                 inclusi nel JSON esportato.
               </p>
             )}
