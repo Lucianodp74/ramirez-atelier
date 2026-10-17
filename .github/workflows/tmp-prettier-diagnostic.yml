@@ -1,9 +1,9 @@
 name: Temporary Prettier diagnostic
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/editor-composizioni-pareti
+      - main
   workflow_dispatch:
 
 permissions:
