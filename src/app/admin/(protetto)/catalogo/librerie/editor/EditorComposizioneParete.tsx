@@ -613,7 +613,10 @@ export function EditorComposizioneParete() {
             <p className="text-sm text-muted-foreground">
               JSON di bozza da revisionare. Nessun salvataggio automatico.
             </p>
-            <p role="note" className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <p
+              role="note"
+              className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+            >
               Bozza non certificata per produzione: richiede revisione tecnica di geometria,
               materiali, ferramenta, portate e costi.
             </p>
