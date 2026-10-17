@@ -36,7 +36,7 @@ export function EditorComposizioneParete() {
   const [modelloCodice, setModelloCodice] = useState(modelloIniziale?.codice ?? '');
   const [nome, setNome] = useState('Nuova composizione parete');
   const [composizione, setComposizione] = useState<ComposizioneLibreria>(() =>
-    copia(modelloIniziale!.composizione),
+    copia((modelloIniziale ?? MODELLI_LIBRERIE[0]!).composizione),
   );
   const [codice, setCodice] = useState('LIB-NEW-01');
   const [messaggio, setMessaggio] = useState('');
@@ -64,6 +64,18 @@ export function EditorComposizioneParete() {
       ),
     [codice, nome, composizione],
   );
+
+  if (!modelloIniziale) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-3 px-4 py-12 sm:px-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Editor pareti attrezzate</h1>
+        <p className="text-sm text-muted-foreground">
+          Non ci sono modelli in stato Bozza da cui partire. Crea o riporta almeno un modello in
+          Bozza nel Catalogo Librerie, poi riapri l’editor.
+        </p>
+      </div>
+    );
+  }
 
   function aggiornaComposizione(
     aggiornamento: (corrente: ComposizioneLibreria) => ComposizioneLibreria,
