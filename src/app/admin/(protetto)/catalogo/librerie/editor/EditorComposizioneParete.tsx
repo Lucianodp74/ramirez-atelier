@@ -138,7 +138,8 @@ export function EditorComposizioneParete() {
     try {
       await navigator.clipboard.writeText(json);
       setMessaggio(
-        'JSON copiato. Il modello resta una bozza: per inserirlo nel catalogo serve una PR revisionata.',
+        'JSON copiato. Il modello resta una bozza: per inserirlo nel catalogo serve una PR ' +
+          'revisionata.',
       );
     } catch {
       setMessaggio('Seleziona e copia manualmente il JSON generato qui sotto.');
@@ -515,8 +516,8 @@ export function EditorComposizioneParete() {
             </select>
           </label>
           <p className="text-xs text-muted-foreground">
-            Materiali e finiture derivano dal catalogo del Preventivatore. La selezione non certifica
-            la disponibilità commerciale o la fattibilità costruttiva.
+            Materiali e finiture derivano dal catalogo del Preventivatore. La selezione non
+            certifica la disponibilità commerciale o la fattibilità costruttiva.
           </p>
         </div>
 
