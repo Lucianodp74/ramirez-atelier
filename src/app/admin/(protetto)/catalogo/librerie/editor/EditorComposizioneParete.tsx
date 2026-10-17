@@ -613,13 +613,9 @@ export function EditorComposizioneParete() {
             <p className="text-sm text-muted-foreground">
               JSON di bozza da revisionare. Nessun salvataggio automatico.
             </p>
-            <p
-              role="note"
-              className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
-            >
-              Attenzione: la validazione riguarda solo le regole del Preventivatore, non certifica
-              geometria, fianchi condivisi, spessori, ferramenta, portate, giunzioni o costi.
-              Non usare questa esportazione per produzione.
+            <p role="note" className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+              Bozza non certificata per produzione: richiede revisione tecnica di geometria,
+              materiali, ferramenta, portate e costi.
             </p>
             {errori.length > 0 && (
               <p role="alert" className="mt-2 text-sm text-destructive">
