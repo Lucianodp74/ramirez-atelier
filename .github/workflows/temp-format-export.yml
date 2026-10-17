@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format-export:
@@ -24,7 +24,8 @@ jobs:
       - name: Format editor and print encoded result
         run: |
           npx prettier --write "src/app/admin/(protetto)/catalogo/librerie/editor/EditorComposizioneParete.tsx"
-          echo "FORMATTED_EDITOR_BASE64_START"
-          base64 -w0 "src/app/admin/(protetto)/catalogo/librerie/editor/EditorComposizioneParete.tsx"
-          echo
-          echo "FORMATTED_EDITOR_BASE64_END"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "src/app/admin/(protetto)/catalogo/librerie/editor/EditorComposizioneParete.tsx"
+          git diff --cached --quiet || git commit -m "style: apply Prettier to wall editor"
+          git push origin HEAD:feat/editor-composizioni-pareti
