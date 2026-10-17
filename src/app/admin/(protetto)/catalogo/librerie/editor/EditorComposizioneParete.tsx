@@ -3,10 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  MODELLI_LIBRERIE,
-  type ModelloLibreria,
-} from '@/lib/catalogo-librerie/catalogo';
+import { MODELLI_LIBRERIE } from '@/lib/catalogo-librerie/catalogo';
 import {
   ingombroComposizione,
   opzioniDisponibili,
