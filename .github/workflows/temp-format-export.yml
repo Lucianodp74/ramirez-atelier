@@ -1,0 +1,27 @@
+name: Temporary editor formatter export
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  format-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Format editor and print encoded result
+        run: |
+          npx prettier --write "src/app/admin/(protetto)/catalogo/librerie/editor/EditorComposizioneParete.tsx"
+          echo "FORMATTED_EDITOR_BASE64_START"
+          base64 -w0 "src/app/admin/(protetto)/catalogo/librerie/editor/EditorComposizioneParete.tsx"
+          echo
+          echo "FORMATTED_EDITOR_BASE64_END"
