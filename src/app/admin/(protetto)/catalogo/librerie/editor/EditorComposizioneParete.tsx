@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MODELLI_LIBRERIE } from '@/lib/catalogo-librerie/catalogo';
+import { FORMATO_CODICE_MODELLO, MODELLI_LIBRERIE } from '@/lib/catalogo-librerie/catalogo';
 import {
   ingombroComposizione,
   opzioniDisponibili,
@@ -56,6 +56,9 @@ export function EditorComposizioneParete() {
   const ingombro = useMemo(() => ingombroComposizione(composizione), [composizione]);
   const riepilogo = useMemo(() => riepilogoElementi(composizione), [composizione]);
   const opzioni = useMemo(() => opzioniDisponibili(composizione), [composizione]);
+  const codiceValido =
+    FORMATO_CODICE_MODELLO.test(codice) &&
+    !MODELLI_LIBRERIE.some((modello) => modello.codice === codice);
   const json = useMemo(
     () =>
       JSON.stringify(
@@ -69,11 +72,17 @@ export function EditorComposizioneParete() {
           componibile: true,
           immagini: [],
           composizione,
+          validazionePreventivatore: {
+            valida: errori.length === 0,
+            errori,
+          },
+          avvertenza:
+            'Bozza dimostrativa non certificata per produzione. Non usare per distinta, costo o lavorazione senza revisione tecnica.',
         },
         null,
         2,
       ),
-    [codice, nome, composizione],
+    [codice, nome, composizione, errori],
   );
 
   if (!modelloIniziale) {
@@ -216,8 +225,19 @@ export function EditorComposizioneParete() {
             maxLength={20}
           />
           <span className="text-xs text-muted-foreground">
-            Il codice è un suggerimento, non viene riservato.
+            Formato richiesto: LIB-XXX-NN. Il codice non viene riservato.
           </span>
+          {!FORMATO_CODICE_MODELLO.test(codice) && (
+            <span role="alert" className="block text-xs text-destructive">
+              Codice non valido: usa il formato LIB-XXX-NN.
+            </span>
+          )}
+          {FORMATO_CODICE_MODELLO.test(codice) &&
+            MODELLI_LIBRERIE.some((modello) => modello.codice === codice) && (
+              <span role="alert" className="block text-xs text-destructive">
+                Questo codice è già presente nel catalogo.
+              </span>
+            )}
         </label>
       </section>
 
@@ -591,11 +611,21 @@ export function EditorComposizioneParete() {
           <div>
             <h2 className="text-lg font-semibold">Esporta la bozza</h2>
             <p className="text-sm text-muted-foreground">
-              JSON pronto da revisionare e integrare nel catalogo in codice. Nessun salvataggio
-              automatico.
+              JSON di bozza da revisionare. Nessun salvataggio automatico.
             </p>
+            <p role="note" className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+              Attenzione: la validazione riguarda solo le regole del Preventivatore, non certifica
+              geometria, fianchi condivisi, spessori, ferramenta, portate, giunzioni o costi.
+              Non usare questa esportazione per produzione.
+            </p>
+            {errori.length > 0 && (
+              <p role="alert" className="mt-2 text-sm text-destructive">
+                La bozza contiene {errori.length} errori di validazione. L'esito e l'elenco sono
+                inclusi nel JSON esportato.
+              </p>
+            )}
           </div>
-          <Button type="button" onClick={copiaJson}>
+          <Button type="button" onClick={copiaJson} disabled={!codiceValido}>
             Copia JSON
           </Button>
         </div>
