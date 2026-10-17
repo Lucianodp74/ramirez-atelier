@@ -1,3 +1,4 @@
+import { generaTokenRipresa } from '@/lib/identity/token';
 import { db } from '@/server/db';
 import { transizioneAmmessa } from '@/lib/workflow';
 import { STATI_OPERATIVI } from '@/lib/workflow';
@@ -258,6 +259,7 @@ export async function creaRichiestaDaPuntoDiPartenza(
     data: {
       tenantId,
       tipoProgettoId: originale.tipoProgettoId,
+      tokenRipresa: generaTokenRipresa(),
       datiFormJson: originale.datiFormJson ?? {},
       // Stato BOZZA, nessun dato del cliente originale: il nuovo cliente (lo
       // stesso o un altro) va identificato da chi completa questa bozza.
