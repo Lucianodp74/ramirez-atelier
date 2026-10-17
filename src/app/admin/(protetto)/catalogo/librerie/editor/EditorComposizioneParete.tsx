@@ -18,6 +18,17 @@ import {
 const modelliBozza = MODELLI_LIBRERIE.filter((modello) => modello.stato === 'BOZZA');
 const modelloIniziale = modelliBozza[0];
 
+// Fallback puramente strutturale: consente di eseguire gli hook React anche
+// quando il catalogo non contiene alcun modello. La schermata mostra poi il
+// messaggio dedicato e non permette di modificare/esportare questa struttura.
+const COMPOSIZIONE_VUOTA: ComposizioneLibreria = {
+  profonditaCm: 35,
+  schienale: true,
+  materiale: 'TRUCIOLARE',
+  finitura: 'MELAMINICO',
+  colonne: [],
+};
+
 function copia<T>(valore: T): T {
   return JSON.parse(JSON.stringify(valore)) as T;
 }
@@ -36,7 +47,7 @@ export function EditorComposizioneParete() {
   const [modelloCodice, setModelloCodice] = useState(modelloIniziale?.codice ?? '');
   const [nome, setNome] = useState('Nuova composizione parete');
   const [composizione, setComposizione] = useState<ComposizioneLibreria>(() =>
-    copia((modelloIniziale ?? MODELLI_LIBRERIE[0]!).composizione),
+    copia(modelloIniziale?.composizione ?? COMPOSIZIONE_VUOTA),
   );
   const [codice, setCodice] = useState('LIB-NEW-01');
   const [messaggio, setMessaggio] = useState('');
