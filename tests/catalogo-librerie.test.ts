@@ -216,7 +216,6 @@ describe('composizione libreria', () => {
   });
 });
 
-
 describe('composizione libreria — casi limite strutturali', () => {
   it('rileva identificativi di colonna mancanti o duplicati', () => {
     const duplicati = {
