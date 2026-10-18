@@ -85,8 +85,8 @@ I valori dimostrativi non devono essere attivati automaticamente.
 
 ## 4. Gate aperti
 
-- [ ] Tracciato il percorso reale di caricamento tariffe dal database al motore.
-- [ ] Verificato se le tabelle tariffarie esistenti possono essere riutilizzate.
+- [x] Tracciato il percorso di caricamento tariffe dal database al motore tramite `caricaTariffePreventivatore`.
+- [x] Verificato che la tabella legacy `listino_prezzo` e il relativo storico esistono nelle migrazioni e sono riutilizzati dai servizi.
 - [ ] Prezzi e conversioni approvati dal responsabile acquisti.
 - [ ] Regole costruttive e distinta della parete campione approvate dal responsabile tecnico.
 - [ ] Versionamento tariffario e retrocompatibilità definiti.
@@ -114,9 +114,11 @@ L'esame di `prisma/schema.prisma` non mostra un modello Prisma dedicato a `listi
 
 - `src/server/services/preventivatore-listino-service.ts` legge da `listino_prezzo` le voci attive del tenant e costruisce `TariffePreventivatore`, controllando codici e unità di misura.
 - Le tariffe obbligatorie mancanti, inattive o con unità errata causano un errore esplicito: questo loader non ripiega su `TARIFFE_DEMO`. `FER-SCORREVOLE` è opzionale se manca o è inattivo.
-- `src/app/admin/(protetto)/catalogo/preventivatore/azioni.ts` usa il loader per il banco prova amministrativo `calcolaTestPreventivatore`, protetto con `richiediContesto({ modulo: 'catalogo', azione: 'leggi' })`.
+- `src/app/preventivatore/azioni.ts` usa lo stesso loader sia in `calcolaStimaPreventivatore` sia in `salvaRichiestaPreventivatore`: anche il preventivatore pubblico calcola quindi la stima dal listino del tenant e non usa `TARIFFE_DEMO` come fallback.
+- Quando salva la richiesta, il codice persiste uno snapshot dei moduli e dei risultati aggregati (prezzo indicativo, prezzo falegname, costo produzione e data), oltre alla BOM iniziale. Non persiste però la versione o la copia completa delle tariffe che hanno generato quei valori.
+- `src/app/admin/(protetto)/catalogo/preventivatore/azioni.ts` usa il loader anche per il banco prova amministrativo `calcolaTestPreventivatore`, protetto con `richiediContesto({ modulo: 'catalogo', azione: 'leggi' })`.
 - `src/app/admin/(protetto)/catalogo/preventivatore/azioni-setup.ts` prepara eventuali codici tariffari mancanti come voci inattive a prezzo zero; non attiva automaticamente i valori dimostrativi e segnala le unità incompatibili.
-- Il default `TARIFFE_DEMO` resta nel motore come default tecnico per chiamate che non passano tariffe esplicite. Il percorso amministrativo individuato passa invece le tariffe caricate dal listino.
+- Il default `TARIFFE_DEMO` resta nel motore come default tecnico per chiamate che non passano tariffe esplicite. I due percorsi server-side esaminati (preventivatore pubblico e banco prova amministrativo) passano invece tariffe caricate dal listino.
 
 ### Distinzione rispetto al preventivo BOM
 
@@ -125,6 +127,6 @@ Il percorso del Preventivatore Modulare e il preventivo commerciale basato su BO
 ### Limiti che restano aperti
 
 - Non è stato verificato lo stato reale delle righe di listino in alcun database.
-- Non è stata dimostrata una versione immutabile del listino collegata a ogni preventivo BOM; il listino ha storico prezzi, mentre il preventivo BOM salva uno snapshot dei parametri commerciali e della versione BOM.
+- Non è stata dimostrata una versione immutabile del listino collegata a ogni preventivo: il preventivatore pubblico salva i risultati aggregati ma non le tariffe applicate; il preventivo BOM salva uno snapshot dei parametri commerciali e della versione BOM, non una versione del listino.
 - Non va creato un secondo modello tariffario finché non è definito il rapporto tra `listino_prezzo`, il banco prova del Preventivatore Modulare e il flusso preventivo BOM.
 - Nessuna modifica funzionale, migrazione o modifica al database è stata eseguita.
