@@ -54,14 +54,6 @@ jobs:
       - name: Prisma seed
         run: npx prisma db seed
 
-      - name: Diagnostica Prettier documenti (temporanea)
-        run: |
-          for file in docs/listino-base-pareti-attrezzate.md docs/scheda-tecnica-composizione-parete-campione.md; do
-            output="/tmp/$(basename "$file")"
-            npx prettier "$file" > "$output"
-            diff -u "$file" "$output" || true
-          done
-
       - name: Format check
         env:
           EVENTO: ${{ github.event_name }}
