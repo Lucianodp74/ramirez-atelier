@@ -1,8 +1,8 @@
 # Listino base — pareti attrezzate Ramirez Atelier
 
-**Versione:** 0.1 — 18 ottobre 2026  
-**Stato:** BASE DI RICERCA, NON APPROVATA PER PREVENTIVI DEFINITIVI  
-**Responsabile aggiornamento:** falegname / responsabile acquisti  
+**Versione:** 0.1 — 18 ottobre 2026
+**Stato:** BASE DI RICERCA, NON APPROVATA PER PREVENTIVI DEFINITIVI
+**Responsabile aggiornamento:** falegname / responsabile acquisti
 **Ambito:** materiali, ferramenta, lavorazioni e voci necessarie alla distinta base delle pareti attrezzate.
 
 > Questo documento è un punto di partenza operativo. I prezzi online sono riferimenti pubblici e non equivalgono a offerte riservate ai professionisti. Prima di usarli in un preventivo, il falegname deve confermare codice prodotto, disponibilità, formato, trasporto, IVA, sfrido e prezzo effettivo del proprio fornitore. I valori non verificati non devono essere trattati come prezzi Ramirez Atelier approvati.
@@ -20,24 +20,24 @@
 
 Questi esempi servono a dimostrare come registrare una fonte. Sono **benchmark orientativi**, non prezzi d'acquisto confermati da Ramirez Atelier.
 
-| ID provvisorio | Voce e specifica pubblicata | Unità | Prezzo pubblicato | Stato / uso |
-|---|---|---:|---:|---|
-| REF-PAN-001 | Pannello multistrato di pioppo, 250 × 122 cm, sp. 10 mm | pannello | € 58,50 | Riferimento retail; verificare disponibilità e prezzo corrente |
-| REF-PAN-002 | Pannello multistrato di pioppo, 250 × 122 cm, sp. 15 mm | pannello | € 80,50 | Riferimento retail; verificare disponibilità e prezzo corrente |
-| REF-PAN-003 | Compensato/multistrato di pioppo rivestito HPL, sp. 18 mm | m² | € 29,65 | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
-| REF-PAN-004 | Compensato/multistrato di pioppo rivestito HPL, sp. 25 mm | m² | € 36,75 | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
+| ID provvisorio | Voce e specifica pubblicata                               | Unità    | Prezzo pubblicato | Stato / uso                                                      |
+| -------------- | --------------------------------------------------------- | -------: | ----------------: | ---------------------------------------------------------------- |
+| REF-PAN-001    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 10 mm   | pannello | € 58,50           | Riferimento retail; verificare disponibilità e prezzo corrente   |
+| REF-PAN-002    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 15 mm   | pannello | € 80,50           | Riferimento retail; verificare disponibilità e prezzo corrente   |
+| REF-PAN-003    | Compensato/multistrato di pioppo rivestito HPL, sp. 18 mm | m²       | € 29,65           | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
+| REF-PAN-004    | Compensato/multistrato di pioppo rivestito HPL, sp. 25 mm | m²       | € 36,75           | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
 
 ### Fonti da verificare al momento dell'ordine
 
-1. Leroy Merlin — pannelli multistrato in pioppo, formati e prezzi pubblicati:  
+1. Leroy Merlin — pannelli multistrato in pioppo, formati e prezzi pubblicati:
    https://www.leroymerlin.it/prodotti/falegnameria/tavole-pannelli-in-legno-e-cavalletti/pannelli-in-legno-pretagliati/pannelli-compensato/pannello-compensato-multistrato-p.html?p=5
-2. Camera di Commercio di Cuneo — Prezzario 2025, riferimento per pannelli multistrato rivestiti HPL:  
+2. Camera di Commercio di Cuneo — Prezzario 2025, riferimento per pannelli multistrato rivestiti HPL:
    https://cn.camcom.it/sites/default/files/uploads/documents/Prezzi/Prezzario/2025/Prezzario_2025r2_agg.pdf
-3. Ferramenta Livenza — catalogo per reggipiani, giunzioni, cerniere, sistemi di apertura, attaccaglie e antiribaltamento:  
+3. Ferramenta Livenza — catalogo per reggipiani, giunzioni, cerniere, sistemi di apertura, attaccaglie e antiribaltamento:
    https://ferramentalivenza.it/catalogo/
-4. Effegi Brevetti — catalogo e istruzioni tecniche per giunzioni, livellatori e reggipiani:  
+4. Effegi Brevetti — catalogo e istruzioni tecniche per giunzioni, livellatori e reggipiani:
    https://www.effegibrevetti.com/it/catalogo/
-5. FIME — catalogo ferramenta, cerniere, guide, sistemi scorrevoli, reggipiani e illuminazione:  
+5. FIME — catalogo ferramenta, cerniere, guide, sistemi scorrevoli, reggipiani e illuminazione:
    https://www.fimesrl.it/cataloghi/catalogo_fime_ferramenta_060423/toc/
 
 **Nota prezzi:** i valori sopra sono stati reperiti da pagine pubbliche durante la ricerca del 18/10/2026. Le pagine possono cambiare; prima di ordinare aprire la fonte e registrare il prezzo effettivamente confermato. I prezzi del prezzario pubblico non sono automaticamente comparabili con quelli retail o con un listino professionale.
@@ -46,23 +46,23 @@ Questi esempi servono a dimostrare come registrare una fonte. Sono **benchmark o
 
 Duplicare una riga per ogni combinazione distinta di materiale, spessore, finitura, formato e fornitore.
 
-| Campo | Cosa registrare |
-|---|---|
-| Codice interno | Codice stabile, es. PAN-MEL-018-BIANCO |
-| Categoria | Pannello, bordo, ferramenta, illuminazione, lavorazione, trasporto |
-| Descrizione precisa | Marca, serie, codice articolo, materiale, finitura e dimensioni |
-| Fornitore | Ragione sociale o punto vendita |
-| Unità d'acquisto | pannello, pezzo, confezione, metro lineare, m², ora |
-| Quantità per unità d'acquisto | es. area del pannello in m² o pezzi per confezione |
-| Prezzo netto d'acquisto | valore da offerta/fattura, al netto IVA |
-| IVA | aliquota effettiva da documento |
-| Trasporto / extra | costo e criterio di ripartizione |
-| Sfrido (%) | definito in base a materiale e piano di taglio, non inventato |
-| Data prezzo | data offerta, fattura o verifica |
-| Fonte / documento | URL, numero offerta o riferimento fattura |
-| Validità | data scadenza o “da riconfermare” |
-| Stato | DA VERIFICARE / CONFERMATO / SCADUTO / NON UTILIZZARE |
-| Verificato da | nome o ruolo e data di conferma |
+| Campo                         | Cosa registrare                                                    |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Codice interno                | Codice stabile, es. PAN-MEL-018-BIANCO                             |
+| Categoria                     | Pannello, bordo, ferramenta, illuminazione, lavorazione, trasporto |
+| Descrizione precisa           | Marca, serie, codice articolo, materiale, finitura e dimensioni    |
+| Fornitore                     | Ragione sociale o punto vendita                                    |
+| Unità d'acquisto              | pannello, pezzo, confezione, metro lineare, m², ora                |
+| Quantità per unità d'acquisto | es. area del pannello in m² o pezzi per confezione                 |
+| Prezzo netto d'acquisto       | valore da offerta/fattura, al netto IVA                            |
+| IVA                           | aliquota effettiva da documento                                    |
+| Trasporto / extra             | costo e criterio di ripartizione                                   |
+| Sfrido (%)                    | definito in base a materiale e piano di taglio, non inventato      |
+| Data prezzo                   | data offerta, fattura o verifica                                   |
+| Fonte / documento             | URL, numero offerta o riferimento fattura                          |
+| Validità                      | data scadenza o “da riconfermare”                                  |
+| Stato                         | DA VERIFICARE / CONFERMATO / SCADUTO / NON UTILIZZARE              |
+| Verificato da                 | nome o ruolo e data di conferma                                    |
 
 ## 4. Categorie da censire
 
