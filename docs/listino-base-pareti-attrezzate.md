@@ -20,12 +20,12 @@
 
 Questi esempi servono a dimostrare come registrare una fonte. Sono **benchmark orientativi**, non prezzi d'acquisto confermati da Ramirez Atelier.
 
-| ID provvisorio | Voce e specifica pubblicata                               | Unità    | Prezzo pubblicato | Stato / uso                                                      |
+| ID provvisorio | Voce e specifica pubblicata                               |    Unità | Prezzo pubblicato | Stato / uso                                                      |
 | -------------- | --------------------------------------------------------- | -------: | ----------------: | ---------------------------------------------------------------- |
-| REF-PAN-001    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 10 mm   | pannello | € 58,50           | Riferimento retail; verificare disponibilità e prezzo corrente   |
-| REF-PAN-002    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 15 mm   | pannello | € 80,50           | Riferimento retail; verificare disponibilità e prezzo corrente   |
-| REF-PAN-003    | Compensato/multistrato di pioppo rivestito HPL, sp. 18 mm | m²       | € 29,65           | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
-| REF-PAN-004    | Compensato/multistrato di pioppo rivestito HPL, sp. 25 mm | m²       | € 36,75           | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
+| REF-PAN-001    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 10 mm   | pannello |           € 58,50 | Riferimento retail; verificare disponibilità e prezzo corrente   |
+| REF-PAN-002    | Pannello multistrato di pioppo, 250 × 122 cm, sp. 15 mm   | pannello |           € 80,50 | Riferimento retail; verificare disponibilità e prezzo corrente   |
+| REF-PAN-003    | Compensato/multistrato di pioppo rivestito HPL, sp. 18 mm |       m² |           € 29,65 | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
+| REF-PAN-004    | Compensato/multistrato di pioppo rivestito HPL, sp. 25 mm |       m² |           € 36,75 | Prezzario pubblico 2025; specifica e contesto diversi dal retail |
 
 ### Fonti da verificare al momento dell'ordine
 
