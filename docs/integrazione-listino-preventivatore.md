@@ -1,6 +1,6 @@
 # Integrazione del listino nel Preventivatore — audit e piano
 
-**Stato:** audit preliminare, nessuna modifica al motore prezzi.  
+**Stato:** audit preliminare, nessuna modifica al motore prezzi.
 **Riferimento:** PR #116 e issue #117.
 
 ## 1. Evidenze dal codice esaminato
@@ -50,6 +50,7 @@ Il CSV descrive articoli acquistabili (fornitore, codice, confezione e prezzo); 
 ### Fase B — modello dati, solo se necessario
 
 Separare logicamente:
+
 - **Articolo fornitore:** codice interno, fornitore, codice articolo, descrizione, unità d'acquisto e quantità per confezione.
 - **Rilevazione prezzo:** prezzo, valuta, IVA, trasporto, fonte, data e validità; storico append-only.
 - **Tariffa di calcolo approvata:** codice motore, unità normalizzata, valore netto, conversione, sfrido approvato, fonte e revisore.
@@ -97,6 +98,33 @@ Questo è un piano di audit, non un'approvazione di prezzi o di produzione. Non 
 
 ## 6. Nota aggiuntiva sullo schema Prisma
 
-L'esame di `prisma/schema.prisma` sul branch non mostra un modello Prisma dedicato alle tariffe del Preventivatore né un modello `listino_prezzo`. Lo schema contiene invece `ProgettoPreimpostato`, che conserva i moduli configurati e non il prezzo. Al contempo, la fixture dei test documenta migrazioni di configurazione delle tariffe. Questo significa che il solo schema Prisma non basta a ricostruire il percorso tariffario: prima di implementare occorre verificare le migrazioni SQL, il codice che legge le tariffe e l'eventuale tabella legacy, senza accedere al database di produzione.
+L'esame di `prisma/schema.prisma` non mostra un modello Prisma dedicato a `listino_prezzo`; tuttavia, le migrazioni SQL e i servizi server usano esplicitamente questa tabella legacy tramite query SQL parametrizzate. Il percorso è stato ricostruito dal codice del branch senza collegarsi al database di produzione.
 
-Questa verifica resta un gate aperto: non è corretto dichiarare già individuata la fonte runtime delle tariffe finché non è tracciato il punto di lettura effettivo.
+## 7. Percorso tariffario runtime verificato
+
+### Persistenza e migrazioni
+
+- `prisma/migrations/20260824150000_listino_falegname/migration.sql` crea `listino_prezzo` e `listino_prezzo_storico`.
+- `prisma/migrations/20260826150000_estendi_listino_materiali_composizioni/migration.sql` aggiunge il tipo (`MATERIALE`, `COMPONENTE`, `COMPOSIZIONE`) e i campi dimensionali.
+- `prisma/migrations/20260927120000_configura_tariffe_preventivatore_ramirez/migration.sql` inserisce le 17 tariffe tecniche iniziali. Il valore iniziale del ricarico è 35%; la migrazione successiva `20261007211500_imposta_ricarico_commerciale_40_ramirez` lo porta al 40% se la riga corrispondente esiste.
+- `prisma/migrations/20261007192000_imposta_sistema_scorrevole_ramirez/migration.sql` imposta `FER-SCORREVOLE` a 700 e lo attiva se la riga esiste.
+- Le migrazioni mostrano valori di configurazione del sistema, non provano da sole che il database di un ambiente specifico le abbia già applicate. Non è stato interrogato alcun database.
+
+### Lettura dal database al motore
+
+- `src/server/services/preventivatore-listino-service.ts` legge da `listino_prezzo` le voci attive del tenant e costruisce `TariffePreventivatore`, controllando codici e unità di misura.
+- Le tariffe obbligatorie mancanti, inattive o con unità errata causano un errore esplicito: questo loader non ripiega su `TARIFFE_DEMO`. `FER-SCORREVOLE` è opzionale se manca o è inattivo.
+- `src/app/admin/(protetto)/catalogo/preventivatore/azioni.ts` usa il loader per il banco prova amministrativo `calcolaTestPreventivatore`, protetto con `richiediContesto({ modulo: 'catalogo', azione: 'leggi' })`.
+- `src/app/admin/(protetto)/catalogo/preventivatore/azioni-setup.ts` prepara eventuali codici tariffari mancanti come voci inattive a prezzo zero; non attiva automaticamente i valori dimostrativi e segnala le unità incompatibili.
+- Il default `TARIFFE_DEMO` resta nel motore come default tecnico per chiamate che non passano tariffe esplicite. Il percorso amministrativo individuato passa invece le tariffe caricate dal listino.
+
+### Distinzione rispetto al preventivo BOM
+
+Il percorso del Preventivatore Modulare e il preventivo commerciale basato su BOM non risultano un unico flusso. `src/app/api/admin/bom/preventivo/route.ts` passa al servizio i campi di pricing ricevuti nel body della richiesta; `src/lib/bom-pricing-calculation.ts` applica il default commerciale del 40% se non specificato. Il servizio che calcola il prezzo BOM non richiama `caricaTariffePreventivatore`. Prima di un'integrazione, occorre quindi chiarire quale dei due flussi deve governare i preventivi di pareti attrezzate e verificare lato server autorizzazioni, origine dei parametri commerciali e snapshot delle condizioni applicate.
+
+### Limiti che restano aperti
+
+- Non è stato verificato lo stato reale delle righe di listino in alcun database.
+- Non è stata dimostrata una versione immutabile del listino collegata a ogni preventivo BOM; il listino ha storico prezzi, mentre il preventivo BOM salva uno snapshot dei parametri commerciali e della versione BOM.
+- Non va creato un secondo modello tariffario finché non è definito il rapporto tra `listino_prezzo`, il banco prova del Preventivatore Modulare e il flusso preventivo BOM.
+- Nessuna modifica funzionale, migrazione o modifica al database è stata eseguita.
