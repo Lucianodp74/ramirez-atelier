@@ -94,3 +94,9 @@ I valori dimostrativi non devono essere attivati automaticamente.
 ## 5. Confini
 
 Questo è un piano di audit, non un'approvazione di prezzi o di produzione. Non modifica motore, tariffe, migrazioni, BOM, database o preventivi. Non autorizza merge o deploy.
+
+## 6. Nota aggiuntiva sullo schema Prisma
+
+L'esame di `prisma/schema.prisma` sul branch non mostra un modello Prisma dedicato alle tariffe del Preventivatore né un modello `listino_prezzo`. Lo schema contiene invece `ProgettoPreimpostato`, che conserva i moduli configurati e non il prezzo. Al contempo, la fixture dei test documenta migrazioni di configurazione delle tariffe. Questo significa che il solo schema Prisma non basta a ricostruire il percorso tariffario: prima di implementare occorre verificare le migrazioni SQL, il codice che legge le tariffe e l'eventuale tabella legacy, senza accedere al database di produzione.
+
+Questa verifica resta un gate aperto: non è corretto dichiarare già individuata la fonte runtime delle tariffe finché non è tracciato il punto di lettura effettivo.
