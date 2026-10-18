@@ -183,4 +183,5 @@ Compilare questa sezione solo dopo l'approvazione tecnica delle sezioni pertinen
 - Riferimento all'approvazione tracciabile:
 
 ---
+
 La scheda compilata deve essere revisionata e versionata. I campi “DA DEFINIRE” non costituiscono valori predefiniti né autorizzano inferenze automatiche. La CI verifica il software, non certifica la sicurezza strutturale o la fattibilità produttiva.
