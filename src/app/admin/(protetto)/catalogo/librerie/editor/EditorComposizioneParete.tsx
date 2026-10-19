@@ -262,7 +262,7 @@ export function EditorComposizioneParete() {
           <div>
             <h2 className="text-lg font-semibold">Struttura della parete</h2>
             <p className="text-sm text-muted-foreground">
-              Le colonne sono da sinistra a destra; i vani dal basso verso l’alto.
+              Le colonne sono da sinistra a destra; i vani dal basso verso l’alto. Le misure iniziali sono valori dimostrativi, non specifiche costruttive approvate.
             </p>
           </div>
           <Button
@@ -326,7 +326,7 @@ export function EditorComposizioneParete() {
                 </div>
               </div>
               <label className="block space-y-1 text-sm">
-                <span>Larghezza colonna (cm)</span>
+                <span>Larghezza colonna (cm, valore iniziale dimostrativo)</span>
                 <Input
                   type="number"
                   min={1}
@@ -588,7 +588,7 @@ export function EditorComposizioneParete() {
           <div className="rounded-md border border-border p-3">
             <p className="font-medium">
               {errori.length === 0
-                ? 'Validazione Preventivatore superata'
+                ? 'Controlli strutturali superati — non è approvazione tecnica'
                 : `${errori.length} problemi da correggere`}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
