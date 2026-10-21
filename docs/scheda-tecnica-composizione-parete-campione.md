@@ -2,6 +2,35 @@
 
 > **Stato: DA COMPILARE E APPROVARE.** Questo documento è un modello di raccolta dati, non una specifica costruttiva. Non contiene valori tecnici approvati. Non usarlo per produrre, preventivare o ordinare materiali finché il responsabile tecnico non avrà compilato e firmato i campi pertinenti e verificato il campione.
 
+## Candidato di lavoro — da confermare
+
+**Modello proposto:** `LIB-ATE-01 — Atelier 270`, attualmente `BOZZA` e `dimostrativo: true` nel catalogo software. La scelta è motivata dalla presenza di tre colonne affiancate, basi con ante e vani aperti superiori, utile per verificare la distinta fisica e la regola dei fianchi tra colonne adiacenti.
+
+**Importante:** i dati sotto sono una trascrizione del modello dimostrativo nel codice, non quote approvate, disegno tecnico o istruzioni di produzione. Servono soltanto a identificare il candidato da confermare.
+
+| Campo presente nel modello dimostrativo | Dato del codice | Stato |
+| -------------------------------------- | --------------- | ----- |
+| Colonne | 3 colonne da 90 cm ciascuna | Solo dimostrativo |
+| Larghezza complessiva risultante dai dati demo | 270 cm | Da verificare su disegno approvato |
+| Vano inferiore di ciascuna colonna | Base con ante, altezza demo 80 cm | Non approvato |
+| Vano superiore di ciascuna colonna | Vano aperto, altezza demo 160 cm | Non approvato |
+| Altezza totale risultante dai dati demo | 240 cm (80 + 160) | Da verificare; non dedurre dal nome commerciale |
+| Profondità presente nel modello | 40 cm | Non approvata |
+| Ripiani del vano superiore | 3 per colonna nel dato demo | Quantità da verificare sul disegno |
+| Ante della base | 2 per colonna nel dato demo | Ferramenta e configurazione da confermare |
+| Materiale/finitura indicati nel modello | Truciolare / melaminico | Non confermati per acquisto o produzione |
+| Schienale | Presente come flag nel modello | Costruzione, materiale, spessore e fissaggio da definire |
+
+### Decisione preliminare
+
+- Conferma responsabile tecnico del candidato: ☐ Sì ☐ No
+- Se no, codice/nome del campione alternativo:
+- Disegno quotato reale e versione:
+- Distinta fisica approvata e versione:
+- Responsabile e data della decisione:
+
+Non convertire i valori dimostrativi in valori approvati copiandoli nella scheda tecnica. Compilare le sezioni successive esclusivamente a partire da disegno, distinta, schede tecniche e decisioni tracciabili del responsabile tecnico.
+
 ## 1. Identificazione e approvazione
 
 - Codice composizione campione:
