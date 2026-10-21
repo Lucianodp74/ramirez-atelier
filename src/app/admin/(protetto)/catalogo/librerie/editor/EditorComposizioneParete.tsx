@@ -264,6 +264,9 @@ export function EditorComposizioneParete() {
             <p className="text-sm text-muted-foreground">
               Le colonne sono da sinistra a destra; i vani dal basso verso l’alto.
             </p>
+            <p className="text-sm text-muted-foreground">
+              Le misure iniziali sono dimostrative, non sono specifiche costruttive approvate.
+            </p>
           </div>
           <Button
             type="button"
@@ -326,7 +329,7 @@ export function EditorComposizioneParete() {
                 </div>
               </div>
               <label className="block space-y-1 text-sm">
-                <span>Larghezza colonna (cm)</span>
+                <span>Larghezza colonna (cm, valore iniziale dimostrativo)</span>
                 <Input
                   type="number"
                   min={1}
@@ -405,7 +408,7 @@ export function EditorComposizioneParete() {
                         </select>
                       </label>
                       <label className="space-y-1 text-sm">
-                        <span>Altezza (cm)</span>
+                        <span>Altezza (cm, valore iniziale dimostrativo)</span>
                         <Input
                           type="number"
                           min={1}
@@ -511,7 +514,7 @@ export function EditorComposizioneParete() {
             Prevedi schienale
           </label>
           <label className="block space-y-1 text-sm">
-            <span>Profondità (cm)</span>
+            <span>Profondità (cm, valore iniziale dimostrativo)</span>
             <Input
               type="number"
               min={1}
@@ -588,7 +591,7 @@ export function EditorComposizioneParete() {
           <div className="rounded-md border border-border p-3">
             <p className="font-medium">
               {errori.length === 0
-                ? 'Validazione Preventivatore superata'
+                ? 'Controlli strutturali superati — non è approvazione tecnica'
                 : `${errori.length} problemi da correggere`}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
