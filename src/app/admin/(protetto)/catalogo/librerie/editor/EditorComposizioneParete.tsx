@@ -262,8 +262,8 @@ export function EditorComposizioneParete() {
           <div>
             <h2 className="text-lg font-semibold">Struttura della parete</h2>
             <p className="text-sm text-muted-foreground">
-              Le colonne sono da sinistra a destra; i vani dal basso verso l’alto. Le misure iniziali sono
-              valori dimostrativi, non specifiche costruttive approvate.
+              Le colonne sono da sinistra a destra; i vani dal basso verso l’alto.
+              Le misure iniziali sono valori dimostrativi, non specifiche costruttive approvate.
             </p>
           </div>
           <Button
