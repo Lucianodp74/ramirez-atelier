@@ -8,18 +8,15 @@
 
 **Importante:** i dati sotto sono una trascrizione del modello dimostrativo nel codice, non quote approvate, disegno tecnico o istruzioni di produzione. Servono soltanto a identificare il candidato da confermare.
 
-| Campo presente nel modello dimostrativo | Dato del codice | Stato |
-| -------------------------------------- | --------------- | ----- |
-| Colonne | 3 colonne da 90 cm ciascuna | Solo dimostrativo |
-| Larghezza complessiva risultante dai dati demo | 270 cm | Da verificare su disegno approvato |
-| Vano inferiore di ciascuna colonna | Base con ante, altezza demo 80 cm | Non approvato |
-| Vano superiore di ciascuna colonna | Vano aperto, altezza demo 160 cm | Non approvato |
-| Altezza totale risultante dai dati demo | 240 cm (80 + 160) | Da verificare; non dedurre dal nome commerciale |
-| Profondità presente nel modello | 40 cm | Non approvata |
-| Ripiani del vano superiore | 3 per colonna nel dato demo | Quantità da verificare sul disegno |
-| Ante della base | 2 per colonna nel dato demo | Ferramenta e configurazione da confermare |
-| Materiale/finitura indicati nel modello | Truciolare / melaminico | Non confermati per acquisto o produzione |
-| Schienale | Presente come flag nel modello | Costruzione, materiale, spessore e fissaggio da definire |
+- **Colonne:** 3 colonne da 90 cm ciascuna nel dato demo; larghezza complessiva risultante 270 cm, da verificare sul disegno approvato.
+- **Vano inferiore:** base con ante, altezza demo 80 cm per colonna; dato non approvato.
+- **Vano superiore:** vano aperto, altezza demo 160 cm per colonna; dato non approvato.
+- **Altezza totale risultante dai dati demo:** 240 cm (80 + 160); da verificare. Non dedurre l'altezza dal nome commerciale.
+- **Profondità:** 40 cm nel modello demo; non approvata.
+- **Ripiani:** 3 per vano superiore nel dato demo; quantità da verificare sul disegno.
+- **Ante:** 2 per base nel dato demo; ferramenta e configurazione da confermare.
+- **Materiale/finitura:** truciolare/melaminico indicati nel modello; non confermati per acquisto o produzione.
+- **Schienale:** presente come flag nel modello; costruzione, materiale, spessore e fissaggio da definire.
 
 ### Decisione preliminare
 
