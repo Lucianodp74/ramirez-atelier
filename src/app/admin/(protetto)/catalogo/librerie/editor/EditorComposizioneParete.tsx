@@ -16,7 +16,8 @@ import {
 } from '@/lib/catalogo-librerie/composizione';
 
 const modelliBozza = MODELLI_LIBRERIE.filter((modello) => modello.stato === 'BOZZA');
-const modelloIniziale = modelliBozza[0];
+// Mantiene l'editor allineato al candidato documentato nella scheda tecnica campione.
+const modelloIniziale = modelliBozza.find((modello) => modello.codice === 'LIB-ATE-01') ?? modelliBozza[0];
 
 // Fallback puramente strutturale: consente di eseguire gli hook React anche
 // quando il catalogo non contiene alcun modello. La schermata mostra poi il
