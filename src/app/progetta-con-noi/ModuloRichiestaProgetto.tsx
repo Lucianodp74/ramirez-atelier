@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { inviaRichiestaProgettoPubblica } from './azioni';
@@ -114,7 +115,7 @@ export function ModuloRichiestaProgetto() {
           required
         />
         <span>
-          Ho letto l’informativa privacy e chiedo di essere ricontattato in merito al progetto. *
+          Ho letto <Link href="/privacy" className="underline underline-offset-2 hover:text-[#8F4525]">l’informativa privacy</Link> e chiedo di essere ricontattato in merito al progetto. *
         </span>
       </label>
 
