@@ -41,25 +41,47 @@ export async function inviaRichiestaProgettoPubblica(
     const messaggio = String(formData.get('messaggio') ?? '').trim();
     const privacy = formData.get('privacy') === 'on';
 
-    if (nome.length < 2 || nome.length > 120) return { successo: false, errore: 'Inserisci nome e cognome.' };
+    if (nome.length < 2 || nome.length > 120) {
+      return { successo: false, errore: 'Inserisci nome e cognome.' };
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 180) {
       return { successo: false, errore: 'Controlla l’indirizzo email inserito.' };
     }
-    if (telefono.length > 40) return { successo: false, errore: 'Il numero di telefono è troppo lungo.' };
+    if (telefono.length > 40) {
+      return { successo: false, errore: 'Il numero di telefono è troppo lungo.' };
+    }
     if (!['parete-attrezzata', 'libreria', 'boiserie', 'madia', 'altro'].includes(tipoProgetto)) {
       return { successo: false, errore: 'Seleziona una tipologia di progetto.' };
     }
     if (messaggio.length < 10 || messaggio.length > 4000) {
-      return { successo: false, errore: 'La descrizione deve contenere da 10 a 4000 caratteri.' };
+      return {
+        successo: false,
+        errore: 'La descrizione deve contenere da 10 a 4000 caratteri.',
+      };
     }
-    if (!privacy) return { successo: false, errore: 'Per inviare la richiesta devi confermare di aver letto l’informativa privacy.' };
+    if (!privacy) {
+      return {
+        successo: false,
+        errore: 'Per inviare la richiesta devi confermare di aver letto l’informativa privacy.',
+      };
+    }
 
-    const files = formData.getAll('documenti').filter((value): value is File => value instanceof File && value.size > 0);
-    if (files.length > MAX_FILES) return { successo: false, errore: 'Puoi allegare al massimo 5 file.' };
+    const files = formData
+      .getAll('documenti')
+      .filter((value): value is File => value instanceof File && value.size > 0);
+    if (files.length > MAX_FILES) {
+      return { successo: false, errore: 'Puoi allegare al massimo 5 file.' };
+    }
     for (const file of files) {
-      if (file.size > MAX_FILE) return { successo: false, errore: 'Ogni allegato deve essere inferiore a 8 MB.' };
-      if (!ESTENSIONI_AMMESSE.test(file.name)) return { successo: false, errore: 'Uno degli allegati ha un formato non supportato.' };
-      if (file.type && !TIPI_AMMESSI.has(file.type)) return { successo: false, errore: 'Il tipo di file dichiarato non è supportato.' };
+      if (file.size > MAX_FILE) {
+        return { successo: false, errore: 'Ogni allegato deve essere inferiore a 8 MB.' };
+      }
+      if (!ESTENSIONI_AMMESSE.test(file.name)) {
+        return { successo: false, errore: 'Uno degli allegati ha un formato non supportato.' };
+      }
+      if (file.type && !TIPI_AMMESSI.has(file.type)) {
+        return { successo: false, errore: 'Il tipo di file dichiarato non è supportato.' };
+      }
     }
 
     const tenantId = await idTenantRamirezAtelier();
@@ -68,7 +90,11 @@ export async function inviaRichiestaProgettoPubblica(
       orderBy: { ordinamento: 'asc' },
     });
     if (!tipoDisponibile) {
-      return { successo: false, errore: 'Il servizio richieste non è ancora disponibile. Contattaci tramite i recapiti del sito.' };
+      return {
+        successo: false,
+        errore:
+          'Il servizio richieste non è ancora disponibile. Contattaci tramite i recapiti del sito.',
+      };
     }
 
     const richiesta = await db.richiestaProgetto.create({
@@ -89,7 +115,11 @@ export async function inviaRichiestaProgettoPubblica(
         richiestaId: richiesta.id,
         tipo: 'RICHIESTA_CREATA',
         descrizione: 'Richiesta pubblica ricevuta dalla pagina Progetta con noi',
-        metadatiJson: { tipologiaRichiesta: tipoProgetto, numeroAllegati: files.length, consensoPrivacy: true },
+        metadatiJson: {
+          tipologiaRichiesta: tipoProgetto,
+          numeroAllegati: files.length,
+          consensoPrivacy: true,
+        },
         attore: 'CLIENTE',
       },
     });
@@ -131,7 +161,8 @@ export async function inviaRichiestaProgettoPubblica(
   } catch {
     return {
       successo: false,
-      errore: 'Non siamo riusciti a inviare la richiesta. Riprova tra poco oppure contattaci tramite il sito.',
+      errore:
+        'Non siamo riusciti a inviare la richiesta. Riprova tra poco oppure contattaci tramite il sito.',
     };
   }
 }
