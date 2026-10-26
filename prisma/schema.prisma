@@ -45,9 +45,302 @@ model TipoProgetto {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  richie
-…[1 chars truncated — re-run with head/grep/tail for full output]…
-iberatamente ridotto): una voce
+  richieste       RichiestaProgetto[]
+  variantiPreimpostate VariantePreimpostata[]
+
+  @@unique([tenantId, chiave])
+  @@map("tipo_progetto")
+}
+
+enum ClienteTipo {
+  PRIVATO
+  ARCHITETTO
+  IMPRESA
+  STUDIO_TECNICO
+
+  @@map("cliente_tipo")
+}
+
+/// Calcolata dal Rule Engine, mai assegnata manualmente in questo incremento
+/// (potrà diventare anche modificabile manualmente in futuro, se servirà).
+enum PrioritaCommerciale {
+  BASSA
+  MEDIA
+  ALTA
+
+  @@map("priorita_commerciale")
+}
+
+/// Stati del ciclo di vita della richiesta. BOZZA precede l'invio (Incremento 2);
+/// dall'invio in poi il workflow operativo (Incremento 3) è Nuova → In revisione →
+/// Preventivo inviato → Convertita, con Chiusa raggiungibile da qualunque stato
+/// attivo (una richiesta può essere persa/rifiutata in qualsiasi momento). Le
+/// transizioni ammesse sono un dato esplicito in codice (src/server/services/
+/// richieste-service.ts:TRANSIZIONI_AMMESSE), non sparse in condizionali - per
+/// restare "facilmente estendibile" come richiesto.
+enum StatoRichiesta {
+  BOZZA
+  NUOVA
+  IN_REVISIONE
+  PREVENTIVO_INVIATO
+  CONVERTITA
+  CHIUSA
+
+  @@map("stato_richiesta")
+}
+
+/// Categoria dell'allegato, derivata automaticamente dal tipo MIME/estensione al
+/// momento del caricamento. Nessuna analisi del contenuto (v. ADR-0002 Fase A/B/C).
+enum CategoriaDocumento {
+  FOTO
+  PDF
+  DWG_DXF
+  RENDER
+  VIDEO
+  ALTRO
+
+  @@map("categoria_documento")
+}
+
+/// Aggregate principale del configuratore. Nome scelto per allinearsi al futuro
+/// `RichiestaPreventivo` di ArtigianOS (ADR-0001).
+/// Bounded Context CRM (nato dalla simulazione della giornata del titolare,
+/// non da un elenco astratto di funzionalità). Deduplica deterministica su
+/// email o telefono - mai sul nome, che introdurrebbe fusioni sbagliate
+/// silenziose (principio esplicitamente confermato: meglio due clienti
+/// distinti che una fusione automatica errata). La logica di deduplica vive
+/// nel servizio applicativo, non in un vincolo univoco di database: email e
+/// telefono possono essere entrambi assenti per un contatto molto informale,
+/// un vincolo rigido lo impedirebbe.
+model Cliente {
+  id        String   @id @default(cuid())
+  tenantId  String
+  nome      String
+  cognome   String?
+  email     String?
+  telefono  String?
+  indirizzo String?
+  tipo      ClienteTipo @default(PRIVATO)
+  azienda   String?
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  richieste RichiestaProgetto[]
+
+  @@index([tenantId, email])
+  @@index([tenantId, telefono])
+  @@map("cliente")
+}
+
+model RichiestaProgetto {
+  id                 String         @id @default(cuid())
+  tenantId           String
+  tipoProgettoId     String
+  tipoProgetto       TipoProgetto   @relation(fields: [tipoProgettoId], references: [id])
+
+  /// Risolto (trovato o creato) al completamento della richiesta, non ad ogni
+  /// passo del wizard - un cliente ha valore solo quando la richiesta è
+  /// davvero inviata, non per ogni bozza abbandonata (Configurazione a Valore).
+  clienteId          String?
+  cliente            Cliente?       @relation(fields: [clienteId], references: [id])
+
+  /// Se il cliente è partito da uno stile preimpostato (v. VariantePreimpostata),
+  /// il suo id resta qui per riferimento - nessuna relazione con vincoli di
+  /// integrità: la variante può essere modificata/disattivata in futuro senza
+  /// invalidare lo storico di chi l'ha scelta in passato.
+  variantePreimpostataId String?
+
+  /// Token opaco memorizzato in un cookie del browser (non un vero login) che
+  /// permette di riprendere una bozza dopo aver chiuso il browser. Diventa
+  /// superfluo quando l'utente avrà un vero account (fuori scope in questo
+  /// incremento, ma il campo resta compatibile con quel futuro).
+  tokenRipresa       String         @unique @default(cuid())
+
+  /// Contatti: intenzionalmente opzionali finché la richiesta è in BOZZA (l'utente
+  /// può iniziare a compilare prima di lasciare nome/email). Diventano obbligatori
+  /// solo al completamento (validato in applicazione, non a livello di database -
+  /// v. src/lib/tipo-progetto-schema.ts:validaCompletamento).
+  clienteNome        String?
+  clienteEmail       String?
+  clienteTelefono    String?
+  clienteTipo        ClienteTipo    @default(PRIVATO)
+  clienteAzienda     String? // ragione sociale se architetto/impresa/studio tecnico
+
+  // Risposte del wizard, secondo la struttura definita in TipoProgetto.configurazione.
+  // Chiave = campo.chiave definito in configurazione, valore = risposta utente.
+  // Non contiene i campi "riservati" (clienteNome, budgetDichiarato, ...) che hanno
+  // una colonna propria - v. CAMPI_RISERVATI in tipo-progetto-schema.ts.
+  datiFormJson       Json           @default("{}")
+
+  /// Chiave dell'ultimo step compilato con successo, per riprendere esattamente da lì.
+  ultimoStepChiave   String?
+
+  budgetDichiarato   String? // nota libera aggiuntiva (facoltativa) - v. fasciaBudgetId per il dato strutturato
+  fasciaBudgetId     String? // dato strutturato, sostituisce il testo libero come fonte primaria per filtri/statistiche
+  fasciaBudget       FasciaBudget?  @relation(fields: [fasciaBudgetId], references: [id])
+  dataDesiderata     DateTime?
+  messaggioLibero    String?
+
+  /// Calcolata dal Rule Engine (non hard-coded) - v. src/lib/rule-engine. Null finché
+  /// nessuna regola del contesto "richiesta_priorita_commerciale" è stata ancora
+  /// valutata per questa richiesta (avviene al completamento, v. azioni.ts).
+  prioritaCommerciale PrioritaCommerciale?
+
+  indiceCompletezza  Int            @default(0) // 0-100, calcolato da pesi di configurazione
+
+  fasciaPrezzoMin    Decimal?       @db.Decimal(12, 2)
+  fasciaPrezzoMax    Decimal?       @db.Decimal(12, 2)
+  regolaPrezzoApplicataId String? // tracciabilità: quale regola ha generato la fascia
+
+  /// Assegnati una sola volta, alla prima generazione del Preventivo PDF -
+  /// mai più modificati dopo (Fatto Osservato nel senso di
+  /// docs/principi/livelli-di-verita-del-dato.md: il numero non si
+  /// "ricalcola", si osserva il momento in cui è stato assegnato). Restano
+  /// null finché nessun PDF è mai stato generato per questa richiesta.
+  numeroPreventivo      String?
+  preventivoGeneratoIl  DateTime?
+
+  /// Contenitore libero per output di future estensioni (AI, OCR, CAD parsing,
+  /// Computer Vision, suggerimenti del Preventivatore - v. src/lib/extension-hooks.ts).
+  /// Nessuna di queste è implementata in questo incremento: il campo esiste solo
+  /// come punto di estensione dichiarato, per non dover alterare lo schema quando
+  /// arriveranno (ADR-0002, Fasi D/E/F/G).
+  datiEstensione     Json?
+
+  stato              StatoRichiesta @default(BOZZA)
+  noteInterne        String? // note del titolare, mai visibili al cliente
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  documenti          DocumentoRichiesta[]
+  eventi             EventoAttivita[]
+  commenti           CommentoInterno[]
+
+  @@index([tenantId, stato])
+  @@index([tipoProgettoId])
+  @@index([createdAt])
+  @@map("richiesta_progetto")
+}
+
+/// Allegati caricati dal cliente. Il contenuto binario non vive mai nel database:
+/// solo il riferimento all'Object Storage S3-compatible (coerente con la disciplina
+/// già stabilita nel Database Design di ArtigianOS per Document Management).
+model DocumentoRichiesta {
+  id               String   @id @default(cuid())
+  richiestaId      String
+  richiesta        RichiestaProgetto @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  nomeFileOriginale String
+  tipoMime         String
+  categoria        CategoriaDocumento // derivata automaticamente dal MIME al caricamento
+  storageObjectKey String // chiave nel bucket S3-compatible
+  dimensioneByte   Int
+
+  createdAt        DateTime @default(now())
+
+  @@index([richiestaId])
+  @@map("documento_richiesta")
+}
+
+/// Tipo di evento registrato nella Activity Timeline. Enum esplicito (non testo
+/// libero) per poter filtrare/interrogare in modo affidabile; estendibile aggiungendo
+/// valori quando servirà (es. in futuro "regola_eseguita" per il Rule Engine, v. ADR-0003).
+enum TipoEventoAttivita {
+  RICHIESTA_CREATA
+  STEP_COMPLETATO
+  DOCUMENTO_CARICATO
+  DOCUMENTO_RIMOSSO
+  STATO_MODIFICATO
+  RICHIESTA_COMPLETATA
+  COMMENTO_INSERITO
+  STATO_CONSULTATO_DAL_CLIENTE
+
+  @@map("tipo_evento_attivita")
+}
+
+/// Chi ha generato l'evento. In questo incremento non esiste ancora autenticazione
+/// per il titolare (v. README, "Cosa NON contiene ancora"): TITOLARE è quindi un
+/// singolo attore implicito, non un utente autenticato specifico - da raffinare
+/// quando arriverà un vero sistema di account per lo staff.
+enum AttoreEvento {
+  CLIENTE
+  TITOLARE
+  SISTEMA
+
+  @@map("attore_evento")
+}
+
+/// Activity Timeline: ogni operazione rilevante su una richiesta genera un evento
+/// immutabile. Base per audit, collaborazione futura tra più persone dello staff,
+/// notifiche, e - in prospettiva - per il Rule Engine (ADR-0003), che potrà sia
+/// consumare questi eventi come "fatti" sia scriverci le proprie esecuzioni.
+model EventoAttivita {
+  id            String             @id @default(cuid())
+  richiestaId   String
+  richiesta     RichiestaProgetto  @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  tipo          TipoEventoAttivita
+  descrizione   String // testo leggibile, pronto per la UI (es. "Documento planimetria.pdf caricato")
+  metadatiJson  Json? // dati strutturati aggiuntivi (es. { stepChiave }, { statoPrecedente, statoNuovo })
+  attore        AttoreEvento       @default(SISTEMA)
+
+  createdAt     DateTime           @default(now())
+
+  @@index([richiestaId, createdAt])
+  @@map("evento_attivita")
+}
+
+/// Note interne del titolare, mai visibili al cliente (Requisito esplicito).
+model CommentoInterno {
+  id           String            @id @default(cuid())
+  richiestaId  String
+  richiesta    RichiestaProgetto @relation(fields: [richiestaId], references: [id], onDelete: Cascade)
+
+  testo        String
+  autore       String            @default("Titolare") // testo semplice finché non esiste autenticazione staff
+
+  createdAt    DateTime          @default(now())
+
+  @@index([richiestaId, createdAt])
+  @@map("commento_interno")
+}
+
+/// Regola di prezzo configurabile: condizioni (JSON, matchate sui campi derivati delle
+/// risposte del wizard) → fascia di prezzo. Nessuna stima "intelligente": è una tabella
+/// di regole che il titolare potrà curare da un pannello, senza intervento di sviluppo.
+// RegolaPrezzo (Incremento 1) è stata rimossa qui: mai realmente collegata a
+// nulla (nessun codice la interrogava), e ora sostituita dal Rule Engine
+// generico (Regola/EsecuzioneRegola, contesto="preventivo_pricing") -
+// esattamente il "secondo consumatore reale" che ADR-0003 indicava come
+// condizione per questa migrazione (Incremento 7).
+
+/// Fasce di budget come dato di configurazione amministrabile, non hard-coded
+/// nell'interfaccia. Ogni azienda potrà definire le proprie fasce (nome, intervallo,
+/// ordinamento, attiva/disattiva) da un pannello, senza intervento di sviluppo -
+/// esattamente come TipoProgetto.configurazione e RegolaPrezzo. `massimo` è
+/// nullable per rappresentare una fascia aperta verso l'alto (es. "20.000 €+").
+model FasciaBudget {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nome        String // es. "10.000 - 20.000 €" oppure "20.000 €+"
+  minimo      Decimal  @db.Decimal(12, 2)
+  massimo     Decimal? @db.Decimal(12, 2) // null = nessun limite superiore
+  ordinamento Int      @default(0) // usato anche come "livello" nelle condizioni delle regole (maggiore = fascia più alta)
+  attiva      Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  richieste   RichiestaProgetto[]
+
+  @@index([tenantId, attiva, ordinamento])
+  @@map("fascia_budget")
+}
+
+/// Sezione Spese (Incremento minimo, scope deliberatamente ridotto): una voce
 /// di spesa mensile ricorrente (personale, affitto, utenze, ecc.) con un
 /// importo. Non calcola ancora il costo per singola commessa né alloca i
 /// costi fissi - dà solo una prima visibilità sul costo mensile complessivo
