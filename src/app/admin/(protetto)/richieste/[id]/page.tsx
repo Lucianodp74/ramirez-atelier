@@ -58,6 +58,24 @@ export default async function DettaglioRichiestaPage({
     ...datiFormPiatti(richiesta),
     fasciaBudgetId: richiesta.fasciaBudget?.nome ?? null,
   };
+  const datiPubblici =
+    richiesta.datiFormJson &&
+    typeof richiesta.datiFormJson === 'object' &&
+    !Array.isArray(richiesta.datiFormJson)
+      ? (richiesta.datiFormJson as Record<string, unknown>)
+      : {};
+  const etichetteTipologiaPubblica: Record<string, string> = {
+    'parete-attrezzata': 'Parete attrezzata',
+    libreria: 'Libreria',
+    boiserie: 'Boiserie',
+    madia: 'Madia o mobile contenitore',
+    altro: 'Altro arredo su misura',
+  };
+  const tipologiaPubblica =
+    typeof datiPubblici.tipologiaRichiesta === 'string'
+      ? etichetteTipologiaPubblica[datiPubblici.tipologiaRichiesta] ??
+        datiPubblici.tipologiaRichiesta
+      : null;
 
   return (
     <div className="mx-auto max-w-[1800px] px-6 py-12">
@@ -131,6 +149,12 @@ export default async function DettaglioRichiestaPage({
               <CardTitle>Il progetto</CardTitle>
             </CardHeader>
             <CardContent>
+              {tipologiaPubblica && (
+                <div className="mb-4 rounded-md border border-border bg-secondary/30 p-3">
+                  <p className="text-xs text-muted-foreground">Tipologia richiesta dal cliente</p>
+                  <p className="text-sm font-medium">{tipologiaPubblica}</p>
+                </div>
+              )}
               <RiepilogoRichiesta
                 configurazione={configurazione}
                 datiForm={datiForm}
