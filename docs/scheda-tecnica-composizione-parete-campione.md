@@ -6,6 +6,8 @@
 
 **Modello proposto:** `LIB-ATE-01 — Atelier 270`, attualmente `BOZZA` e `dimostrativo: true` nel catalogo software. La scelta è motivata dalla presenza di tre colonne affiancate, basi con ante e vani aperti superiori, utile per verificare la distinta fisica e la regola dei fianchi tra colonne adiacenti.
 
+**Scheda descrittiva del modello:** [Scheda modello — LIB-ATE-01 | Atelier 270](scheda-modello-LIB-ATE-01-atelier-270.md). La scheda descrittiva riassume i dati demo del catalogo; questa scheda tecnica resta il riferimento per raccogliere le approvazioni e le verifiche produttive.
+
 **Importante:** i dati sotto sono una trascrizione del modello dimostrativo nel codice, non quote approvate, disegno tecnico o istruzioni di produzione. Servono soltanto a identificare il candidato da confermare.
 
 - **Colonne:** 3 colonne da 90 cm ciascuna nel dato demo; larghezza complessiva risultante 270 cm, da verificare sul disegno approvato.
