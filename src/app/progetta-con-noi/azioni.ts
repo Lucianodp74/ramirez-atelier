@@ -1,5 +1,7 @@
 'use server';
 
+import { createHash } from 'crypto';
+import { headers } from 'next/headers';
 import { db } from '@/server/db';
 import { getStorageAdapter, determinaCategoria } from '@/lib/storage';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
@@ -25,11 +27,44 @@ const TIPI_AMMESSI = new Set([
   'image/vnd.dxf',
 ]);
 const ESTENSIONI_AMMESSE = /\.(pdf|jpe?g|png|webp|dwg|dxf|docx|xlsx|zip)$/i;
+const FINESTRA_RATE_LIMIT_MS = 15 * 60 * 1000;
+const MAX_INVII_PER_FINEStra = 5;
+const inviiRecenti = new Map<string, number[]>();
+
+/** Limitazione best-effort per istanza; in hosting multi-istanza va affiancata da un limiter condiviso. */
+async function verificaLimiteInvii(): Promise<boolean> {
+  const intestazioni = await headers();
+  const ip =
+    intestazioni.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ||
+    intestazioni.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'ip-non-disponibile';
+  const chiave = createHash('sha256').update(ip).digest('hex');
+  const adesso = Date.now();
+  const validi = (inviiRecenti.get(chiave) ?? []).filter(
+    (timestamp) => adesso - timestamp < FINESTRA_RATE_LIMIT_MS,
+  );
+  if (validi.length >= MAX_INVII_PER_FINEStra) {
+    inviiRecenti.set(chiave, validi);
+    return false;
+  }
+  validi.push(adesso);
+  inviiRecenti.set(chiave, validi);
+  if (inviiRecenti.size > 2000) {
+    for (const [k, timestamps] of inviiRecenti) {
+      if (!timestamps.some((timestamp) => adesso - timestamp < FINESTRA_RATE_LIMIT_MS))
+        inviiRecenti.delete(k);
+    }
+  }
+  return true;
+}
 
 export async function inviaRichiestaProgettoPubblica(
   _statoPrecedente: EsitoModulo | null,
   formData: FormData,
 ): Promise<EsitoModulo> {
+  let richiestaId: string | null = null;
+  const chiaviCaricate: string[] = [];
+  let storage: ReturnType<typeof getStorageAdapter> | null = null;
   try {
     // Campo honeypot: bot comuni vengono fermati senza creare richieste.
     if (String(formData.get('aziendaSito') ?? '').trim()) return { successo: true };
@@ -66,6 +101,9 @@ export async function inviaRichiestaProgettoPubblica(
         successo: false,
         errore: 'Per inviare la richiesta devi confermare di aver letto l’informativa privacy.',
       };
+    }
+    if (!(await verificaLimiteInvii())) {
+      return { successo: false, errore: 'Hai effettuato troppi tentativi. Riprova tra 15 minuti.' };
     }
 
     const files = formData
@@ -119,6 +157,8 @@ export async function inviaRichiestaProgettoPubblica(
       },
     });
 
+    richiestaId = richiesta.id;
+
     await db.eventoAttivita.create({
       data: {
         richiestaId: richiesta.id,
@@ -133,7 +173,7 @@ export async function inviaRichiestaProgettoPubblica(
       },
     });
 
-    const storage = getStorageAdapter();
+    storage = getStorageAdapter();
     for (const file of files) {
       const contenuto = Buffer.from(await file.arrayBuffer());
       const { storageObjectKey, dimensioneByte } = await storage.carica({
@@ -143,6 +183,7 @@ export async function inviaRichiestaProgettoPubblica(
         tipoMime: file.type || 'application/octet-stream',
         contenuto,
       });
+      chiaviCaricate.push(storageObjectKey);
       await db.documentoRichiesta.create({
         data: {
           richiestaId: richiesta.id,
@@ -168,6 +209,17 @@ export async function inviaRichiestaProgettoPubblica(
     // registra su console. La richiesta resta disponibile nell'area amministrativa.
     return { successo: true };
   } catch {
+    // Compensa gli upload e i record già creati se un allegato o un evento fallisce.
+    if (storage && chiaviCaricate.length) {
+      await Promise.allSettled(chiaviCaricate.map((chiave) => storage!.elimina(chiave)));
+    }
+    if (richiestaId) {
+      try {
+        await db.richiestaProgetto.delete({ where: { id: richiestaId } });
+      } catch {
+        // Se la compensazione DB fallisce, non mascheriamo l'errore originario.
+      }
+    }
     return {
       successo: false,
       errore:
