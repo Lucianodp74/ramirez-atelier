@@ -78,7 +78,9 @@ export default function ProgettaConNoiPage() {
             </div>
             <div className="flex items-start gap-3 sm:col-span-2">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#8F4525]" />
-              <span>I documenti vengono associati alla richiesta e non sono pubblicati nel sito.</span>
+              <span>
+                I documenti vengono associati alla richiesta e non sono pubblicati nel sito.
+              </span>
             </div>
           </div>
         </div>
@@ -93,8 +95,7 @@ export default function ProgettaConNoiPage() {
             <ModuloRichiestaProgetto />
           </div>
           <p className="mt-5 text-xs leading-5 text-[#71685E]">
-            L’invio è una richiesta di contatto, non un preventivo né un ordine. Puoi leggere
-            l’{' '}
+            L’invio è una richiesta di contatto, non un preventivo né un ordine. Puoi leggere l’{' '}
             <Link href="/privacy" className="underline underline-offset-4 hover:text-[#8F4525]">
               informativa privacy
             </Link>
