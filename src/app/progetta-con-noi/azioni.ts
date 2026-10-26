@@ -27,11 +27,7 @@ const TIPI_AMMESSI = new Set([
   'image/vnd.dxf',
 ]);
 const ESTENSIONI_AMMESSE = /\.(pdf|jpe?g|png|webp|dwg|dxf|docx|xlsx|zip)$/i;
-const FINESTRA_RATE_LIMIT_MS = 15 * 60 * 1000;
-const MAX_INVII_PER_FINEStra = 5;
-const inviiRecenti = new Map<string, number[]>();
-
-/** Limitazione best-effort per istanza; in hosting multi-istanza va affiancata da un limiter condiviso. */
+/** Limite atomico condiviso via PostgreSQL, valido anche tra istanze/serverless. */
 async function verificaLimiteInvii(): Promise<boolean> {
   const intestazioni = await headers();
   const ip =
@@ -39,23 +35,26 @@ async function verificaLimiteInvii(): Promise<boolean> {
     intestazioni.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     'ip-non-disponibile';
   const chiave = createHash('sha256').update(ip).digest('hex');
-  const adesso = Date.now();
-  const validi = (inviiRecenti.get(chiave) ?? []).filter(
-    (timestamp) => adesso - timestamp < FINESTRA_RATE_LIMIT_MS,
-  );
-  if (validi.length >= MAX_INVII_PER_FINEStra) {
-    inviiRecenti.set(chiave, validi);
-    return false;
-  }
-  validi.push(adesso);
-  inviiRecenti.set(chiave, validi);
-  if (inviiRecenti.size > 2000) {
-    for (const [k, timestamps] of inviiRecenti) {
-      if (!timestamps.some((timestamp) => adesso - timestamp < FINESTRA_RATE_LIMIT_MS))
-        inviiRecenti.delete(k);
-    }
-  }
-  return true;
+  const risultato = await db.$queryRaw<Array<{ conteggio: number }>>`
+    INSERT INTO "limite_invio_pubblico" ("chiaveHash", "finestraIniziata", "conteggio", "aggiornatoIl")
+    VALUES (${chiave}, CURRENT_TIMESTAMP, 1, CURRENT_TIMESTAMP)
+    ON CONFLICT ("chiaveHash") DO UPDATE SET
+      "finestraIniziata" = CASE
+        WHEN "limite_invio_pubblico"."finestraIniziata" <= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+          THEN CURRENT_TIMESTAMP
+        ELSE "limite_invio_pubblico"."finestraIniziata"
+      END,
+      "conteggio" = CASE
+        WHEN "limite_invio_pubblico"."finestraIniziata" <= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+          THEN 1
+        ELSE "limite_invio_pubblico"."conteggio" + 1
+      END,
+      "aggiornatoIl" = CURRENT_TIMESTAMP
+    WHERE "limite_invio_pubblico"."finestraIniziata" <= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+       OR "limite_invio_pubblico"."conteggio" < 5
+    RETURNING "conteggio"
+  `;
+  return risultato.length > 0;
 }
 
 export async function inviaRichiestaProgettoPubblica(
