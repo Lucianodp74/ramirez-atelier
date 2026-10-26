@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import path from 'path';
@@ -49,6 +54,10 @@ export class StorageS3Adapter implements StorageAdapter {
       storageObjectKey: key,
       dimensioneByte: params.contenuto.byteLength,
     };
+  }
+
+  async elimina(storageObjectKey: string): Promise<void> {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: storageObjectKey }));
   }
 
   async scarica(storageObjectKey: string): Promise<RisultatoDownload> {
