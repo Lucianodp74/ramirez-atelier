@@ -35,7 +35,9 @@ export async function inviaRichiestaProgettoPubblica(
     if (String(formData.get('aziendaSito') ?? '').trim()) return { successo: true };
 
     const nome = String(formData.get('nome') ?? '').trim();
-    const email = String(formData.get('email') ?? '').trim().toLowerCase();
+    const email = String(formData.get('email') ?? '')
+      .trim()
+      .toLowerCase();
     const telefono = String(formData.get('telefono') ?? '').trim();
     const tipoProgetto = String(formData.get('tipoProgetto') ?? '').trim();
     const messaggio = String(formData.get('messaggio') ?? '').trim();
