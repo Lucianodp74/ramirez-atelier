@@ -87,9 +87,16 @@ export async function inviaRichiestaProgettoPubblica(
     }
 
     const tenantId = await idTenantRamirezAtelier();
+    // Collega la richiesta alla categoria amministrativa più pertinente:
+    // zona giorno per pareti attrezzate, librerie e madie; falegnameria su misura
+    // per boiserie e richieste generiche.
+    const chiaveTipoAmministrativo = ['parete-attrezzata', 'libreria', 'madia'].includes(
+      tipoProgetto,
+    )
+      ? 'zona-giorno'
+      : 'falegnameria-su-misura';
     const tipoDisponibile = await db.tipoProgetto.findFirst({
-      where: { tenantId, attivo: true },
-      orderBy: { ordinamento: 'asc' },
+      where: { tenantId, attivo: true, chiave: chiaveTipoAmministrativo },
     });
     if (!tipoDisponibile) {
       return {
