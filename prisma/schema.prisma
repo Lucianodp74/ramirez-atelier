@@ -24,9 +24,9 @@ datasource db {
 /// completezza — v. src/lib/tipo-progetto-schema.ts per la forma tipizzata attesa.
 /// Finestra di rate limit condivisa tra istanze per il modulo pubblico.
 model LimiteInvioPubblico {
-  chiaveHash      String   @id
+  chiaveHash       String   @id
   finestraIniziata DateTime @default(now())
-  conteggio       Int      @default(1)
+  conteggio        Int      @default(1)
   aggiornatoIl     DateTime @updatedAt
 
   @@map("limite_invio_pubblico")
@@ -45,7 +45,7 @@ model TipoProgetto {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  richiest
+  richie
 …[1 chars truncated — re-run with head/grep/tail for full output]…
 iberatamente ridotto): una voce
 /// di spesa mensile ricorrente (personale, affitto, utenze, ecc.) con un
