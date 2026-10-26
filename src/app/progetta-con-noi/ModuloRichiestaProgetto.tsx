@@ -90,7 +90,7 @@ export function ModuloRichiestaProgetto() {
           type="file"
           name="documenti"
           multiple
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.doc,.docx,.xls,.xlsx,.zip"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.docx,.xlsx,.zip"
         />
         <span className="mt-2 block text-xs font-normal leading-5 text-[#71685E]">
           Massimo 5 file da 8 MB ciascuno. Formati: PDF, JPG, PNG, WEBP, DWG, DXF, DOCX, XLSX e ZIP.
