@@ -4,16 +4,14 @@
 
 ## 1. Identificazione
 
-| Campo | Dato |
-|---|---|
-| Codice modello | `LIB-ATE-01` |
-| Nome catalogo | Atelier 270 |
-| Famiglia | Linea Atelier |
-| Stato catalogo | BOZZA |
-| Modello dimostrativo | Sì |
-| Visibilità pubblica / richiedibilità | Non visibile al pubblico; non richiedibile in quanto bozza |
-| Fonte dei dati | `src/lib/catalogo-librerie/catalogo.ts` |
-| Scheda tecnica di validazione | [Scheda tecnica — composizione campione di parete attrezzata](scheda-tecnica-composizione-parete-campione.md) |
+- Campo: Codice modello; Dato: `LIB-ATE-01`
+- Campo: Nome catalogo; Dato: Atelier 270
+- Campo: Famiglia; Dato: Linea Atelier
+- Campo: Stato catalogo; Dato: BOZZA
+- Campo: Modello dimostrativo; Dato: Sì
+- Campo: Visibilità pubblica / richiedibilità; Dato: Non visibile al pubblico; non richiedibile in quanto bozza
+- Campo: Fonte dei dati; Dato: `src/lib/catalogo-librerie/catalogo.ts`
+- Campo: Scheda tecnica di validazione; Dato: [Scheda tecnica — composizione campione di parete attrezzata](scheda-tecnica-composizione-parete-campione.md)
 
 ## 2. Descrizione del concept
 
@@ -21,23 +19,21 @@ Composizione dimostrativa a tre colonne affiancate, ciascuna con un contenitore 
 
 ## 3. Configurazione presente nel software
 
-| Caratteristica | Dato registrato | Stato |
-|---|---:|---|
-| Numero colonne | 3 | Demo |
-| Larghezza colonna 1 | 90 cm | Demo |
-| Larghezza colonna 2 | 90 cm | Demo |
-| Larghezza colonna 3 | 90 cm | Demo |
-| Larghezza totale risultante dalla somma delle colonne | 270 cm | Da verificare su disegno approvato |
-| Altezza vano inferiore per colonna | 80 cm | Demo |
-| Altezza vano aperto superiore per colonna | 160 cm | Demo |
-| Altezza totale risultante dalla somma dei vani | 240 cm | Da verificare su disegno approvato |
-| Profondità registrata | 40 cm | Demo |
-| Ripiani del vano aperto superiore | 3 per colonna | Demo |
-| Ante del vano inferiore | 2 per colonna | Demo |
-| Ripiano registrato nel vano inferiore | 1 per colonna | Demo; verificare se corrisponde alla costruzione prevista |
-| Schienale | Flag presente nel modello | Costruzione e fissaggio da definire |
-| Materiale registrato | Truciolare | Non approvato |
-| Finitura registrata | Melaminico | Non approvata |
+- Caratteristica: Numero colonne; Dato registrato: 3; Stato: Demo
+- Caratteristica: Larghezza colonna 1; Dato registrato: 90 cm; Stato: Demo
+- Caratteristica: Larghezza colonna 2; Dato registrato: 90 cm; Stato: Demo
+- Caratteristica: Larghezza colonna 3; Dato registrato: 90 cm; Stato: Demo
+- Caratteristica: Larghezza totale risultante dalla somma delle colonne; Dato registrato: 270 cm; Stato: Da verificare su disegno approvato
+- Caratteristica: Altezza vano inferiore per colonna; Dato registrato: 80 cm; Stato: Demo
+- Caratteristica: Altezza vano aperto superiore per colonna; Dato registrato: 160 cm; Stato: Demo
+- Caratteristica: Altezza totale risultante dalla somma dei vani; Dato registrato: 240 cm; Stato: Da verificare su disegno approvato
+- Caratteristica: Profondità registrata; Dato registrato: 40 cm; Stato: Demo
+- Caratteristica: Ripiani del vano aperto superiore; Dato registrato: 3 per colonna; Stato: Demo
+- Caratteristica: Ante del vano inferiore; Dato registrato: 2 per colonna; Stato: Demo
+- Caratteristica: Ripiano registrato nel vano inferiore; Dato registrato: 1 per colonna; Stato: Demo; verificare se corrisponde alla costruzione prevista
+- Caratteristica: Schienale; Dato registrato: Flag presente nel modello; Stato: Costruzione e fissaggio da definire
+- Caratteristica: Materiale registrato; Dato registrato: Truciolare; Stato: Non approvato
+- Caratteristica: Finitura registrata; Dato registrato: Melaminico; Stato: Non approvata
 
 **Nota sulle misure:** le altezze 80 + 160 cm descrivono la somma dei vani configurati nel software; non attestano l'ingombro esterno definitivo. Spessori dei pannelli, basamento, cielo, giochi, piedini e altre eventuali parti non sono definiti in questa scheda. Non dedurre quote produttive da questi totali.
 
@@ -81,15 +77,13 @@ Questi dati devono derivare dal disegno quotato, dalle schede dei materiali e de
 
 ## 7. Approvazione e tracciabilità
 
-| Campo | Da compilare |
-|---|---|
-| Disegno quotato e versione | Da definire |
-| Distinta base e versione | Da definire |
-| Responsabile tecnico | Da indicare |
-| Data revisione | Da indicare |
-| Esito | Da compilare |
-| Riferimento approvazione tracciabile | Da indicare |
-| Limitazioni d'uso approvate | Da indicare |
+- Campo: Disegno quotato e versione; Da compilare: Da definire
+- Campo: Distinta base e versione; Da compilare: Da definire
+- Campo: Responsabile tecnico; Da compilare: Da indicare
+- Campo: Data revisione; Da compilare: Da indicare
+- Campo: Esito; Da compilare: Da compilare
+- Campo: Riferimento approvazione tracciabile; Da compilare: Da indicare
+- Campo: Limitazioni d'uso approvate; Da compilare: Da indicare
 
 **Uso consentito nello stato attuale:** riferimento descrittivo per sviluppo e verifica del configuratore. I dati restano dimostrativi; la scheda non autorizza produzione, acquisto materiali, installazione o preventivi definitivi.
 
