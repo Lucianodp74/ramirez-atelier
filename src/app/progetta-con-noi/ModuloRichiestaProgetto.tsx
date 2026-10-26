@@ -115,7 +115,14 @@ export function ModuloRichiestaProgetto() {
           required
         />
         <span>
-          Ho letto <Link href="/privacy" className="underline underline-offset-2 hover:text-[#8F4525]">l’informativa privacy</Link> e chiedo di essere ricontattato in merito al progetto. *
+          Ho letto{' '}
+          <Link
+            href="/privacy"
+            className="underline underline-offset-2 hover:text-[#8F4525]"
+          >
+            l’informativa privacy
+          </Link>{' '}
+          e chiedo di essere ricontattato in merito al progetto. *
         </span>
       </label>
 
