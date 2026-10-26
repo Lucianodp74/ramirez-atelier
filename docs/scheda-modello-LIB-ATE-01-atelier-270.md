@@ -48,6 +48,7 @@ Composizione dimostrativa a tre colonne affiancate, ciascuna con un contenitore 
 ## 5. Elementi non definiti — non dedurre
 
 Questa scheda non definisce:
+
 - spessori e codici dei pannelli;
 - dimensioni di taglio dei singoli componenti;
 - fianchi condivisi, divisori, cielo, base e dettagli delle giunzioni;
