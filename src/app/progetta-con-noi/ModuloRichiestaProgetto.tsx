@@ -19,8 +19,8 @@ export function ModuloRichiestaProgetto() {
         <CheckCircle2 className="h-8 w-8 text-[#477044]" />
         <h3 className="mt-4 font-serif text-2xl">Grazie, abbiamo ricevuto la richiesta.</h3>
         <p className="mt-2 text-sm leading-6 text-[#4D604A]">
-          Esamineremo le informazioni inviate e ti ricontatteremo. Se hai indicato un numero di telefono,
-          potremo utilizzarlo per approfondire il progetto.
+          Esamineremo le informazioni inviate e ti ricontatteremo. Se hai indicato un numero di
+          telefono, potremo utilizzarlo per approfondire il progetto.
         </p>
       </div>
     );
@@ -31,11 +31,25 @@ export function ModuloRichiestaProgetto() {
       <div className="grid gap-5 sm:grid-cols-2">
         <label className={etichetta}>
           Nome e cognome *
-          <input className={campo} name="nome" autoComplete="name" required minLength={2} maxLength={120} />
+          <input
+            className={campo}
+            name="nome"
+            autoComplete="name"
+            required
+            minLength={2}
+            maxLength={120}
+          />
         </label>
         <label className={etichetta}>
           Email *
-          <input className={campo} name="email" type="email" autoComplete="email" required maxLength={180} />
+          <input
+            className={campo}
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={180}
+          />
         </label>
       </div>
       <label className={etichetta}>
@@ -69,7 +83,10 @@ export function ModuloRichiestaProgetto() {
       <label className={etichetta}>
         Allega planimetrie, disegni o fotografie
         <input
-          className={campo + ' file:mr-4 file:rounded-full file:border-0 file:bg-[#EEE7DC] file:px-3 file:py-2 file:text-xs file:font-medium'}
+          className={
+            campo +
+            ' file:mr-4 file:rounded-full file:border-0 file:bg-[#EEE7DC] file:px-3 file:py-2 file:text-xs file:font-medium'
+          }
           type="file"
           name="documenti"
           multiple
@@ -80,15 +97,25 @@ export function ModuloRichiestaProgetto() {
         </span>
       </label>
 
-      <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+      <div
+        className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
+        aria-hidden="true"
+      >
         <label>
           Lascia vuoto questo campo
           <input name="aziendaSito" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
       <label className="flex items-start gap-3 text-xs leading-5 text-[#5C554D]">
-        <input className="mt-1 h-4 w-4 shrink-0 accent-[#8F4525]" type="checkbox" name="privacy" required />
-        <span>Ho letto l’informativa privacy e chiedo di essere ricontattato in merito al progetto. *</span>
+        <input
+          className="mt-1 h-4 w-4 shrink-0 accent-[#8F4525]"
+          type="checkbox"
+          name="privacy"
+          required
+        />
+        <span>
+          Ho letto l’informativa privacy e chiedo di essere ricontattato in merito al progetto. *
+        </span>
       </label>
 
       {esito && !esito.successo && (
