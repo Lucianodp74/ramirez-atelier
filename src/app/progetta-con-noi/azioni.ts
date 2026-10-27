@@ -86,7 +86,11 @@ export async function inviaRichiestaProgettoPubblica(
     if (telefono.length > 40) {
       return { successo: false, errore: 'Il numero di telefono è troppo lungo.' };
     }
-    if (!['parete-attrezzata', 'libreria', 'boiserie', 'madia', 'cucina', 'altro'].includes(tipoProgetto)) {
+    if (
+      !['parete-attrezzata', 'libreria', 'boiserie', 'madia', 'cucina', 'altro'].includes(
+        tipoProgetto,
+      )
+    ) {
       return { successo: false, errore: 'Seleziona una tipologia di progetto.' };
     }
     if (messaggio.length < 10 || messaggio.length > 4000) {
@@ -102,7 +106,10 @@ export async function inviaRichiestaProgettoPubblica(
       };
     }
     if (!(await verificaLimiteInvii())) {
-      return { successo: false, errore: 'Hai effettuato troppi tentativi. Riprova tra 15 minuti.' };
+      return {
+        successo: false,
+        errore: 'Hai effettuato troppi tentativi. Riprova tra 15 minuti.',
+      };
     }
 
     const files = formData
