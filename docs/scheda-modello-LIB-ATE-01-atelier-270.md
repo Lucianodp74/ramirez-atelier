@@ -9,9 +9,11 @@
 - **Famiglia:** Linea Atelier
 - **Stato catalogo:** BOZZA
 - **Modello dimostrativo:** Sì
-- **Visibilità pubblica / richiedibilità:** Non visibile al pubblico; non richiedibile in quanto bozza
+- **Visibilità pubblica / richiedibilità:** Non visibile al pubblico; non richiedibile in quanto
+  bozza
 - **Fonte dei dati:** `src/lib/catalogo-librerie/catalogo.ts`
-- **Scheda tecnica di validazione:** [Scheda tecnica — composizione campione di parete attrezzata](scheda-tecnica-composizione-parete-campione.md)
+- **Scheda tecnica di validazione:** [Scheda tecnica — composizione campione di parete
+  attrezzata](scheda-tecnica-composizione-parete-campione.md)
 
 ## 2. Descrizione del concept
 
