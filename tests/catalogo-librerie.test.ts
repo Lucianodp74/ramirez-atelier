@@ -215,3 +215,78 @@ describe('composizione libreria', () => {
     expect(opzioni.finiture).toEqual(['MELAMINICO', 'LAMINATO', 'LACCATO']);
   });
 });
+
+describe('composizione libreria — casi limite strutturali', () => {
+  it('rileva identificativi di colonna mancanti o duplicati', () => {
+    const duplicati = {
+      ...composizione,
+      colonne: [
+        composizione.colonne[0],
+        { ...composizione.colonne[1], id: composizione.colonne[0].id },
+      ],
+    };
+    expect(validaComposizione(duplicati).join(' ')).toContain('mancante o duplicato');
+
+    const senzaId = {
+      ...composizione,
+      colonne: [{ ...composizione.colonne[0], id: '' }],
+    };
+    expect(validaComposizione(senzaId).join(' ')).toContain('mancante o duplicato');
+  });
+
+  it('segnala colonne senza vani senza inventare regole costruttive', () => {
+    const vuota = {
+      ...composizione,
+      colonne: [{ id: 'c-vuota', larghezzaCm: 90, vani: [] }],
+    };
+    expect(validaComposizione(vuota).join(' ')).toContain('La colonna c-vuota non ha vani.');
+  });
+
+  it('rileva cassetti o ripiani incoerenti con il tipo di vano', () => {
+    const incoerente = {
+      ...composizione,
+      colonne: [
+        {
+          id: 'c1',
+          larghezzaCm: 90,
+          vani: [
+            { tipo: 'VANO_APERTO' as const, altezzaCm: 100, cassetti: 3 as const },
+            { tipo: 'CASSETTI' as const, altezzaCm: 60, cassetti: 3 as const, ripiani: 1 },
+          ],
+        },
+      ],
+    };
+    const errori = validaComposizione(incoerente).join(' ');
+    expect(errori).toContain('i cassetti sono previsti solo per le cassettiere');
+    expect(errori).toContain('una cassettiera non ha ripiani');
+  });
+
+  it('usa valori predefiniti solo per il conteggio riepilogativo, non come specifica di produzione', () => {
+    const incompleta = {
+      ...composizione,
+      colonne: [
+        {
+          id: 'c1',
+          larghezzaCm: 90,
+          vani: [
+            { tipo: 'BASE_ANTE' as const, altezzaCm: 80 },
+            { tipo: 'CASSETTI' as const, altezzaCm: 60 },
+          ],
+        },
+      ],
+    };
+    expect(riepilogoElementi(incompleta)).toMatchObject({
+      basiConAnte: 1,
+      ante: 2,
+      cassettiere: 1,
+      cassetti: 3,
+    });
+  });
+
+  it('non propone materiali o finiture quando non è presente alcun vano', () => {
+    expect(opzioniDisponibili({ ...composizione, colonne: [] })).toEqual({
+      materiali: [],
+      finiture: [],
+    });
+  });
+});
