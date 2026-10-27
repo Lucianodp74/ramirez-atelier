@@ -67,6 +67,7 @@ export function ModuloRichiestaProgetto() {
           <option value="libreria">Libreria</option>
           <option value="boiserie">Boiserie</option>
           <option value="madia">Madia o mobile contenitore</option>
+          <option value="cucina">Cucina</option>
           <option value="altro">Altro arredo su misura</option>
         </select>
       </label>
