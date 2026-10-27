@@ -22,6 +22,16 @@ datasource db {
 /// Definisce un tipo di progetto configurabile (Cucina, Armadio, Living, Bagno, ...).
 /// Il campo `configurazione` contiene la struttura JSON di step/campi/pesi di
 /// completezza — v. src/lib/tipo-progetto-schema.ts per la forma tipizzata attesa.
+/// Finestra di rate limit condivisa tra istanze per il modulo pubblico.
+model LimiteInvioPubblico {
+  chiaveHash       String   @id
+  finestraIniziata DateTime @default(now())
+  conteggio        Int      @default(1)
+  aggiornatoIl     DateTime @updatedAt
+
+  @@map("limite_invio_pubblico")
+}
+
 model TipoProgetto {
   id              String   @id @default(cuid())
   tenantId        String

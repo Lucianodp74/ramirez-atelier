@@ -1,4 +1,4 @@
-import { mkdir, writeFile, readFile } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink } from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import type { StorageAdapter, RisultatoUpload, RisultatoDownload } from './tipi';
@@ -34,6 +34,20 @@ export class StorageLocaleAdapter implements StorageAdapter {
       storageObjectKey: `locale://${params.tenantId}/richieste/${params.richiestaId}/${nomeUnivoco}`,
       dimensioneByte: params.contenuto.byteLength,
     };
+  }
+
+  async elimina(storageObjectKey: string): Promise<void> {
+    const prefisso = 'locale://';
+    if (!storageObjectKey.startsWith(prefisso)) {
+      throw new Error("storageObjectKey non riconosciuto dall'adattatore locale");
+    }
+    const percorsoRelativo = storageObjectKey.slice(prefisso.length);
+    const percorsoCompleto = path.resolve(CARTELLA_UPLOAD, ...percorsoRelativo.split('/'));
+    const radice = path.resolve(CARTELLA_UPLOAD) + path.sep;
+    if (!percorsoCompleto.startsWith(radice)) {
+      throw new Error('Percorso storage fuori dalla cartella consentita');
+    }
+    await unlink(percorsoCompleto);
   }
 
   async scarica(storageObjectKey: string): Promise<RisultatoDownload> {

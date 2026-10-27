@@ -114,7 +114,7 @@ function Apertura() {
               <ArrowDown aria-hidden="true" className="size-4" />
             </a>
             <Link
-              href="/progetti"
+              href="/progetta-con-noi"
               className={`inline-flex h-13 items-center justify-center rounded-full border border-[#F6F1E9]/45 px-7 text-sm font-medium hover:bg-[#F6F1E9]/10 ${premi} ${focusScuro}`}
             >
               Inizia il tuo progetto
@@ -261,7 +261,7 @@ export function Esperienza() {
             </span>
           </Link>
           <Link
-            href="/progetti"
+            href="/progetta-con-noi"
             className={`inline-flex h-11 items-center whitespace-nowrap rounded-full bg-[#1E1B18] px-5 text-sm font-medium text-[#F6F1E9] hover:bg-[#5B3F2C] ${premi} ${focusChiaro}`}
           >
             Inizia il tuo progetto
@@ -495,7 +495,7 @@ export function Esperienza() {
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/progetti"
+                  href="/progetta-con-noi"
                   className={`inline-flex h-13 items-center justify-center rounded-full bg-[#F6F1E9] px-7 text-sm font-medium text-[#1E1B18] ${premi} ${focusScuro}`}
                 >
                   Inizia il tuo progetto

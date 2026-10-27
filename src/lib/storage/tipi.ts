@@ -35,6 +35,9 @@ export interface StorageAdapter {
 
   /** Recupera un documento già caricato, dato lo storageObjectKey salvato in DB. */
   scarica(storageObjectKey: string): Promise<RisultatoDownload>;
+
+  /** Elimina un oggetto caricato, usato per compensare invii falliti. */
+  elimina(storageObjectKey: string): Promise<void>;
 }
 
 const CATEGORIE_PER_MIME: Array<{
