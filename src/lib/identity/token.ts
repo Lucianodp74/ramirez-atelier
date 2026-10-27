@@ -11,6 +11,18 @@ export function generaTokenOpaco(): string {
   return randomBytes(32).toString('base64url');
 }
 
+/**
+ * Token di ripresa di una richiesta: la credenziale con cui il cliente riprende
+ * la propria bozza (cookie del wizard) e consulta lo stato (`/richiesta/<token>`).
+ * 256 bit da un generatore crittografico, in base64url: va impostato
+ * esplicitamente a ogni creazione, senza affidarsi al default `cuid()` della
+ * colonna, che è prevedibile. Le richieste già esistenti conservano il proprio
+ * token: la ricerca avviene per uguaglianza, qualunque sia il formato.
+ */
+export function generaTokenRipresa(): string {
+  return generaTokenOpaco();
+}
+
 export function hashToken(tokenGrezzo: string): string {
   return createHash('sha256').update(tokenGrezzo).digest('hex');
 }

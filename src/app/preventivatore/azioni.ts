@@ -4,6 +4,7 @@ import { costiRigheBomIniziale } from '@/lib/preventivatore/bom-iniziale';
 import { unstable_rethrow } from 'next/navigation';
 import { idTenantRamirezAtelier } from '@/server/identity/tenant-corrente';
 import { db } from '@/server/db';
+import { generaTokenRipresa } from '@/lib/identity/token';
 import { caricaTariffePreventivatore } from '@/server/services/preventivatore-listino-service';
 import { calcolaPreventivoModulare } from '@/lib/preventivatore/prezzo-modulare';
 import { validaInputModuli } from '@/lib/preventivatore/validazione-moduli';
@@ -108,6 +109,7 @@ export async function salvaRichiestaPreventivatore(
       data: {
         tenantId,
         tipoProgettoId: tipoProgetto.id,
+        tokenRipresa: generaTokenRipresa(),
         clienteNome: nome,
         clienteEmail: email,
         clienteTelefono: telefono,
@@ -210,7 +212,6 @@ export async function salvaRichiestaPreventivatore(
   return {
     successo: true as const,
     id: nuova.richiesta.id,
-    tokenRipresa: nuova.richiesta.tokenRipresa,
     bomId: nuova.bomId,
     prezzoIndicativo: preventivo.prezzoIndicativo,
   };
