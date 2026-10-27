@@ -86,7 +86,7 @@ export async function inviaRichiestaProgettoPubblica(
     if (telefono.length > 40) {
       return { successo: false, errore: 'Il numero di telefono è troppo lungo.' };
     }
-    if (!['parete-attrezzata', 'libreria', 'boiserie', 'madia', 'altro'].includes(tipoProgetto)) {
+    if (!['parete-attrezzata', 'libreria', 'boiserie', 'madia', 'cucina', 'altro'].includes(tipoProgetto)) {
       return { successo: false, errore: 'Seleziona una tipologia di progetto.' };
     }
     if (messaggio.length < 10 || messaggio.length > 4000) {
@@ -127,7 +127,7 @@ export async function inviaRichiestaProgettoPubblica(
     // Collega la richiesta alla categoria amministrativa più pertinente:
     // zona giorno per pareti attrezzate, librerie e madie; falegnameria su misura
     // per boiserie e richieste generiche.
-    const chiaveTipoAmministrativo = ['parete-attrezzata', 'libreria', 'madia'].includes(
+    const chiaveTipoAmministrativo = ['parete-attrezzata', 'libreria', 'madia', 'cucina'].includes(
       tipoProgetto,
     )
       ? 'zona-giorno'
