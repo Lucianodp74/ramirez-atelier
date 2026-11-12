@@ -14,6 +14,7 @@ import { TimelineEventi } from '@/components/admin/TimelineEventi';
 import { RiepilogoRichiesta } from '@/components/wizard/RiepilogoRichiesta';
 import { PreventivatoreSnapshotCard } from '@/components/admin/PreventivatoreSnapshotCard';
 import { ModelloOrigineCard } from '@/components/admin/ModelloOrigineCard';
+import { ImportaSKPViewer } from '@/components/progetti/ImportaSKPViewer';
 import { BOMCard } from './BOMCard';
 import { TipoProgettoConfigurazioneSchema } from '@/lib/tipo-progetto-schema';
 import { datiFormPiatti } from '@/lib/richiesta-fatti';
@@ -141,6 +142,8 @@ export default async function DettaglioRichiestaPage({
           </Card>
 
           <ModelloOrigineCard datiEstensione={richiesta.datiEstensione} />
+
+          <ImportaSKPViewer />
 
           <PreventivatoreSnapshotCard datiEstensione={richiesta.datiEstensione} />
 
