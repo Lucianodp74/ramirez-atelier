@@ -117,3 +117,21 @@ Usare almeno 5 file reali Ramirez: SKP 2019/2020, SKP 2021+, un modello con text
 - https://extensions.sketchup.com/developers/sketchup_c_api/sketchup/index.html
 - https://developer.trimble.com/docs/sketchup/tools/sdk
 - https://johnmcm.com/skp-viewer
+
+
+## Implementazione prototipale OpenSKP — primo collegamento
+
+Nel branch `feat/ramirez-3d-presentazioni` è stato aggiunto:
+- dipendenza `openskp@1.5.0` e relative voci package-lock;
+- componente `ImportaSKPViewer` inserito nella scheda amministrativa della richiesta;
+- conversione lazy nel browser con `buildInstancedScene()` + `toInstancedGLB({ textures: true })`;
+- preservazione delle istanze dei componenti ripetuti e incorporamento delle texture supportate;
+- anteprima GLB nel componente `Modello3DViewer` esistente e download del GLB risultante.
+
+### Limiti dichiarati del prototipo
+- Il componente limita l'importazione a 40 MB e non avvia il parsing nella pagina pubblica cliente.
+- La conversione avviene localmente nel browser: il componente non carica automaticamente né SKP né GLB nello storage. Il GLB può essere scaricato; il collegamento al caricamento autenticato e alla pubblicazione versionata è un incremento successivo.
+- Non è ancora una pipeline server/worker e non offre ripresa automatica in caso di chiusura della pagina.
+- Non è ancora verificato su modelli reali Ramirez; la fedeltà di texture/materiali/componenti deve essere misurata con file campione.
+- Prima del merge occorre eseguire `npm ci`, `npm run type-check`, `npm run lint`, `npm test` e `npm run build`. Il lockfile è stato aggiornato strutturalmente dal lockfile upstream per le dipendenze OpenSKP, ma va validato con npm CI.
+
