@@ -134,12 +134,16 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
               supportato, materiali, texture e componenti ripetuti.
             </p>
           </div>
-          <span className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+          <span
+            className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+          >
             SKP → GLB
           </span>
         </div>
 
-        <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-secondary/20 px-6 py-8 text-center transition hover:bg-secondary/40">
+        <label
+          className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-secondary/20 px-6 py-8 text-center transition hover:bg-secondary/40"
+        >
           <span className="text-sm font-medium">Seleziona file .SKP</span>
           <span className="mt-1 text-xs text-muted-foreground">
             Massimo 40 MB · conversione locale nel browser
