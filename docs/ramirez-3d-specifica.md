@@ -69,7 +69,6 @@ Usare l'adapter S3/local già presente. Aggiungere classificazione esplicita per
 ## Decisioni per il pilot
 Usare un progetto reale con un GLB esportato dal CAD/SketchUp e render Enscape; partire con un solo modello GLB, una galleria di render e contenuti descrittivi. Non importare interi repository esterni: riusare `model-viewer`, già presente nell'app, e gli adapter storage esistenti.
 
-
 ## Ricerca tecnica SKP — decisione architetturale (2026-11-12)
 
 ### Candidato scelto: OpenSKP
@@ -117,7 +116,6 @@ Usare almeno 5 file reali Ramirez: SKP 2019/2020, SKP 2021+, un modello con text
 - https://extensions.sketchup.com/developers/sketchup_c_api/sketchup/index.html
 - https://developer.trimble.com/docs/sketchup/tools/sdk
 - https://johnmcm.com/skp-viewer
-
 
 ## Implementazione prototipale OpenSKP — primo collegamento
 
