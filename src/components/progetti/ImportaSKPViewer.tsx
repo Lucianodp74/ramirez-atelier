@@ -50,7 +50,8 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
     if (file.size > MAX_FILE_BYTES) {
       setState({
         status: 'error',
-        message: 'Per questa prima versione il limite è 40 MB. Per file più grandi useremo la conversione su worker dedicato.',
+        message:
+          'Per questa prima versione il limite è 40 MB. Per file più grandi useremo la conversione su worker dedicato.',
       });
       return;
     }
@@ -65,22 +66,32 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
       setState({ status: 'processing', stage: 'Analisi geometrie e componenti', percent: 20 });
       const scene = openskp.buildInstancedScene(buffer, {
         onProgress: (info) => {
-          const percent = info.total > 0
-            ? Math.min(82, 20 + Math.round((info.current / info.total) * 62))
-            : 25;
+          const percent =
+            info.total > 0
+              ? Math.min(82, 20 + Math.round((info.current / info.total) * 62))
+              : 25;
           setState({
             status: 'processing',
-            stage: info.stage === 'tlv_walk' ? 'Lettura della struttura SKP' : 'Preparazione della scena 3D',
+            stage:
+              info.stage === 'tlv_walk'
+                ? 'Lettura della struttura SKP'
+                : 'Preparazione della scena 3D',
             percent,
           });
         },
       });
 
       if (!scene.meshResources.length) {
-        throw new Error('Il file è stato letto, ma non contiene geometrie 3D visibili da esportare.');
+        throw new Error(
+          'Il file è stato letto, ma non contiene geometrie 3D visibili da esportare.',
+        );
       }
 
-      setState({ status: 'processing', stage: 'Esportazione GLB con componenti riutilizzati', percent: 88 });
+      setState({
+        status: 'processing',
+        stage: 'Esportazione GLB con componenti riutilizzati',
+        percent: 88,
+      });
       const bytes = openskp.toInstancedGLB(scene, { textures: true });
       // Copia in un ArrayBuffer autonomo per compatibilità con Blob/TS.
       const output = new Uint8Array(bytes.byteLength);
@@ -101,9 +112,10 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
     } catch (error) {
       setState({
         status: 'error',
-        message: error instanceof Error
-          ? error.message
-          : 'Non è stato possibile convertire questo file SketchUp.',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Non è stato possibile convertire questo file SketchUp.',
       });
     }
   }
@@ -118,8 +130,8 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
             </p>
             <h2 className="mt-2 font-serif text-2xl font-light">Importa un modello SketchUp</h2>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Carica direttamente un file SKP. Il browser lo converte in GLB mantenendo, dove supportato,
-              materiali, texture e componenti ripetuti.
+              Carica direttamente un file SKP. Il browser lo converte in GLB mantenendo, dove
+              supportato, materiali, texture e componenti ripetuti.
             </p>
           </div>
           <span className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
@@ -129,7 +141,9 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
 
         <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-secondary/20 px-6 py-8 text-center transition hover:bg-secondary/40">
           <span className="text-sm font-medium">Seleziona file .SKP</span>
-          <span className="mt-1 text-xs text-muted-foreground">Massimo 40 MB · conversione locale nel browser</span>
+          <span className="mt-1 text-xs text-muted-foreground">
+            Massimo 40 MB · conversione locale nel browser
+          </span>
           <input
             className="sr-only"
             type="file"
@@ -145,13 +159,19 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
               <span>{state.percent}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full rounded-full bg-foreground transition-all" style={{ width: `${state.percent}%` }} />
+              <div
+                className="h-full rounded-full bg-foreground transition-all"
+                style={{ width: `${state.percent}%` }}
+              />
             </div>
           </div>
         )}
 
         {state.status === 'error' && (
-          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          <p
+            className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+            role="alert"
+          >
             {state.message}
           </p>
         )}
@@ -161,7 +181,9 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
               <div>
                 <p className="font-medium">{state.fileName}</p>
-                <p className="text-xs text-muted-foreground">{(state.size / (1024 * 1024)).toFixed(2)} MB · conversione completata</p>
+                <p className="text-xs text-muted-foreground">
+                  {(state.size / (1024 * 1024)).toFixed(2)} MB · conversione completata
+                </p>
               </div>
               <a
                 className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-secondary"
@@ -180,9 +202,10 @@ export function ImportaSKPViewer({ onGlbReady, className }: ImportaSKPViewerProp
         )}
 
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Nota: il file SKP originale non viene caricato né conservato da questo componente.
-          Il GLB convertito deve essere salvato tramite il flusso documentale autenticato prima della pubblicazione.
-          I file complessi o molto grandi richiederanno la conversione su server dedicato.
+          Nota: il file SKP originale non viene caricato né conservato da questo componente. Il GLB
+          convertito deve essere salvato tramite il flusso documentale autenticato prima della
+          pubblicazione. I file complessi o molto grandi richiederanno la conversione su server
+          dedicato.
         </p>
       </div>
     </section>
