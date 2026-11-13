@@ -1,7 +1,7 @@
 # Ramirez 3D — Specifica funzionale e tecnica
 
-**Stato:** approvata per sviluppo  
-**Branding:** Ramirez Atelier + rivenditore  
+**Stato:** approvata per sviluppo
+**Branding:** Ramirez Atelier + rivenditore
 **Prezzi:** riservati al rivenditore; mai esposti nella presentazione cliente.
 
 ## Obiettivo
@@ -72,7 +72,7 @@ Usare un progetto reale con un GLB esportato dal CAD/SketchUp e render Enscape; 
 ## Ricerca tecnica SKP — decisione architetturale (2026-11-12)
 
 ### Candidato scelto: OpenSKP
-Repository: https://github.com/iamahsanmehmood/openskp  
+Repository: https://github.com/iamahsanmehmood/openskp
 Pacchetto TypeScript: `openskp` 1.5.0 — licenza dichiarata MIT.
 
 OpenSKP è un parser/writer/converter indipendente per SketchUp. La versione TypeScript dichiara supporto al contenitore VFF (SketchUp 2021+) e al formato MFC classico (2013–2020), con lettura di geometrie, gerarchie di componenti, layer/tag, materiali, texture e attributi. Espone parsing browser da ArrayBuffer, costruzione scena triangolata e conversione GLB. Il progetto include un viewer web drag-and-drop Three.js utilizzabile come riferimento d'implementazione.
