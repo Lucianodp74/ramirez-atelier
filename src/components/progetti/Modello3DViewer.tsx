@@ -63,7 +63,10 @@ export function Modello3DViewer({
         )}
 
         {error && (
-          <div role="status" className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
+          <div
+            role="status"
+            className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center"
+          >
             <p className="max-w-sm text-sm text-muted-foreground">
               Il visualizzatore non è disponibile. Puoi consultare le immagini del progetto.
             </p>
